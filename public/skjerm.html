@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karkasand – skjerm</title>
+  <link rel="icon" href="/ikon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Alegreya+Sans:wght@400;700;800&display=swap">
+  <link rel="stylesheet" href="/css/felles.css">
+  <link rel="stylesheet" href="/css/brett.css">
+  <link rel="stylesheet" href="/css/skjerm.css">
+</head>
+<body data-modus="tv">
+  <div id="brett" class="brett-vindu"></div>
+  <div id="paneler"></div>
+  <div id="info" hidden>
+    <span class="bunke"><span class="bunke-ikon"></span><span id="igjen">0</span> brikker igjen</span>
+  </div>
+  <div id="melding" hidden></div>
+  <img id="liten-qr" alt="" hidden>
+
+  <section id="lobby" class="overlegg">
+    <h1 class="tittel">Karkasand</h1>
+    <div class="lobby-innhold">
+      <div class="qr-boks">
+        <img id="qr" alt="QR-kode for å bli med">
+        <p>Skann med mobilen for å bli med</p>
+        <p id="adresse" class="adresse"></p>
+      </div>
+      <div class="lobby-spillere">
+        <h2>Spillere</h2>
+        <ul id="lobby-liste"></ul>
+        <p id="lobby-status"></p>
+        <button id="bytt-modus"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="slutt" class="overlegg" hidden>
+    <h1 class="tittel">Spillet er slutt</h1>
+    <ol id="resultat"></ol>
+    <p class="dempet">Trykk «Nytt spill» på mobilen for å spille igjen.</p>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/skjerm.js"></script>
+</body>
+</html>

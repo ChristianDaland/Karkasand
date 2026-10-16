@@ -1,0 +1,173 @@
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+
+body {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.side {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+
+.side.midt { justify-content: center; align-items: center; text-align: center; }
+
+.tittel.liten { font-size: 2.2rem; text-align: center; }
+
+.felt { display: grid; gap: 8px; }
+.felt > span { color: var(--dempet); font-size: 0.95rem; }
+
+input {
+  font: inherit;
+  font-size: 1.3rem;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid var(--kant);
+  background: var(--kort);
+  color: var(--tekst);
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+input:focus { outline: none; border-color: var(--gull); }
+
+.farger { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.farger button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.farger button.valgt { border-color: #fff; box-shadow: 0 0 0 3px var(--gull); }
+.farger button:disabled { opacity: 0.15; }
+
+.bord-velger {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  grid-template-rows: 48px 90px 48px;
+  gap: 6px;
+  max-width: 320px;
+}
+
+.bord-velger [data-plass='N'] { grid-column: 2; grid-row: 1; }
+.bord-velger [data-plass='V'] { grid-column: 1; grid-row: 2; }
+.bord-velger [data-plass='Ø'] { grid-column: 3; grid-row: 2; }
+.bord-velger [data-plass='S'] { grid-column: 2; grid-row: 3; }
+.bord-velger button { font-weight: 700; }
+.bord-velger button.valgt { background: var(--gull); color: #1b140d; }
+
+.bord-flate {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #e9e4da;
+  color: #6d6556;
+  font-weight: 700;
+}
+
+.spillerliste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.spillerliste li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--kort);
+  font-weight: 700;
+}
+
+.spillerliste .prikk, .topp .prikk {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #fff;
+  flex: none;
+}
+
+.spillerliste .hoyre { margin-left: auto; color: var(--dempet); font-weight: 400; }
+
+button.stor { padding: 18px; font-size: 1.35rem; font-weight: 800; flex: 2; }
+button.middels { padding: 18px 12px; font-size: 1.05rem; font-weight: 700; flex: 1; }
+button.primar { background: var(--gull); color: #1b140d; }
+.hjelp { color: var(--dempet); font-size: 0.95rem; margin: 0; text-align: center; }
+
+/* ---------- Spill ---------- */
+
+#spill { gap: 10px; }
+
+.topp { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; }
+.topp .poeng { margin-left: auto; font-family: var(--tittelskrift); color: var(--gull); font-size: 1.4rem; }
+.topp .vikinger { display: flex; align-items: center; gap: 3px; color: var(--dempet); }
+.topp .vikinger svg { width: 20px; height: 20px; }
+
+.status { margin: 0; text-align: center; font-size: 1.2rem; font-weight: 700; min-height: 1.5em; }
+.status.din-tur { color: var(--gull); }
+
+.forhand-ramme { flex: 1; min-height: 140px; display: grid; place-items: center; }
+
+.forhand {
+  position: relative;
+  width: min(62vw, 36vh, 280px);
+  aspect-ratio: 1;
+  transition: transform 0.25s ease-out;
+}
+
+.forhand img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  transition: transform 0.25s ease-out;
+}
+
+.forhand.venter img { filter: saturate(0.4) brightness(0.7); }
+
+#prikker button {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 3px solid #fff;
+  padding: 4px;
+}
+
+#prikker button.valgt { background: var(--farge); box-shadow: 0 0 0 4px var(--gull); }
+#prikker svg { width: 100%; height: 100%; display: block; }
+
+.kontroll { display: grid; gap: 12px; }
+
+.styrepute {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, minmax(56px, 9vh));
+  gap: 8px;
+  max-width: 340px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.styrepute button { font-size: 1.7rem; background: var(--kort); border: 2px solid var(--kant); }
+.styrepute button:active { background: var(--kant); transform: scale(0.96); }
+.styrepute .opp { grid-column: 2; grid-row: 1; }
+.styrepute .venstre { grid-column: 1; grid-row: 2; }
+.styrepute .roter { grid-column: 2; grid-row: 2; font-size: 2.1rem; background: #3d2f1f; color: var(--gull); }
+.styrepute .hoyre { grid-column: 3; grid-row: 2; }
+.styrepute .ned { grid-column: 2; grid-row: 3; }
+
+.knapperad { display: flex; gap: 10px; }
+
+#start { flex: none; }

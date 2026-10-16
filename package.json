@@ -1,0 +1,21 @@
+{
+  "name": "karkasand",
+  "version": "0.1.0",
+  "description": "Vikinginspirert flislegging-spill for to spillere, styrt fra mobilen",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test test/",
+    "skisser": "node verktoy/lag-skisser.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.4"
+  }
+}

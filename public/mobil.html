@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1b140d">
+  <title>Karkasand – kontroll</title>
+  <link rel="icon" href="/ikon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Alegreya+Sans:wght@400;700;800&display=swap">
+  <link rel="stylesheet" href="/css/felles.css">
+  <link rel="stylesheet" href="/css/mobil.css">
+</head>
+<body>
+  <section id="kobler" class="side midt">
+    <h1 class="tittel liten">Karkasand</h1>
+    <p>Kobler til …</p>
+  </section>
+
+  <section id="feil" class="side midt" hidden>
+    <h1 class="tittel liten">Karkasand</h1>
+    <p id="feiltekst"></p>
+    <button id="prov-igjen" class="stor">Prøv igjen</button>
+  </section>
+
+  <section id="oppsett" class="side" hidden>
+    <h1 class="tittel liten">Karkasand</h1>
+    <label class="felt">
+      <span>Navnet ditt</span>
+      <input id="navn" maxlength="16" autocomplete="nickname" enterkeyhint="done">
+    </label>
+    <div class="felt">
+      <span>Farge</span>
+      <div id="farger" class="farger"></div>
+    </div>
+    <div class="felt" id="plass-felt">
+      <span>Hvor sitter du ved bordet?</span>
+      <div class="bord-velger">
+        <button data-plass="N">Nord</button>
+        <button data-plass="V">Vest</button>
+        <div class="bord-flate">Bordet</div>
+        <button data-plass="Ø">Øst</button>
+        <button data-plass="S">Sør</button>
+      </div>
+    </div>
+    <div class="felt">
+      <span>Spillere</span>
+      <ul id="spillerliste" class="spillerliste"></ul>
+    </div>
+    <button id="start" class="stor primar">Start spillet</button>
+    <p id="start-hjelp" class="hjelp"></p>
+  </section>
+
+  <section id="spill" class="side" hidden>
+    <header class="topp">
+      <span class="prikk" id="min-farge"></span>
+      <strong id="mitt-navn"></strong>
+      <span id="mine-vikinger" class="vikinger"></span>
+      <span id="mine-poeng" class="poeng"></span>
+    </header>
+    <p id="status" class="status"></p>
+    <div class="forhand-ramme">
+      <div id="forhand" class="forhand">
+        <img id="forhand-bilde" alt="">
+        <div id="prikker"></div>
+      </div>
+    </div>
+
+    <div id="legg-kontroll" class="kontroll" hidden>
+      <div class="styrepute">
+        <button data-retning="opp" class="pil opp" aria-label="Opp">▲</button>
+        <button data-retning="venstre" class="pil venstre" aria-label="Venstre">◀</button>
+        <button id="roter" class="roter" aria-label="Roter">⟳</button>
+        <button data-retning="hoyre" class="pil hoyre" aria-label="Høyre">▶</button>
+        <button data-retning="ned" class="pil ned" aria-label="Ned">▼</button>
+      </div>
+      <div class="knapperad">
+        <button id="neste" class="middels">Neste plass</button>
+        <button id="legg" class="stor primar">Legg brikken</button>
+      </div>
+    </div>
+
+    <div id="viking-kontroll" class="kontroll" hidden>
+      <p class="hjelp">Trykk på et punkt på brikken for å velge hvor vikingen skal stå.</p>
+      <div class="knapperad">
+        <button id="ingen-viking" class="middels">Ingen viking</button>
+        <button id="sett-viking" class="stor primar">Sett ut viking</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="slutt" class="side midt" hidden>
+    <h1 class="tittel liten">Spillet er slutt</h1>
+    <ol id="resultat" class="spillerliste"></ol>
+    <button id="nytt-spill" class="stor primar">Nytt spill</button>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/mobil.js"></script>
+</body>
+</html>

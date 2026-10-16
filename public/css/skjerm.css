@@ -1,0 +1,221 @@
+body { overflow: hidden; }
+
+body[data-modus='bord'] { background: #000; }
+
+/* ---------- Brettet ---------- */
+
+body[data-modus='tv'] #brett { left: 270px; right: 270px; }
+body[data-modus='bord'] #brett { inset: 150px; }
+
+/* ---------- Spillerpaneler ---------- */
+
+.panel {
+  --farge: #fff;
+  position: absolute;
+  width: 230px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(42, 32, 22, 0.92);
+  border: 3px solid color-mix(in srgb, var(--farge) 40%, transparent);
+  display: grid;
+  gap: 8px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.panel.tur {
+  border-color: var(--farge);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--farge) 60%, transparent);
+}
+
+.panel .navn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 1.3rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.panel .prikk {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--farge);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.panel .poeng {
+  font-family: var(--tittelskrift);
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--gull);
+}
+
+.panel .poeng small { font-family: var(--skrift); font-size: 1rem; color: var(--dempet); }
+
+.panel .vikinger { display: flex; gap: 2px; }
+.panel .vikinger span { width: 24px; height: 24px; }
+.panel .vikinger span.borte { opacity: 0.18; filter: grayscale(1); }
+.panel .vikinger svg { width: 100%; height: 100%; display: block; }
+
+.panel .tur-tekst { color: var(--farge); font-weight: 800; min-height: 1.3em; }
+
+.panel .neste {
+  width: 110px;
+  height: 110px;
+  justify-self: center;
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px var(--farge), 0 6px 14px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s ease-out;
+}
+
+.panel .frakoblet {
+  color: #ff8a80;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+body[data-modus='tv'] .panel { top: 24px; }
+body[data-modus='tv'] .panel.side-0 { left: 20px; }
+body[data-modus='tv'] .panel.side-1 { right: 20px; }
+
+/* Bordmodus: panelet ligger langs spillerens kant, med teksten vendt mot spilleren */
+body[data-modus='bord'] .panel {
+  width: 470px;
+  grid-template-columns: 1fr auto auto;
+  grid-template-areas: 'navn poeng neste' 'vikinger poeng neste' 'tur tur neste';
+  align-items: center;
+  column-gap: 18px;
+  padding: 12px 18px;
+  background: rgba(20, 15, 10, 0.95);
+  transform: translate(-50%, -50%) rotate(var(--snu));
+}
+
+body[data-modus='bord'] .panel .navn { grid-area: navn; }
+body[data-modus='bord'] .panel .vikinger { grid-area: vikinger; }
+body[data-modus='bord'] .panel .poeng { grid-area: poeng; }
+body[data-modus='bord'] .panel .tur-tekst { grid-area: tur; }
+body[data-modus='bord'] .panel .frakoblet { grid-area: tur; }
+body[data-modus='bord'] .panel .neste { grid-area: neste; width: 96px; height: 96px; }
+
+body[data-modus='bord'] .panel.plass-S { left: 50%; top: calc(100% - 72px); --snu: 0deg; }
+body[data-modus='bord'] .panel.plass-N { left: 50%; top: 72px; --snu: 180deg; }
+body[data-modus='bord'] .panel.plass-V { left: 72px; top: 50%; --snu: 90deg; }
+body[data-modus='bord'] .panel.plass-Ø { left: calc(100% - 72px); top: 50%; --snu: -90deg; }
+
+/* ---------- Info og meldinger ---------- */
+
+#info {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+  color: var(--dempet);
+  font-size: 1.1rem;
+}
+
+body[data-modus='bord'] #info { bottom: auto; top: 50%; left: auto; right: 160px; transform: none; display: none; }
+
+.bunke { display: inline-flex; align-items: center; gap: 8px; }
+
+.bunke-ikon {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #5a3a22, #3a2716);
+  box-shadow: 2px 2px 0 #241810, 4px 4px 0 #1b120b;
+}
+
+#melding {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: rgba(20, 15, 10, 0.92);
+  border: 2px solid var(--gull);
+  font-weight: 700;
+  font-size: 1.2rem;
+  z-index: 10;
+  animation: inn 0.3s ease-out;
+}
+
+body[data-modus='bord'] #melding { top: 50%; transform: translate(-50%, -50%); }
+
+@keyframes inn { from { opacity: 0; } }
+
+#liten-qr {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 120px;
+  border-radius: 8px;
+  z-index: 10;
+}
+
+/* ---------- Lobby og slutt ---------- */
+
+.overlegg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 24px;
+  padding: 24px;
+  background: radial-gradient(ellipse at center, rgba(45, 34, 22, 0.97), rgba(10, 7, 4, 0.98));
+  z-index: 20;
+  text-align: center;
+}
+
+.lobby-innhold { display: flex; gap: 48px; align-items: center; flex-wrap: wrap; justify-content: center; }
+
+.qr-boks img { width: min(340px, 40vh); border-radius: 16px; display: block; margin: 0 auto 10px; }
+.qr-boks p { margin: 4px 0; }
+.adresse { color: var(--dempet); font-size: 0.95rem; }
+
+.lobby-spillere { min-width: 300px; text-align: left; }
+.lobby-spillere h2 { margin: 0 0 12px; color: var(--gull); }
+
+#lobby-liste { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 10px; }
+
+#lobby-liste li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--kort);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+#lobby-liste li.tom { color: var(--dempet); font-weight: 400; font-style: italic; }
+#lobby-liste .prikk { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
+#lobby-liste .plass { margin-left: auto; color: var(--dempet); font-weight: 400; font-size: 1rem; }
+
+#lobby-status { color: var(--dempet); }
+#bytt-modus { padding: 10px 16px; font-size: 1rem; }
+
+#resultat { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; min-width: 360px; }
+
+#resultat li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  background: var(--kort);
+  font-size: 1.5rem;
+  font-weight: 800;
+  border: 3px solid transparent;
+}
+
+#resultat li.vinner { border-color: var(--gull); box-shadow: 0 0 30px rgba(226, 181, 82, 0.4); }
+#resultat .prikk { width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
+#resultat .p { margin-left: auto; font-family: var(--tittelskrift); color: var(--gull); }
+
+.dempet { color: var(--dempet); }

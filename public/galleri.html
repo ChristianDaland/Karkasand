@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karkasand – brikkene</title>
+  <link rel="icon" href="/ikon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Alegreya+Sans:wght@400;700;800&display=swap">
+  <link rel="stylesheet" href="/css/felles.css">
+  <link rel="stylesheet" href="/css/brett.css">
+  <style>
+    body { overflow-y: auto; }
+    main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 2.6rem; }
+    h2 { color: var(--gull); margin-top: 40px; }
+    p { color: var(--dempet); }
+    .rutenett { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
+    figure { margin: 0; background: var(--kort); border-radius: 12px; padding: 10px; }
+    figure img { width: 100%; aspect-ratio: 1; display: block; border-radius: 6px; }
+    figcaption { margin-top: 8px; font-size: 0.95rem; }
+    figcaption b { color: var(--gull); }
+    .merke { float: right; font-size: 0.8rem; padding: 1px 8px; border-radius: 999px; background: var(--kant); color: var(--dempet); }
+    .merke.malt { background: #2e7d32; color: #fff; }
+    .test-brett { position: relative; height: 80vh; min-height: 420px; border-radius: 14px; background: #120d08; border: 2px solid var(--kant); }
+    .verktoy { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .verktoy button { padding: 10px 16px; }
+    a { color: var(--gull); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="tittel">Brikkene</h1>
+    <p>Alle 24 brikketypene. Brikker merket «malt» bruker bildene i <code>kunst/brikker/</code>, de andre bruker midlertidige tegninger. <a href="/">Tilbake</a></p>
+    <div id="liste" class="rutenett"></div>
+
+    <h2>Kantsjekk</h2>
+    <p>Et tilfeldig ferdigspilt brett med alle brikkene. Her ser du om kantene på de malte bildene glir inn i hverandre.</p>
+    <div class="verktoy">
+      <button id="nytt-brett">Nytt tilfeldig brett</button>
+      <label><input type="checkbox" id="vis-vikinger"> Vis vikinger</label>
+    </div>
+    <div id="test-brett" class="test-brett brett-vindu"></div>
+  </main>
+  <script type="module" src="/js/galleri.js"></script>
+</body>
+</html>
