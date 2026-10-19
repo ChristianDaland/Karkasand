@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Karkasand – slik spiller du</title>
+  <link rel="icon" href="/ikon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Alegreya+Sans:wght@400;700;800&display=swap">
+  <link rel="stylesheet" href="/css/felles.css">
+  <style>
+    body { overflow-y: auto; line-height: 1.5; }
+    main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: clamp(2.2rem, 7vw, 3.4rem); }
+    h2 { color: var(--gull); margin: 48px 0 12px; font-size: 1.6rem; }
+    h3 { margin: 24px 0 6px; color: var(--tekst); }
+    p, li { color: var(--tekst); }
+    .dempet { color: var(--dempet); }
+    a { color: var(--gull); }
+    nav { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 16px 0 8px; }
+    ol li, ul li { margin-bottom: 6px; }
+
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; background: var(--kort); border-radius: 12px; overflow: hidden; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--kant); vertical-align: top; }
+    th { color: var(--gull); font-weight: 800; }
+    tr:last-child td { border-bottom: 0; }
+    .tabell { overflow-x: auto; }
+
+    .boks { background: var(--kort); border: 1px solid var(--kant); border-radius: 12px; padding: 14px 18px; margin: 16px 0; }
+    .boks.viking { display: flex; gap: 16px; align-items: center; }
+    .boks.viking svg { width: 56px; height: 56px; flex: none; }
+
+    .type { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; color: #1b140d; white-space: nowrap; }
+    .type.borg { background: #c99a62; }
+    .type.vei { background: #e3cc98; }
+    .type.eng { background: #8fb866; }
+    .type.hov { background: #b98a6a; }
+    .type.rune { background: #d0584f; color: #fff; }
+
+    .brikker { display: grid; gap: 16px; }
+    .brikke { display: grid; grid-template-columns: 200px 1fr; gap: 18px; background: var(--kort); border: 1px solid var(--kant); border-radius: 14px; padding: 14px; }
+    .brikke img { width: 100%; aspect-ratio: 1; border-radius: 8px; display: block; }
+    .brikke h3 { margin: 0 0 2px; color: var(--gull); }
+    .brikke .fakta { color: var(--dempet); font-size: 0.95rem; margin: 0 0 8px; }
+    .brikke p { margin: 0 0 10px; }
+    .brikke ul { margin: 0; padding-left: 0; list-style: none; }
+    .brikke ul li { margin-bottom: 4px; }
+    @media (max-width: 600px) {
+      .brikke { grid-template-columns: 1fr; }
+      .brikke img { max-width: 320px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="tittel">Slik spiller du</h1>
+    <p class="undertittel">Karkasand – bygg borger, ferdaveier og hov i Norge på slutten av 1100-tallet</p>
+    <nav>
+      <a href="#kort">Kort fortalt</a>
+      <a href="#tur">En tur</a>
+      <a href="#vikinger">Vikingene</a>
+      <a href="#poeng">Poeng</a>
+      <a href="#brikkene">Brikkene</a>
+      <a href="/">Til spillet</a>
+    </nav>
+
+    <h2 id="kort">Kort fortalt</h2>
+    <p>To spillere bygger et landskap sammen, brikke for brikke. Brettet vises på en felles skjerm, og hver spiller styrer med mobilen sin. Det er 72 brikker. Spillet starter med <b>Borgveien</b> (D) midt på brettet og er slutt når bunken er tom.</p>
+    <p>Du får poeng ved å sette ut <b>vikinger</b> i borger, på veier, i hov og i enga. Når et område blir ferdig, får den som har flest vikinger der poengene. Den med flest poeng til slutt vinner.</p>
+
+    <h2 id="tur">En tur</h2>
+    <ol>
+      <li><b>Legg brikken.</b> Du får en tilfeldig brikke fra bunken. Flytt den med pilene på mobilen og roter med ⟳. «Neste plass» hopper til neste rute der den passer.</li>
+      <li><b>Kantene må passe.</b> Brikken må ligge inntil minst én brikke som allerede er lagt. Alle kantene må stemme med naboene: borg mot borg, vei mot vei og eng mot eng.</li>
+      <li><b>Sett ut en viking</b> hvis du vil. Du kan bare sette den på brikken du nettopp la (se under).</li>
+      <li><b>Poeng telles</b> med en gang hvis brikken gjorde ferdig en borg, en vei eller et hov.</li>
+    </ol>
+    <p class="dempet">Passer en brikke ingen steder på brettet, legges den til side, og du trekker en ny.</p>
+
+    <h2 id="vikinger">Vikingene</h2>
+    <div class="boks viking">
+      <span id="viking-bilde"></span>
+      <div>Hver spiller har <b>7 vikinger</b>. Etter at du har lagt en brikke, kan du sette én viking på den, eller la være.</div>
+    </div>
+    <ul>
+      <li>Vikingen kan stå i en <span class="type borg">borg</span>, på en <span class="type vei">vei</span>, i et <span class="type hov">hov</span> eller i <span class="type eng">enga</span>.</li>
+      <li>Du kan <b>ikke</b> sette en viking i et område som allerede har en viking, selv om den står mange brikker unna. Men to områder som hver har sine vikinger, kan senere bli bygget sammen til ett. Da deler de området.</li>
+      <li>Når et område blir ferdig og poengene telles, går vikingene i området tilbake til eierne og kan brukes igjen.</li>
+      <li>Vikinger i enga ligger ned og blir liggende helt til spillet er slutt. Tenk deg om før du setter dem der.</li>
+      <li>Spar på noen vikinger. Har du brukt opp alle, kan du ikke være med og kjempe om nye områder.</li>
+    </ul>
+
+    <h2 id="poeng">Poeng</h2>
+    <div class="tabell">
+      <table>
+        <thead><tr><th>Område</th><th>Ferdig under spillet</th><th>Uferdig når spillet er slutt</th></tr></thead>
+        <tbody>
+          <tr><td><span class="type borg">Borg</span></td><td>2 poeng per brikke<br>+ 2 per <span class="type rune">runestein</span></td><td>1 poeng per brikke<br>+ 1 per runestein</td></tr>
+          <tr><td><span class="type vei">Vei</span></td><td>1 poeng per brikke</td><td>1 poeng per brikke</td></tr>
+          <tr><td><span class="type hov">Hov</span></td><td>9 poeng når hovet er omringet av 8 brikker</td><td>1 poeng + 1 per brikke rundt hovet</td></tr>
+          <tr><td><span class="type eng">Eng</span></td><td>–</td><td>3 poeng per <b>ferdig</b> borg enga grenser til</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Når er et område ferdig?</h3>
+    <ul>
+      <li><b>Borg:</b> Palisaden går rundt hele borgen, uten åpninger mot tomme ruter.</li>
+      <li><b>Vei:</b> Veien ender i begge retninger, ved et hov, et tun med brønn, en borgport eller et veikryss. En vei kan også gå i ring.</li>
+      <li><b>Hov:</b> Alle de 8 rutene rundt hovet er fylt.</li>
+      <li><b>Eng:</b> Blir aldri ferdig. Den telles bare ved slutten.</li>
+    </ul>
+    <h3>Hvem får poengene?</h3>
+    <p>Den som har <b>flest vikinger</b> i området, får alle poengene. Står det likt, får begge full poengsum. Den med færre vikinger får ingenting. Et område der ingen har vikinger, gir ingen poeng. Det teller likevel som ferdig, for eksempel for enga.</p>
+    <div class="boks">
+      <b>Eksempel:</b> En borg på 4 brikker med én runestein gir 2 × (4 + 1) = <b>10 poeng</b> når den blir ferdig. Er den uferdig når spillet slutter, gir den 4 + 1 = <b>5 poeng</b>.
+    </div>
+
+    <h2 id="brikkene">Brikkene</h2>
+    <p>Det er 24 ulike brikker. Bildene er vist slik de ligger med nord øverst, men i spillet kan du dreie dem. Kantene er oppgitt som nord / øst / sør / vest.</p>
+    <div id="brikker" class="brikker"></div>
+  </main>
+  <script type="module" src="/js/veiledning.js"></script>
+</body>
+</html>

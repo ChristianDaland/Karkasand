@@ -28,6 +28,7 @@ app.use('/kunst', express.static(rot('kunst'), { maxAge: '1h' }));
 app.get('/skjerm/:kode', (req, res) => res.sendFile(rot('public/skjerm.html')));
 app.get('/m/:kode', (req, res) => res.sendFile(rot('public/mobil.html')));
 app.get('/galleri', (req, res) => res.sendFile(rot('public/galleri.html')));
+app.get('/veiledning', (req, res) => res.sendFile(rot('public/veiledning.html')));
 
 // Hvilke malte brikkebilder som finnes: { A: ['A.jpg', 'A_2.jpg'], ... }
 app.get('/api/bilder', (req, res) => {

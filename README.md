@@ -23,6 +23,8 @@ I bordmodus følger pilene siden du sitter ved. «Opp» betyr alltid bort fra de
 
 Den som har flest vikinger i et område får poengene. Står det likt, får alle de som deler førsteplassen poengene.
 
+Den fullstendige veiledningen, med alle brikkene, ligger på siden `/veiledning` i spillet.
+
 ## Utvikling
 
 ```bash
@@ -40,7 +42,7 @@ Når du kjører lokalt, peker QR-koden til maskinens IP-adresse på nettverket. 
 |---|---|
 | `delt/` | Brikkedata, spillmotor og brikketegning. Brukes av både serveren og nettleseren. |
 | `server/` | Express- og Socket.IO-server og spillrommene |
-| `public/` | Nettsidene: startside, storskjerm, mobilkontroll og galleri |
+| `public/` | Nettsidene: startside, storskjerm, mobilkontroll, spillveiledning og galleri |
 | `kunst/brikker/` | De malte brikkebildene (`A.jpg` til `X.jpg`) |
 | `kunst/skisser/` | Skisser som brukes som maler for maleriene |
 | `docs/BRIKKER.md` | Beskrivelse av alle brikkene, med krav til bildene |
