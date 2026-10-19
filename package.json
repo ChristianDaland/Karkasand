@@ -8,7 +8,8 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "test": "node --test test/",
-    "skisser": "node verktoy/lag-skisser.js"
+    "skisser": "node verktoy/lag-skisser.js",
+    "brikker": "node verktoy/lag-brikker.js"
   },
   "engines": {
     "node": ">=18"

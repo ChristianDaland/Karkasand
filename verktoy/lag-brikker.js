@@ -1,0 +1,251 @@
+// Maler brikkebildene med Z-Image Turbo i ComfyUI på AI-serveren. Promptene hentes
+// fra docs/BRIKKER.md, og skissene i kunst/skisser/ bestemmer hvor alt havner:
+//   1. Hele brikken males. Et kantkart av skissen styrer ControlNet. (Skissen som
+//      startbilde med denoise under 1 gir flate felt eller rutemønstre, så det er av.)
+//   2. Borggrunnen (med runesteinen) males på nytt med borgprompten. ControlNet ser
+//      bare strekene og vet ellers ikke hvilken side av palisaden som er borg.
+//   3. Båndet langs kantene byttes ut med det samme båndet fra tre kildebilder som er
+//      malt på samme måte: bare eng, bare borggrunn og en rett vei (dreid 90° for
+//      øst–vest). Da møtes alle brikkene likt. Kildene lagres i kunst/teksturer/ og
+//      lages på nytt hvis de slettes.
+//
+// Bruk: npm run brikker                       maler alle brikkene til kunst/brikker/
+//       npm run brikker -- A D V              maler bare A, D og V
+//       npm run brikker -- A --ut=kunst/proeve --seed=7
+//
+// Valg: --ut=<mappe>  --seed=<tall>  --denoise=<0–1>  --styrke=<ControlNet, 0–1>
+//       --stoy=<fargestøy i startbildet>  --borgdenoise=<0–1>
+// Serveren settes med COMFY_URL (standard http://10.0.0.76:8188). Krever ImageMagick.
+
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { BRIKKER } from '../delt/brikker.js';
+
+const COMFY = process.env.COMFY_URL ?? 'http://10.0.0.76:8188';
+const ROT = new URL('../', import.meta.url).pathname;
+const SKISSEFARGE = { eng: '#7fa65a', vei: '#c9a877', borg: '#9c7a55', stein: '#8a8f94', rune: '#b3322b', steinkant: '#3c3f42' };
+
+const valg = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith('--'))
+  .map((a) => a.slice(2).split('=')));
+const ider = process.argv.slice(2).filter((a) => !a.startsWith('--')).map((a) => a.toUpperCase());
+const seed = Number(valg.seed ?? 1066);
+// Brikker der standard-seed ga feil: B fikk en sti ned til kanten (har ingen vei),
+// og X fikk åtte veier i stedet for fire
+const SEED = { B: 7, X: 99 };
+const denoise = Number(valg.denoise ?? 1.0);
+const styrke = Number(valg.styrke ?? 1.0);
+const stoy = Number(valg.stoy ?? 0);
+const borgdenoise = Number(valg.borgdenoise ?? 1.0);
+const UT = `${ROT}${valg.ut ?? 'kunst/brikker'}/`;
+const ARBEID = `${UT}.arbeid/`;
+const TEKSTURER = `${ROT}kunst/teksturer/`;
+mkdirSync(ARBEID, { recursive: true });
+mkdirSync(TEKSTURER, { recursive: true });
+
+// Promptene fra docs/BRIKKER.md
+const doc = readFileSync(`${ROT}docs/BRIKKER.md`, 'utf8');
+const kodeEtter = (tekst, merke) => tekst.split(merke)[1].match(/```\n([\s\S]*?)\n```/)[1].trim();
+const stil = kodeEtter(doc, '**Stilprompt (felles):**');
+const borgprompt = kodeEtter(doc, '**Borgprompt (felles):**');
+const kildeprompter = Object.fromEntries(kodeEtter(doc, '**Kantkilder (felles):**')
+  .split('\n').map((linje) => linje.split(/:\s(.+)/).slice(0, 2)));
+const prompter = Object.fromEntries(doc.split(/\n### /).slice(1)
+  .filter((del) => /^[A-X] –/.test(del) && del.includes('**Prompt:**'))
+  .map((del) => [del[0], kodeEtter(del, '**Prompt:**')]));
+// Stilen for kantkildene: uten leddene som får modellen til å fylle en ensfarget flate med mønstre
+const kildestil = stil.split(', ').filter((ledd) => !/board game|richly detailed|edge to edge|along all edges/.test(ledd)).join(', ');
+const RUNESTEIN = 'a prominent grey runestone with bright red serpent knotwork standing on a small stone-paved square';
+
+const magick = (...args) => execFileSync('convert', args.flat());
+const snitt = (fil) => Number(execFileSync('convert', [fil, '-format', '%[fx:mean]', 'info:']).toString());
+
+async function api(sti, init) {
+  const svar = await fetch(`${COMFY}${sti}`, init);
+  if (!svar.ok) throw new Error(`${sti}: ${svar.status} ${await svar.text()}`);
+  return svar;
+}
+
+async function lastOpp(fil, navn) {
+  const skjema = new FormData();
+  skjema.append('image', new Blob([readFileSync(fil)], { type: 'image/png' }), navn);
+  skjema.append('overwrite', 'true');
+  return (await (await api('/upload/image', { method: 'POST', body: skjema })).json()).name;
+}
+
+// Kjører en arbeidsflyt og henter bildet fra SaveImage-noden 'lagre'
+async function kjor(arbeidsflyt) {
+  const { prompt_id } = await (await api('/prompt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: arbeidsflyt }),
+  })).json();
+  for (;;) {
+    const historikk = (await (await api(`/history/${prompt_id}`)).json())[prompt_id];
+    if (historikk?.status?.status_str === 'error') throw new Error(JSON.stringify(historikk.status.messages));
+    if (historikk?.status?.completed) {
+      const bilde = historikk.outputs.lagre.images[0];
+      return Buffer.from(await (await api(`/view?${new URLSearchParams(bilde)}`)).arrayBuffer());
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+}
+
+const lastere = {
+  unet: { class_type: 'UNETLoader', inputs: { unet_name: 'z_image_turbo_bf16.safetensors', weight_dtype: 'default' } },
+  clip: { class_type: 'CLIPLoader', inputs: { clip_name: 'qwen_3_4b.safetensors', type: 'lumina2' } },
+  vae: { class_type: 'VAELoader', inputs: { vae_name: 'ae.safetensors' } },
+  modell: { class_type: 'ModelSamplingAuraFlow', inputs: { model: ['unet', 0], shift: 3 } },
+};
+const tekst = (navn, prompt) => ({
+  [navn]: { class_type: 'CLIPTextEncode', inputs: { clip: ['clip', 0], text: prompt } },
+  [`${navn}_tom`]: { class_type: 'ConditioningZeroOut', inputs: { conditioning: [navn, 0] } },
+});
+const sampler = (modell, prompt, latent, d, brikkeseed = seed) => ({
+  class_type: 'KSampler',
+  inputs: {
+    model: [modell, 0], positive: [prompt, 0], negative: [`${prompt}_tom`, 0], latent_image: [latent, 0],
+    seed: brikkeseed, steps: 8, cfg: 1, sampler_name: 'res_multistep', scheduler: 'simple', denoise: d,
+  },
+});
+
+// Hvit der skissen har en av fargene, svart ellers
+const fargemaske = (skisse, farger, ut, ...etter) => magick(skisse, '-fuzz', '4%', '-fill', 'white',
+  farger.flatMap((f) => ['-opaque', f]), '-fill', 'black', '+opaque', 'white', '-colorspace', 'gray', etter, ut);
+
+const skisseAv = (id) => `${ROT}kunst/skisser/${id}.png`;
+const filAv = (id) => (navn) => `${ARBEID}${id}_${navn}.png`;
+
+// Runde 1 og 2. Gir stien til det malte bildet, før kantstripen.
+async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id]}, ${stil}`, borgrunde = true, kontroll = true } = {}) {
+  const fil = filAv(b.id);
+  if (existsSync(fil('malt'))) return fil('malt');
+
+  // Kantkart: en hvit strek ved hver fargeovergang. Canny i ComfyUI ser bare lysstyrke
+  // og mister overganger mellom farger som er omtrent like lyse.
+  magick(skisse, '-morphology', 'Edge', 'Diamond:1', '-separate', '-evaluate-sequence', 'max', '-threshold', '8%', fil('kant'));
+  // Startbilde med fargestøy, ellers beholder modellen de flate feltene
+  magick(skisse, ...(stoy ? ['-attenuate', String(stoy), '+noise', 'Gaussian', '-blur', '0x1.5'] : []), fil('start'));
+  fargemaske(skisse, [SKISSEFARGE.borg, SKISSEFARGE.stein, SKISSEFARGE.rune, SKISSEFARGE.steinkant], fil('borg'),
+    '-morphology', 'Close', 'Disk:8');
+  magick(fil('borg'), '-blur', '0x4', fil('borgmyk'));
+  const harBorg = borgrunde && snitt(fil('borg')) > 0.01;
+
+  const styrtModell = (kantbilde) => ({
+    patch: { class_type: 'ModelPatchLoader', inputs: { name: 'Z-Image-Turbo-Fun-Controlnet-Union-2.1-lite-2602-8steps.safetensors' } },
+    kant: { class_type: 'LoadImage', inputs: { image: kantbilde } },
+    styrt: {
+      class_type: 'ZImageFunControlnet',
+      inputs: { model: ['modell', 0], model_patch: ['patch', 0], vae: ['vae', 0], image: ['kant', 0], strength: styrke },
+    },
+  });
+
+  // Runde 1: hele brikken
+  writeFileSync(fil('malt'), await kjor({
+    ...lastere,
+    ...styrtModell(await lastOpp(fil('kant'), `karkasand_${b.id}_kant.png`)),
+    start: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil('start'), `karkasand_${b.id}.png`) } },
+    ...tekst('p', prompt),
+    latent: { class_type: 'VAEEncode', inputs: { pixels: ['start', 0], vae: ['vae', 0] } },
+    k: sampler(kontroll ? 'styrt' : 'modell', 'p', 'latent', denoise, valg.seed ? seed : SEED[b.id] ?? seed),
+    bilde: { class_type: 'VAEDecode', inputs: { samples: ['k', 0], vae: ['vae', 0] } },
+    lagre: { class_type: 'SaveImage', inputs: { images: ['bilde', 0], filename_prefix: `karkasand/${b.id}` } },
+  }));
+
+  // Runde 2: borggrunnen klippes ut og skaleres opp, slik at modellen maler en hel
+  // borg med hus og ikke bare fortsetter enga rundt. Under borgen legges den brune
+  // skissen, så runden starter fra jord.
+  if (harBorg) {
+    // Rammen rundt borgen. Svart kant først, ellers regnes en borg som dekker hjørnene som bakgrunn.
+    const [, w, h, xr, yr] = execFileSync('convert', [fil('borg'), '-bordercolor', 'black', '-border', '1', '-format', '%@', 'info:'])
+      .toString().match(/(\d+)x(\d+)\+(\d+)\+(\d+)/).map(Number);
+    const x = xr - 1, y = yr - 1;
+    const x0 = Math.max(0, x - 48), y0 = Math.max(0, y - 48);
+    const bw = Math.min(1024, x + w + 48) - x0, bh = Math.min(1024, y + h + 48) - y0;
+    const skala = 1024 / Math.max(bw, bh);
+    const [sw, sh] = [bw, bh].map((v) => Math.round((v * skala) / 16) * 16);
+    const klipp = (inn, ut, ...etter) => magick(inn, '-crop', `${bw}x${bh}+${x0}+${y0}`, '+repage', '-resize', `${sw}x${sh}!`, etter, ut);
+    magick(fil('malt'), fil('start'), fil('borg'), '-composite', fil('jord'));
+    klipp(fil('jord'), fil('jord_klipp'));
+    klipp(fil('kant'), fil('kant_klipp'), '-threshold', '50%');
+    klipp(fil('borg'), fil('borg_klipp'));
+    const runestein = b.deler.some((d) => d.runestein) ? `, ${RUNESTEIN}` : '';
+    writeFileSync(fil('borg_malt'), await kjor({
+      ...lastere,
+      ...styrtModell(await lastOpp(fil('kant_klipp'), `karkasand_${b.id}_kant_klipp.png`)),
+      start: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil('jord_klipp'), `karkasand_${b.id}_jord.png`) } },
+      maskebilde: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil('borg_klipp'), `karkasand_${b.id}_borg.png`) } },
+      maske: { class_type: 'ImageToMask', inputs: { image: ['maskebilde', 0], channel: 'red' } },
+      ...tekst('p', `${borgprompt}${runestein}, ${stil}`),
+      latent: { class_type: 'VAEEncode', inputs: { pixels: ['start', 0], vae: ['vae', 0] } },
+      maskert: { class_type: 'SetLatentNoiseMask', inputs: { samples: ['latent', 0], mask: ['maske', 0] } },
+      k: sampler('styrt', 'p', 'maskert', borgdenoise),
+      bilde: { class_type: 'VAEDecode', inputs: { samples: ['k', 0], vae: ['vae', 0] } },
+      lagre: { class_type: 'SaveImage', inputs: { images: ['bilde', 0], filename_prefix: `karkasand/${b.id}_borg` } },
+    }));
+    magick(fil('malt'), '(', fil('borg_malt'), '-resize', `${bw}x${bh}!`, ')', '-geometry', `+${x0}+${y0}`, '-composite', fil('borg_innsatt'));
+    magick(fil('malt'), fil('borg_innsatt'), fil('borgmyk'), '-composite', fil('malt'));
+  }
+
+  return fil('malt');
+}
+
+// Runde 3: felles kantstripe. Hver kilde legges der skissen har den typen underlag,
+// men bare i båndet langs kantene (nesten helt dekkende ut til ca. 30 px, så tones den
+// ut mot ca. 90 px). Palisaden og alt annet som ikke er gress, vei eller borggrunn får stå.
+function kantstripe(b, malt, kilder) {
+  const skisse = skisseAv(b.id);
+  const fil = filAv(b.id);
+  const band = `${ARBEID}band.png`;
+  if (!existsSync(band)) magick('-size', '1024x1024', 'xc:white', '-fill', 'black', '-draw', 'rectangle 56,56 967,967', '-blur', '0x14', band);
+  let bilde = malt;
+  for (const [type, kilde] of Object.entries(kilder)) {
+    fargemaske(skisse, [SKISSEFARGE[type]], fil(`klasse_${type}`), '-blur', '0x2');
+    magick(fil(`klasse_${type}`), band, '-compose', 'multiply', '-composite', fil(`maske_${type}`));
+    if (snitt(fil(`maske_${type}`)) < 0.0005) continue;
+    magick(bilde, kilde, fil(`maske_${type}`), '-composite', fil('kantet'));
+    bilde = fil('kantet');
+  }
+  magick(bilde, '-resize', '1024x1024!', '-colorspace', 'sRGB', '-quality', '88', `${UT}${b.id}.jpg`);
+}
+
+// Kildene til kantstripen: tre bilder malt med samme stil som brikkene, men med bare
+// eng, bare borggrunn og en rett vei nord–sør (promptene står under «Kantkilder» i
+// docs/BRIKKER.md). Veien brukes som den er langs nord- og sørkanten, og dreid 90°
+// langs øst- og vestkanten.
+async function lagKantkilder() {
+  const kilder = { eng: `${TEKSTURER}eng.jpg`, borg: `${TEKSTURER}borg.jpg`, vei: `${TEKSTURER}vei.jpg` };
+  const ensfarget = (type) => {
+    const fil = `${ARBEID}skisse_${type}.png`;
+    magick('-size', '1024x1024', `xc:${SKISSEFARGE[type]}`, fil);
+    return fil;
+  };
+  // Eng og borg males uten ControlNet: med et tomt kantkart finner den på mønstre selv.
+  // Borggrunnen får den reduserte stilen, ellers fyller modellen den med stokker og heller.
+  // Veien trenger både full stil og ControlNet for å ligge rett ovenfra og midt på.
+  const mal = (type, skisse, { kontroll = false, medStil = stil } = {}) => malRunder({ id: `kilde_${type}`, deler: [] },
+    { skisse, prompt: `${kildeprompter[type]}, ${medStil}`, borgrunde: false, kontroll });
+  // Eng og borggrunn: bare midten brukes, speilet 2×2, så det modellen har lagt langs kantene forsvinner
+  const speilMidten = (inn, ut) => magick(inn, '-gravity', 'center', '-crop', '512x512+0+0', '+repage',
+    '(', '+clone', '-flop', ')', '+append', '(', '+clone', '-flip', ')', '-append', '-quality', '92', ut);
+  if (!existsSync(kilder.eng)) speilMidten(await mal('eng', ensfarget('eng')), kilder.eng);
+  if (!existsSync(kilder.borg)) speilMidten(await mal('borg', ensfarget('borg'), { medStil: kildestil }), kilder.borg);
+  if (!existsSync(kilder.vei)) {
+    const u = await mal('vei', skisseAv('U'), { kontroll: true });
+    const diagonal = `${ARBEID}diagonal.png`;
+    magick('-size', '1024x1024', 'xc:black', '-fill', 'white', '-draw', 'polygon 0,0 1024,0 512,512',
+      '-draw', 'polygon 0,1024 1024,1024 512,512', diagonal);
+    magick('(', u, '-rotate', '90', ')', u, diagonal, '-composite', '-quality', '92', kilder.vei);
+  }
+  return kilder;
+}
+
+const valgte = ider.length ? BRIKKER.filter((b) => ider.includes(b.id)) : BRIKKER;
+for (const b of valgte) if (!prompter[b.id]) throw new Error(`Fant ingen prompt for ${b.id} i docs/BRIKKER.md`);
+const kilder = await lagKantkilder();
+for (const b of valgte) {
+  const start = Date.now();
+  kantstripe(b, await malRunder(b), kilder);
+  console.log(`${b.id}  ${b.navn}  (${((Date.now() - start) / 1000).toFixed(0)} s)`);
+}
+if (!valg.behold) rmSync(ARBEID, { recursive: true });
+console.log(`Ferdig: ${valgte.length} brikker i ${UT}`);

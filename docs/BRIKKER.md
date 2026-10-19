@@ -89,7 +89,19 @@ Bruk samme stilbeskrivelse på alle brikkene og legg til den brikkespesifikke de
 
 **Stilprompt (felles):**
 ```
-top-down orthographic bird's-eye view, square board game tile, hand-painted gouache and watercolor illustration, richly detailed, Viking Age Scandinavia 10th century, muted Nordic palette of moss green, heather purple, birch white, weathered timber brown and slate grey, soft overcast diffuse daylight, no directional cast shadows, painterly brushwork, fills the entire frame edge to edge, consistent grass texture along all edges
+top-down orthographic bird's-eye view, square board game tile, hand-painted gouache and watercolor illustration, richly detailed, rural Norway in the late 12th century at the end of the Viking Age, muted Nordic palette of moss green, heather purple, birch white, weathered timber brown and slate grey, soft overcast diffuse daylight, no directional cast shadows, painterly brushwork, fills the entire frame edge to edge, consistent grass texture along all edges
+```
+
+**Borgprompt (felles):** brukes når borggrunnen males på nytt for seg (se arbeidsflyten under).
+```
+inside a Norse settlement seen from directly above: bare trampled brown earth ground with no grass, crowded turf-roofed longhouses with smoke holes, wooden plank walkways between the houses, a storehouse on posts, barrels, stacked firewood and fish drying racks
+```
+
+**Kantkilder (felles):** tre bilder som bare har underlaget. Kantstripen på alle brikkene hentes fra dem. For eng og borg brukes bare midten av bildet, speilet til en sømløs flate.
+```
+eng: an open Nordic meadow seen from directly above, only grass with a little heather, no trees, no stones, nothing else
+borg: bare trampled brown earth ground seen from directly above, a few pebbles and wisps of straw, nothing else
+vei: a straight dirt road runs vertically from the exact middle of the top edge to the exact middle of the bottom edge through open meadow, no trees, no stones, nothing else
 ```
 
 **Negativ prompt (felles):**
@@ -98,6 +110,12 @@ perspective, isometric, horizon, sky, clouds, text, letters, watermark, signatur
 ```
 
 ### Anbefalt arbeidsflyt på AI-riggen
+`npm run brikker` gjør alt dette automatisk med Z-Image Turbo i ComfyUI på AI-serveren (se `verktoy/lag-brikker.js`):
+- **Runde 1:** Hele brikken males med brikkens prompt. Et kantkart av skissen styrer ControlNet.
+- **Runde 2:** Borggrunnen, med runesteinen, klippes ut, skaleres opp og males på nytt med borgprompten. Modellen ser bare strekene i kantkartet og vet ellers ikke hvilken side av palisaden som er borg.
+- **Runde 3:** Båndet langs kantene byttes ut med det samme båndet fra tre kildebilder som er malt med kantkilde-promptene: bare eng, bare borggrunn og en rett vei (dreid for øst–vest). Da møtes alle brikkene likt. Kildene ligger i `kunst/teksturer/`. Er du ikke fornøyd med kantene, slett filene der og kjør på nytt med en annen `--seed`.
+
+Slik gjør du det for hånd:
 1. Bruk skissen `kunst/skisser/<ID>.png` som **styringsbilde**. Det kan være ControlNet med segmentering, canny eller scribble, eller img2img med denoise på omtrent 0,55–0,75. Skissene er flate og fargekodet: grønn er eng, lys brun er vei, mellombrun er borggrunn, mørk brun stripe er palisade, mørkebrunt rektangel er hov, grå stein med rødt er runestein, og den lille firkanten i en lys sirkel er tun med brønn.
 2. Lag med samme oppløsning (1024 × 1024), eller høyere og skaler ned.
 3. Bruk gjerne **samme seed og samme innstillinger** for alle brikkene, slik at stilen blir lik.
