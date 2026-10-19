@@ -6,6 +6,7 @@
 export const S = 1024;
 const m = S / 2;
 export const VEIBREDDE = 110;
+export const ELVBREDDE = 150;
 export const KAPPEDYBDE = 300;
 const c = 2 * KAPPEDYBDE;
 const UT = 20; // veier tegnes litt utenfor kanten så de ikke får synlig ende
@@ -19,6 +20,10 @@ export const FARGE = {
   stein: '#8a8f94',
   rune: '#b3322b',
   helle: '#b8b2a4', // steinlagt plass rundt runesteinen
+  elv: '#4f86b5',
+  bro: '#7a5a3a',
+  gjest: '#a8492f', // gjestgiveriet
+  storhov: '#5e2a1a',
 };
 
 // Kappe = område avgrenset av en kant og en bue som når KAPPEDYBDE inn
@@ -28,7 +33,12 @@ const KAPPE = {
   S: { flate: `M0 ${S} L${S} ${S} Q${m} ${S - c} 0 ${S} Z`, bue: `M0 ${S} Q${m} ${S - c} ${S} ${S}` },
   V: { flate: `M0 0 L0 ${S} Q${c} ${m} 0 0 Z`, bue: `M0 0 Q${c} ${m} 0 ${S}` },
 };
-const DIAGONAL = { flate: `M0 0 L${S} 0 Q640 640 0 ${S} Z`, bue: `M${S} 0 Q640 640 0 ${S}` };
+// Borgen i et hjørne, avgrenset av en bue fra hjørne til hjørne: NV, NØ eller ØS
+const DIAGONALER = {
+  NV: { flate: `M0 0 L${S} 0 Q640 640 0 ${S} Z`, bue: `M${S} 0 Q640 640 0 ${S}` },
+  NØ: { flate: `M${S} 0 L${S} ${S} Q384 640 0 0 Z`, bue: `M${S} ${S} Q384 640 0 0` },
+  ØS: { flate: `M${S} ${S} L0 ${S} Q384 384 ${S} 0 Z`, bue: `M0 ${S} Q384 384 ${S} 0` },
+};
 const HEL = `M0 0 H${S} V${S} H0 Z`;
 
 const VEI = {
@@ -43,6 +53,25 @@ const VEI = {
   V: `M${-UT} ${m} L${m} ${m}`,
   PORT: `M${m} ${S + UT} L${m} ${S - KAPPEDYBDE}`,
   HOV: `M${m} ${S + UT} L${m} 640`,
+  // Utvidelsene
+  PORT_N: `M${m} ${S + UT} L${m} ${KAPPEDYBDE}`, // fra sør inn til en borgkappe i nord
+  PORT_Ø: `M${S + UT} ${m} L${S - KAPPEDYBDE} ${m}`,
+  PORT_V: `M${-UT} ${m} L${KAPPEDYBDE} ${m}`,
+  NV: `M${m} ${-UT} Q${m} ${m} ${-UT} ${m}`,
+  NØ: `M${m} ${-UT} Q${m} ${m} ${S + UT} ${m}`,
+  TIL_ELV: `M${m} ${S + UT} L${m} ${m + ELVBREDDE / 2}`, // fra sør og ned til elvebredden
+  TIL_HOV_ELV: `M${m} ${S + UT} L${m} 400`,
+  V_HJØRNEBORG: `M${-UT} ${m} L385 ${m}`, // fra vest inn til en hjørneborg i NØ
+  S_HJØRNEBORG: `M${m} ${S + UT} L${m} 636`, // fra sør inn til en hjørneborg i NØ
+  KAPPE_N_TUN: `M${m} ${KAPPEDYBDE} L${m} ${m}`,
+  KAPPE_S_TUN: `M${m} ${S - KAPPEDYBDE} L${m} ${m}`,
+};
+
+const ELV = {
+  VØ: VEI.VØ,
+  VS: VEI.VS,
+  V: VEI.V,
+  TIL_VATN: `M${-UT} ${m} L560 ${m}`,
 };
 
 // Langhus [x, y, bredde, høyde, vinkel] i en borgkappe mot nord. Roteres til de andre sidene.
@@ -91,6 +120,37 @@ const OPPSETT = {
   V: { veier: [VEI.VS], pynt: [['tre', 800, 240], ['tre', 300, 230], ['stein', 170, 870], ['stein', 740, 790], ['busk', 880, 620]] },
   W: { veier: [VEI.Ø, VEI.S, VEI.V], tun: [m, m], pynt: [['tre', 240, 240], ['tre', 790, 220], ['sau', 640, 300], ['stein', 840, 840], ['tre', 190, 840]] },
   X: { veier: [VEI.N, VEI.Ø, VEI.S, VEI.V], tun: [m, m], pynt: [['tre', 200, 200], ['stein', 830, 200], ['tre', 830, 830], ['sau', 200, 830]] },
+
+  // Elva
+  R1: { elver: [ELV.V], kilde: [m, m], pynt: [['tre', 760, 260], ['stein', 640, 760], ['busk', 300, 250], ['sau', 800, 700]] },
+  R2: { elver: [ELV.TIL_VATN], vatn: [640, m], pynt: [['tre', 230, 230], ['busk', 220, 800], ['stein', 880, 140]] },
+  R3: { elver: [ELV.VØ], pynt: [['tre', 250, 220], ['stein', 780, 240], ['busk', 300, 820], ['sau', 760, 800]] },
+  R4: { elver: [ELV.VS], pynt: [['tre', 760, 260], ['stein', 640, 600], ['sau', 420, 260], ['busk', 860, 760]] },
+  R5: { borgKapper: ['N', 'S'], elver: [ELV.VØ], hus: [...husKappe('N'), ...husKappe('S')] },
+  R6: { diagonal: 'NØ', elver: [ELV.VS], hus: [[560, 165, 210, 78, 25], [860, 470, 210, 78, 65]], pynt: [['busk', 560, 820]] },
+  R7: { borgKapper: ['N'], elver: [ELV.VØ], veier: [VEI.TIL_ELV], hus: husKappe('N'), pynt: [['tre', 230, 820], ['stein', 800, 830]] },
+  R8: { elver: [ELV.VØ], veier: [VEI.TIL_HOV_ELV], bro: [[m, m, 0]], hov: [m, 245, 0.8], pynt: [['tre', 170, 200], ['tre', 850, 200], ['busk', 230, 840], ['stein', 800, 840]] },
+  R9: { elver: [ELV.VS], veier: [VEI.NØ], pynt: [['stein', 600, 560], ['busk', 880, 140], ['tre', 300, 330]] },
+  R10: { elver: [ELV.VØ], veier: [VEI.NS], bro: [[m, m, 0]], pynt: [['tre', 230, 230], ['tre', 800, 800], ['sau', 780, 250], ['stein', 230, 800]] },
+
+  // Gjestgiveri og storhov
+  G1: { helBorg: true, storhov: [m, 450], hus: [[200, 820, 210, 80, 0], [824, 820, 210, 80, 0], [180, 200, 180, 70, 90], [844, 200, 180, 70, 90]] },
+  G2: { borgKapper: ['N', 'Ø', 'S', 'V'], hus: [...husKappe('N'), ...husKappe('Ø'), ...husKappe('S'), ...husKappe('V')].filter((_, i) => i % 3 === 0), pynt: [['sau', m, m]] },
+  G3: { borgKapper: ['N', 'Ø', 'S'], hus: [...husKappe('N'), ...husKappe('Ø'), ...husKappe('S')].filter((_, i) => i % 3 === 0), pynt: [['tre', 260, m], ['sau', 470, 560]] },
+  G4: { borgKapper: ['N'], diagonal: 'ØS', runestein: [740, 740], hus: [husKappe('N')[0], [880, 520, 200, 76, 65], [520, 880, 200, 76, 25]], pynt: [['tre', 230, 520]] },
+  G5: { diagonal: 'NØ', veier: [VEI.V_HJØRNEBORG], port: [385, m, 90], gjestgiveri: [[220, 640, 0]], hus: [[600, 170, 210, 78, 25], [860, 470, 210, 78, 65]], pynt: [['tre', 330, 860], ['busk', 640, 760]] },
+  G6: { diagonal: 'NØ', veier: [VEI.S_HJØRNEBORG], port: [m, 636, 0], hus: [[560, 165, 210, 78, 25], [860, 400, 210, 78, 65]], pynt: [['tre', 230, 600], ['sau', 230, 300], ['busk', 820, 880]] },
+  G7: { diagonal: 'NØ', veier: [VEI.VS], runestein: [760, 270], gjestgiveri: [[250, 380, 0]], hus: [[500, 140, 180, 70, 20], [890, 520, 180, 70, 70]], pynt: [['busk', 860, 860]] },
+  G8: { borgKapper: ['N'], hus: husKappe('N'), pynt: [['tre', 220, 700], ['tre', 800, 640], ['sau', 520, 560], ['stein', 520, 860]] },
+  G9: { borgKapper: ['N'], veier: [VEI.PORT_N], port: [m, KAPPEDYBDE, 0], hus: husKappe('N').filter((_, i) => i > 0), pynt: [['tre', 230, 720], ['tre', 800, 720], ['sau', 760, 440]] },
+  G10: { borgKapper: ['N'], veier: [VEI.VS], gjestgiveri: [[230, 400, 0]], hus: husKappe('N'), pynt: [['tre', 854, 700], ['stein', 640, 860]] },
+  G11: { helBorg: true, engKapper: ['Ø', 'V'], veier: [VEI.PORT_Ø, VEI.PORT_V], port: [[S - KAPPEDYBDE, m, 90], [KAPPEDYBDE, m, 90]], runestein: [m, 270], hus: [[m, 740, 200, 80, 0], [m, 880, 160, 64, 0]] },
+  G12: { borgKapper: ['N', 'S'], veier: [VEI.V, VEI.Ø, VEI.KAPPE_N_TUN, VEI.KAPPE_S_TUN], tun: [m, m], hus: [...husKappe('N'), ...husKappe('S')].filter((h) => Math.abs(h[0] - m) > 50) },
+  G13: { veier: [VEI.VS], gjestgiveri: [[620, 360, 0]], pynt: [['tre', 830, 220], ['stein', 170, 870], ['busk', 880, 620]] },
+  G14: { veier: [VEI.VØ], gjestgiveri: [[m, 300, 0]], pynt: [['tre', 200, 220], ['tre', 830, 800], ['sau', 300, 780], ['stein', 780, 220]] },
+  G15: { veier: [VEI.V, VEI.Ø], hov: [m, m, 0.8], pynt: [['tre', 170, 200], ['tre', 850, 830], ['busk', 200, 840], ['stein', 830, 180]] },
+  G16: { veier: [VEI.Ø, VEI.S, VEI.V], tun: [m, m], gjestgiveri: [[760, 360, 0]], pynt: [['tre', 240, 240], ['stein', 840, 840], ['tre', 190, 840]] },
+  G17: { veier: [VEI.NV, VEI.ØS], pynt: [['busk', 120, 120], ['tre', 512, 512], ['stein', 900, 900], ['sau', 760, 300]] },
 };
 
 // ---------- Skisse: flate fargefelt ----------
@@ -103,7 +163,17 @@ const SKISSE = {
   palisade: (d) =>
     `<path d="${d}" fill="none" stroke="${FARGE.palisade}" stroke-width="36"/>` +
     `<path d="${d}" fill="none" stroke="#6e5238" stroke-width="20" stroke-dasharray="14 10"/>`,
-  port: (x, y) => `<rect x="${x - 75}" y="${y - 30}" width="150" height="60" fill="#2b1d12"/>`,
+  port: (x, y, v = 0) => `<rect x="-75" y="-30" width="150" height="60" fill="#2b1d12" transform="translate(${x} ${y}) rotate(${v})"/>`,
+  elv: (d) => `<path d="${d}" fill="none" stroke="${FARGE.elv}" stroke-width="${ELVBREDDE}"/>`,
+  kilde: (x, y) => `<circle cx="${x}" cy="${y}" r="70" fill="${FARGE.elv}"/>`,
+  vatn: (x, y) => `<ellipse cx="${x}" cy="${y}" rx="300" ry="250" fill="${FARGE.elv}"/>`,
+  bro: (x, y, v) => `<rect x="-70" y="-110" width="140" height="220" fill="${FARGE.bro}" transform="translate(${x} ${y}) rotate(${v})"/>`,
+  gjestgiveri: (x, y, v) =>
+    `<g transform="translate(${x} ${y}) rotate(${v})"><rect x="-95" y="-60" width="190" height="120" rx="10" fill="${FARGE.gjest}"/>` +
+    `<circle cx="120" cy="0" r="22" fill="#d9a441"/></g>`,
+  storhov: (x, y) =>
+    `<g transform="translate(${x} ${y})"><rect x="-120" y="-230" width="240" height="460" rx="14" fill="${FARGE.storhov}"/>` +
+    `<rect x="-220" y="-80" width="440" height="160" rx="14" fill="${FARGE.storhov}"/></g>`,
   tun: (x, y) =>
     `<circle cx="${x}" cy="${y}" r="92" fill="${FARGE.vei}"/>` +
     `<rect x="${x - 34}" y="${y - 34}" width="68" height="68" rx="8" fill="${FARGE.bygg}"/>` +
@@ -116,8 +186,8 @@ const SKISSE = {
     `<g transform="scale(1.5)">` +
     `<path d="M-40 60 L-48 -20 Q-40 -70 0 -76 Q40 -70 48 -20 L40 60 Z" fill="${FARGE.stein}" stroke="#3c3f42" stroke-width="6"/>` +
     `<path d="M-22 -40 Q20 -50 18 -10 Q14 26 -20 20 Q-30 50 6 44" fill="none" stroke="${FARGE.rune}" stroke-width="10"/></g></g>`,
-  hov: (x, y) =>
-    `<g transform="translate(${x} ${y})">` +
+  hov: (x, y, skala = 1) =>
+    `<g transform="translate(${x} ${y}) scale(${skala})">` +
     `<rect x="-150" y="-190" width="300" height="380" rx="12" fill="${FARGE.bygg}"/>` +
     `<path d="M0 -190 L0 190" stroke="#3e2416" stroke-width="10"/>` +
     `<path d="M-150 -190 l-30 -30 M150 -190 l30 -30 M-150 190 l-30 30 M150 190 l30 30" stroke="#3e2416" stroke-width="14"/></g>`,
@@ -159,8 +229,8 @@ const PLASSHOLDER = {
     `<path d="${d}" fill="none" stroke="#2e2015" stroke-width="46"/>` +
     `<path d="${d}" fill="none" stroke="#6b4e30" stroke-width="28" stroke-dasharray="0.1 25" stroke-linecap="round"/>` +
     `<path d="${d}" fill="none" stroke="#9a774c" stroke-width="10" stroke-dasharray="0.1 25" stroke-linecap="round"/>`,
-  port: (x, y) =>
-    `<g transform="translate(${x} ${y})"><rect x="-82" y="-32" width="164" height="64" rx="6" fill="#3a2716"/>` +
+  port: (x, y, v = 0) =>
+    `<g transform="translate(${x} ${y}) rotate(${v})"><rect x="-82" y="-32" width="164" height="64" rx="6" fill="#3a2716"/>` +
     `<path d="M-60 -32v64M-30 -32v64M0 -32v64M30 -32v64M60 -32v64" stroke="#5c412a" stroke-width="8"/>` +
     `<circle cx="-82" cy="0" r="22" fill="#2e2015"/><circle cx="82" cy="0" r="22" fill="#2e2015"/></g>`,
   tun: (x, y) =>
@@ -186,10 +256,30 @@ const PLASSHOLDER = {
     `<path d="M-30 -30 Q-24 -64 0 -66 Q26 -62 32 -30" fill="none" stroke="#b4b9be" stroke-width="6" opacity=".7"/>` +
     `<path d="M-24 -40 Q22 -54 20 -10 Q16 28 -20 22 Q-32 52 8 46" fill="none" stroke="${FARGE.rune}" stroke-width="11" stroke-linecap="round"/>` +
     `<circle cx="-24" cy="-40" r="8" fill="${FARGE.rune}"/></g>`,
-  hov: (x, y) => {
+  elv: (d) =>
+    `<path d="${d}" fill="none" stroke="#3f6f96" stroke-width="${ELVBREDDE + 12}"/>` +
+    `<path d="${d}" fill="none" stroke="#5f9ccc" stroke-width="${ELVBREDDE - 10}"/>` +
+    `<path d="${d}" fill="none" stroke="#a9d1ee" stroke-width="8" stroke-dasharray="40 60" opacity=".7"/>`,
+  kilde: (x, y) =>
+    `<circle cx="${x}" cy="${y}" r="80" fill="#3f6f96"/><circle cx="${x}" cy="${y}" r="66" fill="#5f9ccc"/>` +
+    `<circle cx="${x - 14}" cy="${y - 12}" r="16" fill="#a9d1ee" opacity=".7"/>`,
+  vatn: (x, y) =>
+    `<ellipse cx="${x}" cy="${y}" rx="312" ry="262" fill="#3f6f96"/><ellipse cx="${x}" cy="${y}" rx="296" ry="246" fill="#5f9ccc"/>` +
+    `<path d="M${x - 160} ${y - 60}h120M${x + 20} ${y + 40}h160M${x - 80} ${y + 120}h90" stroke="#a9d1ee" stroke-width="8" opacity=".7"/>`,
+  bro: (x, y, v) =>
+    `<g transform="translate(${x} ${y}) rotate(${v})"><rect x="-72" y="-112" width="144" height="224" rx="6" fill="#5c412a"/>` +
+    `<path d="M-60 -90h120M-60 -54h120M-60 -18h120M-60 18h120M-60 54h120M-60 90h120" stroke="#8a6644" stroke-width="16"/></g>`,
+  gjestgiveri: (x, y, v) =>
+    `<g transform="translate(${x} ${y}) rotate(${v})"><rect x="-100" y="-66" width="200" height="132" rx="12" fill="#2b1d12" opacity=".35"/>` +
+    `<rect x="-92" y="-58" width="184" height="116" rx="10" fill="#b5523a" stroke="#4a2316" stroke-width="6"/>` +
+    `<path d="M-92 0H92" stroke="#4a2316" stroke-width="6"/><circle cx="122" cy="0" r="22" fill="#d9a441" stroke="#4a2316" stroke-width="5"/></g>`,
+  storhov: (x, y) =>
+    `<g transform="translate(${x} ${y})"><path d="M-120 -230H120V-80H220V80H120V230H-120V80H-220V-80H-120Z" fill="#6b3a22" stroke="#2f1b10" stroke-width="10"/>` +
+    `<path d="M0 -230V230M-220 0H220" stroke="#2f1b10" stroke-width="12"/></g>`,
+  hov: (x, y, skala = 1) => {
     const takstein = Array.from({ length: 15 }, (_, i) => `M-150 ${-180 + i * 25}H150`).join('');
     return (
-      `<g transform="translate(${x} ${y})">` +
+      `<g transform="translate(${x} ${y}) scale(${skala})">` +
       `<rect x="-178" y="-212" width="356" height="424" rx="34" fill="#a49a86" stroke="#6d6556" stroke-width="6"/>` +
       `<rect x="-150" y="-190" width="150" height="380" fill="#55321e"/>` +
       `<rect x="0" y="-190" width="150" height="380" fill="#7a4a2c"/>` +
@@ -249,20 +339,28 @@ export function tegnBrikke(id, stil = 'plassholder') {
 
   if (o.helBorg) lag.push(t.borg(HEL));
   for (const side of o.borgKapper ?? []) lag.push(t.borg(KAPPE[side].flate));
-  if (o.diagonal) lag.push(t.borg(DIAGONAL.flate));
+  const diagonal = o.diagonal && DIAGONALER[o.diagonal === true ? 'NV' : o.diagonal];
+  if (diagonal) lag.push(t.borg(diagonal.flate));
   for (const side of o.engKapper ?? []) lag.push(t.eng(KAPPE[side].flate));
 
+  for (const d of o.elver ?? []) lag.push(t.elv(d));
+  if (o.kilde) lag.push(t.kilde(...o.kilde));
+  if (o.vatn) lag.push(t.vatn(...o.vatn));
   for (const d of o.veier ?? []) lag.push(t.vei(d));
+  for (const b of o.bro ?? []) lag.push(t.bro(...b));
 
   for (const side of o.borgKapper ?? []) lag.push(t.palisade(KAPPE[side].bue));
   for (const side of o.engKapper ?? []) lag.push(t.palisade(KAPPE[side].bue));
-  if (o.diagonal) lag.push(t.palisade(DIAGONAL.bue));
+  if (diagonal) lag.push(t.palisade(diagonal.bue));
 
-  if (o.port) lag.push(t.port(...o.port));
+  const porter = o.port ? (Array.isArray(o.port[0]) ? o.port : [o.port]) : [];
+  for (const p of porter) lag.push(t.port(...p));
   if (o.tun) lag.push(t.tun(...o.tun));
   for (const h of o.hus ?? []) lag.push(t.hus(h));
   if (o.runestein) lag.push(t.runestein(...o.runestein));
   if (o.hov) lag.push(t.hov(...o.hov));
+  if (o.storhov) lag.push(t.storhov(...o.storhov));
+  for (const g of o.gjestgiveri ?? []) lag.push(t.gjestgiveri(...g));
   for (const p of o.pynt ?? []) lag.push(t.pynt(p));
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">${lag.join('')}</svg>`;

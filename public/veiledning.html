@@ -36,6 +36,12 @@
     .type.eng { background: #8fb866; }
     .type.hov { background: #b98a6a; }
     .type.rune { background: #d0584f; color: #fff; }
+    .type.elv { background: #6fa6d6; }
+    .type.gjest { background: #c97a3c; color: #fff; }
+    .type.storhov { background: #7a3a22; color: #fff; }
+    .seksjon { margin: 24px 0 4px; }
+    .seksjon h3 { color: var(--gull); font-size: 1.3rem; margin: 0; }
+    .seksjon p { margin: 4px 0 0; }
 
     .brikker { display: grid; gap: 16px; }
     .brikke { display: grid; grid-template-columns: 200px 1fr; gap: 18px; background: var(--kort); border: 1px solid var(--kant); border-radius: 14px; padding: 14px; }
@@ -60,17 +66,18 @@
       <a href="#tur">En tur</a>
       <a href="#vikinger">Vikingene</a>
       <a href="#poeng">Poeng</a>
+      <a href="#utvidelser">Utvidelser</a>
       <a href="#brikkene">Brikkene</a>
       <a href="/">Til spillet</a>
     </nav>
 
     <h2 id="kort">Kort fortalt</h2>
-    <p>2–5 spillere bygger et landskap sammen, brikke for brikke. Brettet vises på en felles skjerm, og hver spiller styrer med mobilen sin. Det er 72 brikker. Spillet starter med <b>Borgveien</b> (D) midt på brettet og er slutt når bunken er tom.</p>
+    <p>2–5 spillere (6 med Gjestgiveri og storhov) bygger et landskap sammen, brikke for brikke. Brettet vises på en felles skjerm, og hver spiller styrer med mobilen sin. Grunnspillet har 72 brikker, og utvidelsene gir flere. Spillet starter med <b>Borgveien</b> (D) midt på brettet, eller med <b>Kilden</b> når Elva er med, og er slutt når bunken er tom.</p>
     <h3>Før spillet</h3>
     <ol>
       <li>Åpne spillet på storskjermen. Alle skanner QR-koden med mobilen.</li>
       <li>Hver spiller skriver navnet sitt og velger en farge. En farge som en annen spiller har valgt, er låst 🔒. I bordmodus velger dere også hvilken side av bordet dere sitter ved. Høyst to kan dele en side.</li>
-      <li>Den som skannet først, er <b>vert</b> og den eneste som kan starte spillet. Verten trykker «Start spillet» og bekrefter at alle er klare.</li>
+      <li>Den som skannet først, er <b>vert</b>. Verten velger utvidelser, og mobilen viser hvor mange brikker det blir. Verten er også den eneste som kan starte spillet: trykk «Start spillet» og bekreft at alle er klare.</li>
     </ol>
     <p>Du får poeng ved å sette ut <b>vikinger</b> i borger, på veier, i hov og i enga. Når et område blir ferdig, får den som har flest vikinger der poengene. Den med flest poeng til slutt vinner.</p>
 
@@ -103,8 +110,8 @@
       <table>
         <thead><tr><th>Område</th><th>Ferdig under spillet</th><th>Uferdig når spillet er slutt</th></tr></thead>
         <tbody>
-          <tr><td><span class="type borg">Borg</span></td><td>2 poeng per brikke<br>+ 2 per <span class="type rune">runestein</span></td><td>1 poeng per brikke<br>+ 1 per runestein</td></tr>
-          <tr><td><span class="type vei">Vei</span></td><td>1 poeng per brikke</td><td>1 poeng per brikke</td></tr>
+          <tr><td><span class="type borg">Borg</span></td><td>2 poeng per brikke<br>+ 2 per <span class="type rune">runestein</span><br>3 per brikke og runestein med <span class="type storhov">storhov</span></td><td>1 poeng per brikke<br>+ 1 per runestein<br>0 med storhov</td></tr>
+          <tr><td><span class="type vei">Vei</span></td><td>1 poeng per brikke<br>2 med <span class="type gjest">gjestgiveri</span></td><td>1 poeng per brikke<br>0 med gjestgiveri</td></tr>
           <tr><td><span class="type hov">Hov</span></td><td>9 poeng når hovet er omringet av 8 brikker</td><td>1 poeng + 1 per brikke rundt hovet</td></tr>
           <tr><td><span class="type eng">Eng</span></td><td>–</td><td>3 poeng per <b>ferdig</b> borg enga grenser til</td></tr>
         </tbody>
@@ -125,8 +132,24 @@
       <b>Eksempel:</b> En borg på 4 brikker med én runestein gir 2 × (4 + 1) = <b>10 poeng</b> når den blir ferdig. Er den uferdig når spillet slutter, gir den 4 + 1 = <b>5 poeng</b>.
     </div>
 
+    <h2 id="utvidelser">Utvidelser</h2>
+    <h3>Elva (+12 brikker)</h3>
+    <ul>
+      <li>Spillet starter med <b>Kilden</b> i stedet for Borgveien. Elvebrikkene trekkes først, til elva renner ut i <b>Vatnet</b>. Så kommer resten av brikkene.</li>
+      <li>Elv må møte elv, og elva må henge sammen med elva som ligger der. Den kan ikke svinge samme vei to ganger etter hverandre, slik at den snur rett tilbake.</li>
+      <li>Elva deler enga i to. Man kan ikke sette vikinger i elva, men borger, veier, hov og eng på elvebrikkene teller som vanlig.</li>
+    </ul>
+    <h3>Gjestgiveri og storhov (+18 brikker)</h3>
+    <ul>
+      <li><span class="type gjest">Gjestgiveri</span> En vei med et gjestgiveri gir <b>2 poeng per brikke</b> når den blir ferdig, men <b>ingenting</b> hvis den er uferdig ved slutt.</li>
+      <li><span class="type storhov">Storhov</span> En borg med et storhov gir <b>3 poeng per brikke og runestein</b> når den blir ferdig, men <b>ingenting</b> hvis den er uferdig ved slutt. Det kan lønne seg å legge et storhov i borgen til en annen spiller.</li>
+      <li><b>Storvikingen:</b> Hver spiller får én storviking. Den settes ut i stedet for en vanlig viking, med knappen «Bruk storvikingen» på mobilen, og teller som to når det telles hvem som har flest vikinger. Poengene blir ikke doblet.</li>
+      <li>Det blir plass til en <b>sjette spiller</b>, med rosa vikinger.</li>
+      <li>Noen brikker har to, tre eller fire adskilte borger, og «Hovet på veien» deler veien i to.</li>
+    </ul>
+
     <h2 id="brikkene">Brikkene</h2>
-    <p>Det er 24 ulike brikker. Bildene er vist slik de ligger med nord øverst, men i spillet kan du dreie dem. Kantene er oppgitt som nord / øst / sør / vest.</p>
+    <p>Grunnspillet har 24 ulike brikker, og utvidelsene har sine egne. Bildene er vist slik de ligger med nord øverst, men i spillet kan du dreie dem. Kantene er oppgitt som nord / øst / sør / vest.</p>
     <div id="brikker" class="brikker"></div>
   </main>
   <script type="module" src="/js/veiledning.js"></script>

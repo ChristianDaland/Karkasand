@@ -59,6 +59,10 @@ body[data-modus='bord'] #brett { inset: 150px; }
 .panel .vikinger { display: flex; gap: 2px; }
 .panel .vikinger span { width: 24px; height: 24px; }
 .panel .vikinger span.borte { opacity: 0.18; filter: grayscale(1); }
+.panel .vikinger .storviking { width: 26px; height: 26px; margin-left: 5px; align-self: flex-end; }
+/* Med storvikingen må hele raden få plass i panelet */
+.panel .vikinger:has(.storviking) { gap: 1px; }
+.panel .vikinger:has(.storviking) span:not(.storviking) { width: 22px; height: 22px; }
 .panel .vikinger svg { width: 100%; height: 100%; display: block; }
 
 .panel .tur-tekst { color: var(--farge); font-weight: 800; min-height: 1.3em; }
@@ -296,3 +300,5 @@ body[data-modus='bord'] #slutt { top: 50%; transform: translate(-50%, -50%); }
 body[data-modus='bord'] #opptelling { top: 50%; }
 
 .dempet { color: var(--dempet); }
+
+.lobby-utvidelser { color: var(--gull); font-weight: 700; }

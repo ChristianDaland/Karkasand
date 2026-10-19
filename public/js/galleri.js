@@ -1,6 +1,6 @@
 // Galleriet: viser alle brikketypene og et tilfeldig ferdigspilt brett for å sjekke kantene.
 
-import { BRIKKER } from '/delt/brikker.js';
+import { BRIKKER, UTVIDELSER } from '/delt/brikker.js';
 import { Spill } from '/delt/motor.js';
 import { BrettVisning } from './brett.js';
 import { lastBilder, brikkeUrl, harMalt, elementFra } from './felles.js';
@@ -23,9 +23,9 @@ for (const b of BRIKKER) {
 const visning = new BrettVisning($('test-brett'), { maksSkala: 1.6 });
 const spillere = [{ navn: 'Rød', farge: '#e53935' }, { navn: 'Blå', farge: '#1e88e5' }];
 
-// Spill et parti med tilfeldige trekk. Vi stopper før sluttellingen, så vikingene blir stående.
+// Spill et parti med tilfeldige trekk, med alle utvidelsene. Vi stopper før sluttellingen, så vikingene blir stående.
 function tilfeldigBrett() {
-  const spill = new Spill(spillere);
+  const spill = new Spill(spillere, { utvidelser: UTVIDELSER.map((u) => u.id) });
   const medVikinger = $('vis-vikinger').checked;
   while (spill.fase !== 'slutt' && spill.bunke.length > 0) {
     const plasser = spill.gyldigePlasser(spill.aktiv.brikke.id);

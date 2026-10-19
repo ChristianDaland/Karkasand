@@ -35,7 +35,7 @@ app.get('/api/bilder', (req, res) => {
   const bilder = {};
   try {
     for (const fil of readdirSync(rot('kunst/brikker')).sort()) {
-      const treff = fil.match(/^([A-X])(_\d+)?\.(jpe?g|png|webp)$/i);
+      const treff = fil.match(/^([A-X]|[RG]\d+)(_\d+)?\.(jpe?g|png|webp)$/i);
       if (treff) (bilder[treff[1].toUpperCase()] ??= []).push(fil);
     }
   } catch {
@@ -134,6 +134,11 @@ io.on('connection', (socket) => {
     if (!rom || rom.spill) return;
     rom.oppsett(socket.data.spillerId, valg);
     sendTilstand(rom);
+  });
+
+  socket.on('mobil:utvidelser', (liste) => {
+    const rom = hentRom();
+    if (rom?.settUtvidelser(socket.data.spillerId, liste)) sendTilstand(rom);
   });
 
   socket.on('mobil:start', () => {

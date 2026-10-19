@@ -102,6 +102,7 @@ inside a Norse settlement seen from directly above: bare trampled brown earth gr
 eng: an open Nordic meadow seen from directly above, only grass with a little heather, no trees, no stones, nothing else
 borg: bare trampled brown earth ground seen from directly above, a few pebbles and wisps of straw, nothing else
 vei: a straight dirt road runs vertically from the exact middle of the top edge to the exact middle of the bottom edge through open meadow, no trees, no stones, nothing else
+elv: a river flows straight across the tile from the exact middle of the left edge to the exact middle of the right edge through open meadow, clear blue-grey water, no trees, no stones, nothing else
 ```
 
 **Negativ prompt (felles):**
@@ -441,6 +442,288 @@ four dirt roads from the exact middles of all four edges meet at a stone well in
 
 ---
 
+---
+
+## Utvidelsene
+
+Brikkene fra utvidelsene følger de samme reglene og den samme stilen som grunnspillet. Filene heter `R1.jpg` til `R10.jpg` (Elva) og `G1.jpg` til `G17.jpg` (Gjestgiveri og storhov).
+
+- **Elv** treffer kanten **nøyaktig midt på**, akkurat som en vei, men er **150 px** bred (fra 437 til 587 px). Vannet er klart og blågrått, med siv og steiner langs breddene. Elva er ikke et område man kan sette vikinger i, og den deler enga i to.
+- **Gjestgiveri** er et lite hus ved veien, med et utskåret mjødskilt, tønner og benker. Det må synes godt, fordi det endrer poengene for veien.
+- **Storhov** er et stort gudehus midt i en borg, med takene i flere lag og dragehoder, i samme stil som hovet, men større.
+
+### R1 – Kilden · 1 stk
+**Kanter:** eng / eng / eng / elv · **Skisse:** [R1.png](../kunst/skisser/R1.png)
+
+**Motiv:** Startbrikken når Elva er med. En kilde vokser fram mellom mosegrodde steiner midt på brikken, og elva renner ut midt på vestkanten.
+
+**Prompt:**
+```
+a round spring pool ringed by mossy stones in the exact center of the tile; from the pool a river flows straight to the left, horizontally, and leaves through the exact middle of the left edge; the river runs only between the center and the left edge; the right half, top and bottom of the tile are open Nordic meadow with heather
+```
+
+### R2 – Vatnet · 1 stk
+**Kanter:** eng / eng / eng / elv · **Skisse:** [R2.png](../kunst/skisser/R2.png)
+
+**Motiv:** Elva kommer inn fra vest og renner ut i et stille vatn. Siste elvebrikke.
+
+**Prompt:**
+```
+a river enters at the exact middle of the left edge and flows into a large calm lake in the center-right of the tile, reeds along the shore and a small wooden boat pulled up on the bank; meadow around the lake
+```
+
+### R3 – Elva · 2 stk
+**Kanter:** eng / elv / eng / elv · **Skisse:** [R3.png](../kunst/skisser/R3.png)
+
+**Motiv:** Elva renner rett tvers over brikken fra vest til øst.
+
+**Prompt:**
+```
+a river flows straight across the tile from the exact middle of the left edge to the exact middle of the right edge, open meadow on both banks with a few reeds and stones
+```
+
+### R4 – Elvekroken · 2 stk
+**Kanter:** eng / eng / elv / elv · **Skisse:** [R4.png](../kunst/skisser/R4.png)
+
+**Motiv:** Elva kommer inn fra vest og svinger ut mot sør.
+
+**Prompt:**
+```
+a river enters at the exact middle of the left edge, curves smoothly and leaves at the exact middle of the bottom edge; open meadow elsewhere
+```
+
+### R5 – Borgene ved elva · 1 stk
+**Kanter:** borg / elv / borg / elv · **Skisse:** [R5.png](../kunst/skisser/R5.png)
+
+**Motiv:** To adskilte borgkapper i nord og sør, med elva mellom seg.
+
+**Prompt:**
+```
+two separate Viking settlements behind curved wooden palisades, one along the top edge arcing between the top corners and one along the bottom edge arcing between the bottom corners; a river flows straight across the middle from the left edge to the right edge between them
+```
+
+### R6 – Hjørneborgen ved elva · 1 stk
+**Kanter:** borg / borg / elv / elv · **Skisse:** [R6.png](../kunst/skisser/R6.png)
+
+**Motiv:** Borgen dekker den nordøstlige halvdelen. Elva svinger gjennom det sørvestlige hjørnet.
+
+**Prompt:**
+```
+a Viking settlement fills the upper-right half of the tile behind a curved wooden palisade running from the top-left corner to the bottom-right corner; in the lower-left a river enters at the middle of the left edge, curves and leaves at the middle of the bottom edge; meadow between the palisade and the river
+```
+
+### R7 – Vadestedet · 1 stk
+**Kanter:** borg / elv / vei / elv · **Skisse:** [R7.png](../kunst/skisser/R7.png)
+
+**Motiv:** En borgkappe i nord, elva tvers over brikken, og en vei fra sør som ender ved et vadested.
+
+**Prompt:**
+```
+top edge: curved wooden palisade of a Viking settlement arcing between the top corners; a river flows straight across the middle from the left edge to the right edge; a dirt road comes up from the exact middle of the bottom edge and ends at a shallow ford on the river bank
+```
+
+### R8 – Hovet ved brua · 1 stk
+**Kanter:** eng / elv / vei / elv · **Skisse:** [R8.png](../kunst/skisser/R8.png)
+
+**Motiv:** Et lite hov nord for elva. En vei fra sør krysser elva på en bro og ender ved hovet.
+
+**Prompt:**
+```
+a small wooden Norse temple (hov) with dragon-head gables in the upper middle of the tile; a river flows straight across the middle from the left edge to the right edge; a dirt road comes from the exact middle of the bottom edge, crosses the river on a wooden plank bridge and ends at the temple door
+```
+
+### R9 – Vei og elv i sving · 1 stk
+**Kanter:** vei / vei / elv / elv · **Skisse:** [R9.png](../kunst/skisser/R9.png)
+
+**Motiv:** En veisving i nordøst og en elvesving i sørvest. De møtes ikke.
+
+**Prompt:**
+```
+a dirt road enters at the exact middle of the top edge, curves and leaves at the exact middle of the right edge; a river enters at the exact middle of the left edge, curves and leaves at the exact middle of the bottom edge; the two curves do not touch, meadow between them
+```
+
+### R10 – Brua · 1 stk
+**Kanter:** vei / elv / vei / elv · **Skisse:** [R10.png](../kunst/skisser/R10.png)
+
+**Motiv:** Elva renner fra vest til øst, og veien går over den på en solid trebro.
+
+**Prompt:**
+```
+a river flows straight across the middle from the left edge to the right edge; a dirt road runs straight from the exact middle of the top edge to the exact middle of the bottom edge and crosses the river on a sturdy wooden bridge
+```
+
+### G1 – Storhovet · 2 stk
+**Kanter:** borg / borg / borg / borg · **Skisse:** [G1.png](../kunst/skisser/G1.png)
+
+**Motiv:** Midt inne i en stor borg står et storhov, et stort gudehus med takene i flere lag og dragehoder. Ingen palisade.
+
+**Prompt:**
+```
+the inside of a large Viking settlement filling the entire tile, a great stave-church-like temple hall with tiered shingled roofs and carved dragon heads stands in the center, turf-roofed longhouses around it, packed earth ground reaching all four edges, no palisade
+```
+
+### G2 – Firborgen · 1 stk
+**Kanter:** borg / borg / borg / borg · **Skisse:** [G2.png](../kunst/skisser/G2.png)
+
+**Motiv:** Fire små borger, én langs hver kant, som ikke henger sammen. Eng i midten.
+
+**Prompt:**
+```
+four small separate Viking settlements, one at each edge, each behind its own curved wooden palisade arcing between the corners of that edge; an open meadow in the center of the tile between the four palisades with a few sheep
+```
+
+### G3 – Treborgen · 1 stk
+**Kanter:** borg / borg / borg / eng · **Skisse:** [G3.png](../kunst/skisser/G3.png)
+
+**Motiv:** Tre små borger i nord, øst og sør, hver for seg. Enga når vestkanten.
+
+**Prompt:**
+```
+three small separate Viking settlements at the top, right and bottom edges, each behind its own curved wooden palisade arcing between the corners of its edge; open meadow in the middle reaching the left edge
+```
+
+### G4 – Runehjørnet · 1 stk
+**Kanter:** borg / borg / borg / eng · **Skisse:** [G4.png](../kunst/skisser/G4.png)
+
+**Motiv:** En liten borgkappe i nord og en større borg med runestein i sørøst. De henger ikke sammen.
+
+**Prompt:**
+```
+a curved wooden palisade of a small settlement along the top edge arcing between the top corners; a larger Viking settlement fills the lower-right half behind a curved palisade running from the top-right corner to the bottom-left corner, with a prominent grey runestone with bright red serpent knotwork; meadow on the left
+```
+
+### G5 – Gjestgiveriet ved muren · 1 stk
+**Kanter:** borg / borg / eng / vei · **Skisse:** [G5.png](../kunst/skisser/G5.png)
+
+**Motiv:** Borgen dekker nordøst. En vei fra vest ender ved en port, og ved veien ligger et gjestgiveri.
+
+**Prompt:**
+```
+a Viking settlement fills the upper-right half of the tile behind a curved wooden palisade from the top-left corner to the bottom-right corner; a dirt road comes from the exact middle of the left edge and ends at a gate in the palisade; beside the road a small log-built Viking mead-hall inn with a green turf roof and a carved wooden mead-horn sign and barrels; meadow elsewhere
+```
+
+### G6 – Porten i hjørnet · 1 stk
+**Kanter:** borg / borg / vei / eng · **Skisse:** [G6.png](../kunst/skisser/G6.png)
+
+**Motiv:** Borgen dekker nordøst. En vei fra sør ender ved en port.
+
+**Prompt:**
+```
+a Viking settlement fills the upper-right half of the tile behind a curved wooden palisade from the top-left corner to the bottom-right corner; a dirt road comes up from the exact middle of the bottom edge and ends at a gate in the palisade; meadow elsewhere
+```
+
+### G7 – Runeborgen ved gjestgiveriet · 1 stk
+**Kanter:** borg / borg / vei / vei · **Skisse:** [G7.png](../kunst/skisser/G7.png)
+
+**Motiv:** Borgen med runestein dekker nordøst. En vei svinger fra vest til sør, med et gjestgiveri ved veien.
+
+**Prompt:**
+```
+a Viking settlement fills the upper-right half behind a curved wooden palisade from the top-left corner to the bottom-right corner, with a prominent grey runestone with bright red serpent knotwork; a dirt road enters at the exact middle of the left edge, curves and exits at the exact middle of the bottom edge; beside the road a small log-built Viking mead-hall inn with a green turf roof and a carved wooden mead-horn sign and barrels
+```
+
+### G8 – Storkappa · 1 stk
+**Kanter:** borg / eng / eng / eng · **Skisse:** [G8.png](../kunst/skisser/G8.png)
+
+**Motiv:** En dyp borgkappe i nord, og eng på resten av brikken.
+
+**Prompt:**
+```
+top edge: a deep curved wooden palisade of a Viking settlement arcing from the top-left corner to the top-right corner; the rest is open meadow with sheep
+```
+
+### G9 – Veien til borgen · 1 stk
+**Kanter:** borg / eng / vei / eng · **Skisse:** [G9.png](../kunst/skisser/G9.png)
+
+**Motiv:** En borgkappe i nord. En rett vei fra sør ender ved porten.
+
+**Prompt:**
+```
+top edge: curved wooden palisade of a Viking settlement arcing between the top corners; a dirt road comes from the exact middle of the bottom edge straight up to a wooden gate in the palisade; meadow on both sides of the road
+```
+
+### G10 – Gjestgiveriet under borgen · 1 stk
+**Kanter:** borg / eng / vei / vei · **Skisse:** [G10.png](../kunst/skisser/G10.png)
+
+**Motiv:** En borgkappe i nord og en vei som svinger fra vest til sør, med et gjestgiveri ved veien.
+
+**Prompt:**
+```
+top edge: curved wooden palisade of a Viking settlement arcing between the top corners; a dirt road enters at the exact middle of the left edge, curves and exits at the exact middle of the bottom edge; beside the road a small log-built Viking mead-hall inn with a green turf roof and a carved wooden mead-horn sign and barrels
+```
+
+### G11 – Tvillingportene · 1 stk
+**Kanter:** borg / vei / borg / vei · **Skisse:** [G11.png](../kunst/skisser/G11.png)
+
+**Motiv:** En borg går fra nord til sør. To veier fra vest og øst ender ved hver sin port. Runestein i borgen.
+
+**Prompt:**
+```
+a Viking settlement band running from the top edge to the bottom edge, with two curved wooden palisades arcing between the two left corners and between the two right corners; two dirt roads come from the exact middles of the left and right edges and end at wooden gates in the palisades; a prominent grey runestone with bright red serpent knotwork in the settlement; meadow outside the palisades
+```
+
+### G12 – Krysset mellom borgene · 1 stk
+**Kanter:** borg / vei / borg / vei · **Skisse:** [G12.png](../kunst/skisser/G12.png)
+
+**Motiv:** To borgkapper i nord og sør. Veier fra vest og øst og stier fra begge borgene møtes ved en brønn.
+
+**Prompt:**
+```
+two separate Viking settlements behind curved wooden palisades at the top edge and the bottom edge; two dirt roads from the exact middles of the left and right edges and short paths from both settlements meet at a small farmyard with a stone well in the center
+```
+
+### G13 – Gjestgiveriet i svingen · 1 stk
+**Kanter:** eng / eng / vei / vei · **Skisse:** [G13.png](../kunst/skisser/G13.png)
+
+**Motiv:** En vei svinger fra vest til sør, med et gjestgiveri ved veien.
+
+**Prompt:**
+```
+a dirt road enters at the exact middle of the left edge, curves and exits at the exact middle of the bottom edge; outside the curve a small log-built Viking mead-hall inn with a green turf roof and a carved wooden mead-horn sign, barrels and a hitching post; open meadow elsewhere
+```
+
+### G14 – Gjestgiveriet · 1 stk
+**Kanter:** eng / vei / eng / vei · **Skisse:** [G14.png](../kunst/skisser/G14.png)
+
+**Motiv:** En rett vei fra vest til øst, med et gjestgiveri på nordsiden.
+
+**Prompt:**
+```
+a straight dirt road runs from the exact middle of the left edge to the exact middle of the right edge; on the upper side of the road a small log-built Viking mead-hall inn with a green turf roof and a carved wooden mead-horn sign, barrels and benches; meadow elsewhere
+```
+
+### G15 – Hovet på veien · 1 stk
+**Kanter:** eng / vei / eng / vei · **Skisse:** [G15.png](../kunst/skisser/G15.png)
+
+**Motiv:** Et lite hov midt på brikken. Veiene fra vest og øst ender ved hovet.
+
+**Prompt:**
+```
+a small wooden Norse temple (hov) with dragon-head gables in the center of the tile; two dirt roads come from the exact middles of the left and right edges and end at the temple; open meadow above and below
+```
+
+### G16 – Gjestgiveriet ved veidelet · 1 stk
+**Kanter:** eng / vei / vei / vei · **Skisse:** [G16.png](../kunst/skisser/G16.png)
+
+**Motiv:** Et T-kryss med brønn, og et gjestgiveri ved veien mot øst.
+
+**Prompt:**
+```
+a T-shaped road junction: one dirt road runs straight across the tile from the middle of the left edge to the middle of the right edge, and a second dirt road comes up from the middle of the bottom edge and ends at a small farmyard with a stone well in the center; beside the right-hand road a small log-built Viking mead-hall inn with a green turf roof and a carved wooden mead-horn sign; no road goes north, the whole upper half is unbroken open meadow
+```
+
+### G17 – Dobbelsvingen · 1 stk
+**Kanter:** vei / vei / vei / vei · **Skisse:** [G17.png](../kunst/skisser/G17.png)
+
+**Motiv:** To veisvinger som ikke møtes: fra nord til vest og fra øst til sør.
+
+**Prompt:**
+```
+two separate dirt road curves: one enters at the exact middle of the top edge and curves to the exact middle of the left edge, the other enters at the exact middle of the right edge and curves to the exact middle of the bottom edge; they do not touch, a meadow band between them
+```
+
+---
+
 ## 6. Varianter
 
 Spillet velger tilfeldig blant variantene til en brikketype. Varianter må ha **nøyaktig samme form** som skissen. Det er bare detaljene som skal være forskjellige.
@@ -472,7 +755,7 @@ Variantene er valgfrie. Spillet virker med én fil per brikketype.
 
 ## 8. Sjekkliste før du leverer
 
-- [ ] 24 filer, `A.jpg` til `X.jpg`, i `kunst/brikker/`
+- [ ] 51 filer i `kunst/brikker/`: `A.jpg` til `X.jpg`, `R1.jpg` til `R10.jpg` og `G1.jpg` til `G17.jpg`
 - [ ] Alle er nøyaktig 1024 × 1024 og har nord øverst, uten speilvending
 - [ ] Veiene treffer midt på kanten og er like brede
 - [ ] Palisadene ender i hjørnene

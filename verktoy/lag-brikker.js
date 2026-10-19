@@ -23,7 +23,8 @@ import { BRIKKER } from '../delt/brikker.js';
 
 const COMFY = process.env.COMFY_URL ?? 'http://10.0.0.76:8188';
 const ROT = new URL('../', import.meta.url).pathname;
-const SKISSEFARGE = { eng: '#7fa65a', vei: '#c9a877', borg: '#9c7a55', stein: '#8a8f94', rune: '#b3322b', steinkant: '#3c3f42', helle: '#b8b2a4' };
+const SKISSEFARGE = { eng: '#7fa65a', vei: '#c9a877', borg: '#9c7a55', stein: '#8a8f94', rune: '#b3322b', steinkant: '#3c3f42', helle: '#b8b2a4',
+  elv: '#4f86b5', storhov: '#5e2a1a' };
 
 const valg = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith('--'))
   .map((a) => a.slice(2).split('=')));
@@ -31,11 +32,16 @@ const ider = process.argv.slice(2).filter((a) => !a.startsWith('--')).map((a) =>
 const seed = Number(valg.seed ?? 1066);
 // Brikker der standard-seed ga feil: B fikk en sti ned til kanten (har ingen vei), X fikk
 // åtte veier, H og I fikk borger av gress, og M og O fikk to runesteiner
-const SEED = { B: 7, X: 99, H: 42, I: 42, M: 99, O: 99 };
+const SEED = { B: 7, X: 99, H: 42, I: 42, M: 99, O: 99, R5: 42, R1: 123 };
 // Eng som males på nytt som ren eng etter runde 1. W (tre veier) får ellers alltid en fjerde
 // vei mot nord, fordi kantkartet er tomt der og modellen ser brønn i krysset som firveiskryss.
-// «omrade» er rektangelet (x0,y0 x1,y1) som males på nytt; bare enga innenfor tas med.
-const RENSK_ENG = { W: { omrade: '420,0 604,430' } };
+// «omrade» er rektanglene (x0,y0 x1,y1) som males på nytt; bare enga innenfor tas med.
+// R1 (kilden) får elv i alle fire retninger, men elva skal bare renne mot vest.
+const RENSK_ENG = {
+  W: { omrade: ['420,0 604,430'] },
+  G16: { omrade: ['420,0 604,430'] },
+  // R1: elva fikk armer i alle retninger, men opprydding ga synlige skjøter; løst med seed i stedet
+};
 const denoise = Number(valg.denoise ?? 1.0);
 const styrke = Number(valg.styrke ?? 1.0);
 const stoy = Number(valg.stoy ?? 0);
@@ -54,10 +60,11 @@ const borgprompt = kodeEtter(doc, '**Borgprompt (felles):**');
 const kildeprompter = Object.fromEntries(kodeEtter(doc, '**Kantkilder (felles):**')
   .split('\n').map((linje) => linje.split(/:\s(.+)/).slice(0, 2)));
 const prompter = Object.fromEntries(doc.split(/\n### /).slice(1)
-  .filter((del) => /^[A-X] –/.test(del) && del.includes('**Prompt:**'))
-  .map((del) => [del[0], kodeEtter(del, '**Prompt:**')]));
+  .filter((del) => /^[A-Z]\d* –/.test(del) && del.includes('**Prompt:**'))
+  .map((del) => [del.split(' ')[0], kodeEtter(del, '**Prompt:**')]));
 // Stilen for kantkildene: uten leddene som får modellen til å fylle en ensfarget flate med mønstre
 const kildestil = stil.split(', ').filter((ledd) => !/board game|richly detailed|edge to edge|along all edges/.test(ledd)).join(', ');
+const STORHOV = 'a great stave-church-like temple hall with tiered shingled roofs and carved dragon heads in the middle of the settlement';
 const RUNESTEIN = 'a large prominent grey runestone with bright red serpent knotwork standing in the middle of a round stone-paved square';
 
 const magick = (...args) => execFileSync('convert', args.flat());
@@ -171,9 +178,15 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id
   // Kantkart: en hvit strek ved hver fargeovergang. Canny i ComfyUI ser bare lysstyrke
   // og mister overganger mellom farger som er omtrent like lyse.
   magick(skisse, '-morphology', 'Edge', 'Diamond:1', '-separate', '-evaluate-sequence', 'max', '-threshold', '8%', fil('kant'));
+  // Elva følger ikke kantkartet godt nok alene (den legger seg på skrå), så brikker med elv
+  // starter fra skissen med fargestøy og litt lavere denoise. Ellers males alt fritt.
+  fargemaske(skisse, [SKISSEFARGE.elv], fil('elv'));
+  const harElv = snitt(fil('elv')) > 0.01;
+  const stoyHer = harElv ? 6 : stoy;
+  const denoiseHer = harElv ? Math.min(denoise, 0.85) : denoise;
   // Startbilde med fargestøy, ellers beholder modellen de flate feltene
-  magick(skisse, ...(stoy ? ['-attenuate', String(stoy), '+noise', 'Gaussian', '-blur', '0x1.5'] : []), fil('start'));
-  fargemaske(skisse, [SKISSEFARGE.borg, SKISSEFARGE.stein, SKISSEFARGE.rune, SKISSEFARGE.steinkant, SKISSEFARGE.helle], fil('borg'),
+  magick(skisse, ...(stoyHer ? ['-attenuate', String(stoyHer), '+noise', 'Gaussian', '-blur', '0x1.5'] : []), fil('start'));
+  fargemaske(skisse, [SKISSEFARGE.borg, SKISSEFARGE.stein, SKISSEFARGE.rune, SKISSEFARGE.steinkant, SKISSEFARGE.helle, SKISSEFARGE.storhov], fil('borg'),
     '-morphology', 'Close', 'Disk:8');
   magick(fil('borg'), '-blur', '0x4', fil('borgmyk'));
   const harBorg = borgrunde && snitt(fil('borg')) > 0.01;
@@ -185,7 +198,7 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id
     start: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil('start'), `karkasand_${b.id}.png`) } },
     ...tekst('p', prompt),
     latent: { class_type: 'VAEEncode', inputs: { pixels: ['start', 0], vae: ['vae', 0] } },
-    k: sampler(kontroll ? 'styrt' : 'modell', 'p', 'latent', denoise, valg.seed ? seed : SEED[b.id] ?? seed),
+    k: sampler(kontroll ? 'styrt' : 'modell', 'p', 'latent', denoiseHer, valg.seed ? seed : SEED[b.id] ?? seed),
     bilde: { class_type: 'VAEDecode', inputs: { samples: ['k', 0], vae: ['vae', 0] } },
     lagre: { class_type: 'SaveImage', inputs: { images: ['bilde', 0], filename_prefix: `karkasand/${b.id}` } },
   }));
@@ -195,12 +208,13 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id
   // skissen, så runden starter fra jord.
   if (harBorg) {
     const runestein = b.deler.some((d) => d.runestein) ? `, ${RUNESTEIN}` : '';
-    await malPaaNytt(b, 'borg', `${borgprompt}${runestein}, ${stil}`, borgdenoise);
+    const storhov = b.deler.some((d) => d.storhov) ? `, ${STORHOV}` : '';
+    await malPaaNytt(b, 'borg', `${borgprompt}${runestein}${storhov}, ${stil}`, borgdenoise);
   }
   // Rydd enga der modellen legger til noe som ikke skal være der (se RENSK_ENG)
   if (RENSK_ENG[b.id]) {
     fargemaske(skisse, [SKISSEFARGE.eng], fil('eng'), '(', '-size', '1024x1024', 'xc:black', '-fill', 'white',
-      '-draw', `rectangle ${RENSK_ENG[b.id].omrade}`, ')', '-compose', 'multiply', '-composite');
+      ...RENSK_ENG[b.id].omrade.flatMap((r) => ['-draw', `rectangle ${r}`]), ')', '-compose', 'multiply', '-composite');
     magick(fil('eng'), '-blur', '0x10', fil('engmyk'));
     // Uten ControlNet og uten «board game tile» i stilen: ellers blir det rutemønster
     await malPaaNytt(b, 'eng', `${kildeprompter.eng}, ${kildestil}`, 1, { kontroll: false });
@@ -230,7 +244,7 @@ function kantstripe(b, malt, kilder) {
 
 // Snittfargen gress, vei og borggrunn har inne på de malte brikkene. Kantkildene flyttes
 // hit, ellers blir kantbåndet brunere eller mørkere og rutenettet synes på brettet.
-const MALFARGE = { eng: [112, 120, 51], vei: [171, 155, 116], borg: [110, 100, 66] };
+const MALFARGE = { eng: [112, 120, 51], vei: [171, 155, 116], borg: [110, 100, 66] }; // elva brukes som den er
 
 // Flytter snittfargen i bildet (eller i utsnittet) til målfargen, kanal for kanal
 function fargejuster(inn, ut, maal, utsnitt) {
@@ -244,8 +258,18 @@ function fargejuster(inn, ut, maal, utsnitt) {
 // eng, bare borggrunn og en rett vei nord–sør (promptene står under «Kantkilder» i
 // docs/BRIKKER.md). Veien brukes som den er langs nord- og sørkanten, og dreid 90°
 // langs øst- og vestkanten.
+// Hvit i trekantene mot nord og sør, svart mot øst og vest
+function diagonalMaske() {
+  const fil = `${ARBEID}diagonal.png`;
+  if (!existsSync(fil)) {
+    magick('-size', '1024x1024', 'xc:black', '-fill', 'white', '-draw', 'polygon 0,0 1024,0 512,512',
+      '-draw', 'polygon 0,1024 1024,1024 512,512', fil);
+  }
+  return fil;
+}
+
 async function lagKantkilder() {
-  const kilder = { eng: `${TEKSTURER}eng.jpg`, borg: `${TEKSTURER}borg.jpg`, vei: `${TEKSTURER}vei.jpg` };
+  const kilder = { eng: `${TEKSTURER}eng.jpg`, borg: `${TEKSTURER}borg.jpg`, vei: `${TEKSTURER}vei.jpg`, elv: `${TEKSTURER}elv.jpg` };
   const ensfarget = (type) => {
     const fil = `${ARBEID}skisse_${type}.png`;
     magick('-size', '1024x1024', `xc:${SKISSEFARGE[type]}`, fil);
@@ -263,16 +287,19 @@ async function lagKantkilder() {
   if (!existsSync(kilder.borg)) speilMidten(await mal('borg', ensfarget('borg'), { medStil: kildestil }), kilder.borg);
   if (!existsSync(kilder.vei)) {
     const u = await mal('vei', skisseAv('U'), { kontroll: true });
-    const diagonal = `${ARBEID}diagonal.png`;
-    magick('-size', '1024x1024', 'xc:black', '-fill', 'white', '-draw', 'polygon 0,0 1024,0 512,512',
-      '-draw', 'polygon 0,1024 1024,1024 512,512', diagonal);
-    magick('(', u, '-rotate', '90', ')', u, diagonal, '-composite', '-quality', '92', kilder.vei);
+    magick('(', u, '-rotate', '90', ')', u, diagonalMaske(), '-composite', '-quality', '92', kilder.vei);
+  }
+  // Elva: R3 går vest–øst, så her er det motsatt av veien
+  if (!existsSync(kilder.elv)) {
+    const r = await mal('elv', skisseAv('R3'), { kontroll: true });
+    magick(r, '(', r, '-rotate', '90', ')', diagonalMaske(), '-composite', '-quality', '92', kilder.elv);
   }
   // Veien ligger i en stripe midt på (457–567 px), så fargen måles bare der
   const justert = {};
   for (const [type, fil] of Object.entries(kilder)) {
     justert[type] = `${ARBEID}kilde_${type}_justert.png`;
-    fargejuster(fil, justert[type], MALFARGE[type], type === 'vei' ? '110x1024+457+0' : null);
+    if (MALFARGE[type]) fargejuster(fil, justert[type], MALFARGE[type], type === 'vei' ? '110x1024+457+0' : null);
+    else magick(fil, justert[type]);
   }
   return justert;
 }

@@ -4,7 +4,7 @@
 // Koordinater: x øker mot øst, y øker mot sør. Rotasjon r = antall kvart
 // omdreininger med klokka. Sider: 0 = nord, 1 = øst, 2 = sør, 3 = vest.
 
-import { BRIKKER, BRIKKE } from './brikker.js';
+import { BRIKKER, BRIKKE, utvidelseAv } from './brikker.js';
 
 export const VIKINGER_PER_SPILLER = 7;
 const SIDER = ['N', 'Ø', 'S', 'V'];
@@ -35,31 +35,43 @@ export function roterPunkt([x, y], rot) {
   return [x, y];
 }
 
-export function lagBunke(tilfeldig = Math.random) {
-  const bunke = [];
-  let start = null;
+// Bunken trekkes fra slutten. Med Elva ligger elvebrikkene øverst, så vatnet, så resten,
+// og kilden er startbrikke i stedet for Borgveien.
+export function lagBunke(tilfeldig = Math.random, utvidelser = []) {
+  const elva = utvidelser.includes('elva');
+  const blandet = (liste) => {
+    for (let i = liste.length - 1; i > 0; i--) {
+      const j = Math.floor(tilfeldig() * (i + 1));
+      [liste[i], liste[j]] = [liste[j], liste[i]];
+    }
+    return liste;
+  };
+  const vanlige = [], elv = [];
+  let start = null, innsjo = null;
   for (const b of BRIKKER) {
+    if (utvidelseAv(b) !== 'grunn' && !utvidelser.includes(utvidelseAv(b))) continue;
     for (let nr = 0; nr < b.antall; nr++) {
-      if (b.start && !start) start = { id: b.id, nr };
-      else bunke.push({ id: b.id, nr });
+      const brikke = { id: b.id, nr };
+      if (!start && (elva ? b.kilde : b.start)) start = brikke;
+      else if (b.innsjo) innsjo = brikke;
+      else if (utvidelseAv(b) === 'elva') elv.push(brikke);
+      else vanlige.push(brikke);
     }
   }
-  for (let i = bunke.length - 1; i > 0; i--) {
-    const j = Math.floor(tilfeldig() * (i + 1));
-    [bunke[i], bunke[j]] = [bunke[j], bunke[i]];
-  }
-  return { start, bunke };
+  return { start, bunke: [...blandet(vanlige), ...(innsjo ? [innsjo] : []), ...blandet(elv)] };
 }
 
 export class Spill {
-  constructor(spillere, { tilfeldig = Math.random, bunke } = {}) {
+  constructor(spillere, { tilfeldig = Math.random, bunke, utvidelser = [] } = {}) {
     this.tilfeldig = tilfeldig;
+    this.utvidelser = utvidelser;
+    this.elvSving = 0; // forrige elvesving (1 = høyre, 3 = venstre), for å hindre U-sving
     // underveis/slutt: poengene fordelt på borg, vei, hov og eng, til oversikten på slutten
     this.spillere = spillere.map((s) => ({
-      ...s, poeng: 0, vikinger: VIKINGER_PER_SPILLER,
+      ...s, poeng: 0, vikinger: VIKINGER_PER_SPILLER, storvikinger: utvidelser.includes('gjestgiveri') ? 1 : 0,
       underveis: { borg: 0, vei: 0, hov: 0, eng: 0 }, slutt: { borg: 0, vei: 0, hov: 0, eng: 0 },
     }));
-    const ny = lagBunke(tilfeldig);
+    const ny = lagBunke(tilfeldig, utvidelser);
     this.bunke = bunke ?? ny.bunke; // trekkes fra slutten
     this.brett = new Map();
     this.plasser(ny.start, 0, 0, 0);
@@ -106,7 +118,22 @@ export class Spill {
       naboer++;
       if (kanterRotert(nabo.id, nabo.rot)[(s + 2) % 4] !== kanter[s]) return false;
     }
-    return naboer > 0;
+    return naboer > 0 && this.elvTilkobling(id, x, y, rot) !== null;
+  }
+
+  // For elvebrikker: elva må fortsette fra elva som ligger der, og den kan ikke snu rett
+  // tilbake (to svinger samme vei etter hverandre). Gir svingen (0, 1 eller 3), eller null
+  // hvis brikken ikke kan ligge her. Andre brikker gir alltid 0.
+  elvTilkobling(id, x, y, rot) {
+    const kanter = kanterRotert(id, rot);
+    const elv = [0, 1, 2, 3].filter((s) => kanter[s] === 'elv');
+    if (!elv.length) return 0;
+    const inn = elv.find((s) => this.brikke(x + DX[s], y + DY[s]));
+    if (inn === undefined) return null;
+    const ut = elv.find((s) => s !== inn);
+    if (ut === undefined) return 0;
+    const sving = (ut - (inn + 2) + 8) % 4;
+    return sving !== 0 && sving === this.elvSving ? null : sving;
   }
 
   gyldigeRotasjoner(id, x, y) {
@@ -165,9 +192,12 @@ export class Spill {
     const vikinger = deler
       .filter((d) => d.brikke.viking && d.brikke.viking.del === d.del)
       .map((d) => ({ brikke: d.brikke, spiller: d.brikke.viking.spiller }));
-    const runesteiner = deler.filter((d) => BRIKKE[d.brikke.id].deler[d.del].runestein).length;
+    const tell = (egenskap) => deler.filter((d) => BRIKKE[d.brikke.id].deler[d.del][egenskap]).length;
     const id = [...sett].sort()[0];
-    return { id, type, deler, brikker, apen, vikinger, runesteiner };
+    return {
+      id, type, deler, brikker, apen, vikinger,
+      runesteiner: tell('runestein'), gjestgiverier: tell('gjestgiveri'), storhov: tell('storhov'),
+    };
   }
 
   // Brikken og de som ligger rundt den
@@ -264,6 +294,7 @@ export class Spill {
     if (this.fase !== 'legg') return false;
     const { brikke, x, y, rot } = this.aktiv;
     if (!this.passer(brikke.id, x, y, rot)) return false;
+    if (BRIKKE[brikke.id].kanter.includes('elv')) this.elvSving = this.elvTilkobling(brikke.id, x, y, rot);
     this.plasser(brikke, x, y, rot);
     this.sistLagt = { x, y };
     this.fase = 'viking';
@@ -274,11 +305,13 @@ export class Spill {
 
   // Delene på brikken som nettopp ble lagt, der det er lov å sette en viking
   vikingDeler() {
-    if (this.fase !== 'viking' || this.aktivSpiller.vikinger <= 0) return [];
+    const s = this.aktivSpiller;
+    if (this.fase !== 'viking' || (s.vikinger <= 0 && s.storvikinger <= 0)) return [];
     const { x, y } = this.sistLagt;
     const b = this.brikke(x, y);
     return BRIKKE[b.id].deler
       .map((d, i) => i)
+      .filter((i) => BRIKKE[b.id].deler[i].type !== 'elv')
       .filter((i) => BRIKKE[b.id].deler[i].type === 'hov' || this.omrade(x, y, i).vikinger.length === 0);
   }
 
@@ -299,13 +332,15 @@ export class Spill {
     return true;
   }
 
-  settViking(del) {
+  // stor: sett ut storvikingen (teller som to når det telles hvem som har flest)
+  settViking(del, stor = false) {
     if (this.fase !== 'viking') return false;
     if (del !== null) {
       if (!this.vikingDeler().includes(del)) return false;
+      if ((stor ? this.aktivSpiller.storvikinger : this.aktivSpiller.vikinger) <= 0) return false;
       const b = this.brikke(this.sistLagt.x, this.sistLagt.y);
-      b.viking = { del, spiller: this.tur };
-      this.aktivSpiller.vikinger--;
+      b.viking = { del, spiller: this.tur, ...(stor ? { stor: true } : {}) };
+      this.aktivSpiller[stor ? 'storvikinger' : 'vikinger']--;
     }
     this.fullforTur();
     return true;
@@ -327,7 +362,7 @@ export class Spill {
   // Gir poeng til spilleren(e) med flest vikinger i området og sender vikingene hjem
   gi(omrade, poeng, grunn) {
     const telling = new Map();
-    for (const v of omrade.vikinger) telling.set(v.spiller, (telling.get(v.spiller) ?? 0) + 1);
+    for (const v of omrade.vikinger) telling.set(v.spiller, (telling.get(v.spiller) ?? 0) + (v.brikke.viking?.stor ? 2 : 1));
     const flest = Math.max(...telling.values());
     const vinnere = [...telling].filter(([, n]) => n === flest).map(([s]) => s);
     const brikker = [...omrade.brikker];
@@ -348,12 +383,14 @@ export class Spill {
         poeng,
         vinnere,
         brikker: vis.map((b) => ({ x: b.x, y: b.y })),
-        vikinger: omrade.vikinger.map((v) => ({ x: v.brikke.x, y: v.brikke.y, del: v.brikke.viking.del, spiller: v.spiller })),
+        vikinger: omrade.vikinger.map((v) => ({
+          x: v.brikke.x, y: v.brikke.y, del: v.brikke.viking.del, spiller: v.spiller, stor: Boolean(v.brikke.viking.stor),
+        })),
       });
     }
     for (const v of omrade.vikinger) {
+      this.spillere[v.spiller][v.brikke.viking.stor ? 'storvikinger' : 'vikinger']++;
       v.brikke.viking = null;
-      this.spillere[v.spiller].vikinger++;
     }
   }
 
@@ -369,7 +406,10 @@ export class Spill {
       sett.add(o.id);
       if (o.type === 'borg') this.hendelse({ type: 'ferdig', omrade: 'borg', x, y });
       if (!o.vikinger.length) return;
-      const poeng = o.type === 'borg' ? 2 * (o.brikker.size + o.runesteiner) : o.brikker.size;
+      // Storhov: 3 per brikke og runestein i stedet for 2. Gjestgiveri: 2 per brikke i stedet for 1.
+      const poeng = o.type === 'borg'
+        ? (o.storhov ? 3 : 2) * (o.brikker.size + o.runesteiner)
+        : (o.gjestgiverier ? 2 : 1) * o.brikker.size;
       this.gi(o, poeng, o.type);
     });
     for (let dy = -1; dy <= 1; dy++) {
@@ -405,8 +445,9 @@ export class Spill {
         }
         const o = this.omrade(b.x, b.y, b.viking.del);
         let poeng;
-        if (type === 'vei') poeng = o.brikker.size;
-        else if (type === 'borg') poeng = o.brikker.size + o.runesteiner;
+        // Uferdige veier med gjestgiveri og borger med storhov gir ingenting
+        if (type === 'vei') poeng = o.gjestgiverier ? 0 : o.brikker.size;
+        else if (type === 'borg') poeng = o.storhov ? 0 : o.brikker.size + o.runesteiner;
         else {
           const borger = new Set();
           for (const d of o.deler) {
@@ -456,6 +497,7 @@ export class Spill {
       hendelser: this.hendelser,
       resultat: this.resultat,
       sluttposter: this.fase === 'slutt' ? this.sluttposter : [],
+      utvidelser: this.utvidelser,
     };
   }
 }

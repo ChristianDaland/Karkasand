@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BRIKKER, BRIKKE, ANTALL_BRIKKER } from '../delt/brikker.js';
-import { Spill, kanterRotert, roterPunkt } from '../delt/motor.js';
+import { BRIKKER, BRIKKE, ANTALL_BRIKKER, ANTALL } from '../delt/brikker.js';
+import { Spill, kanterRotert, roterPunkt, lagBunke } from '../delt/motor.js';
 import { tegnBrikke } from '../delt/tegning.js';
 
 const SIDER = ['N', 'Ø', 'S', 'V'];
@@ -25,9 +25,10 @@ function leggDirekte(spill, id, x, y, rot, viking = null) {
   if (spill.fase === 'viking') assert.ok(spill.settViking(viking));
 }
 
-test('det finnes 72 brikker fordelt på 24 typer', () => {
-  assert.equal(BRIKKER.length, 24);
+test('grunnspillet har 72 brikker i 24 typer, og utvidelsene 12 og 18', () => {
+  assert.equal(BRIKKER.filter((b) => !b.utvidelse).length, 24);
   assert.equal(ANTALL_BRIKKER, 72);
+  assert.deepEqual(ANTALL, { grunn: 72, elva: 12, gjestgiveri: 18 });
 });
 
 test('portene til hver brikke stemmer med kantene', () => {
@@ -43,7 +44,7 @@ test('portene til hver brikke stemmer med kantene', () => {
       const kant = b.kanter[s];
       const midt = b.deler[eier.get(`${side}1`)]?.type;
       assert.equal(midt, kant, `${b.id}: midtporten på ${side} skulle vært ${kant}`);
-      if (kant !== 'vei') {
+      if (kant !== 'vei' && kant !== 'elv') {
         for (const p of [0, 2]) assert.equal(b.deler[eier.get(`${side}${p}`)]?.type, kant, `${b.id} ${side}${p}`);
       } else {
         for (const p of [0, 2]) assert.equal(b.deler[eier.get(`${side}${p}`)]?.type, 'eng', `${b.id} ${side}${p}`);
@@ -232,4 +233,105 @@ test('sluttellingen lagres område for område, og poengfordelingen går opp', (
   }
   // Ingen vikinger står igjen på brettet etter sluttellingen
   assert.ok([...spill.brett.values()].every((b) => !b.viking));
+});
+
+// ---------- Utvidelsene ----------
+
+test('bunken med utvidelser: kilden starter, elva ligger øverst og vatnet sist i elva', () => {
+  const { start, bunke } = lagBunke(frø(3), ['elva', 'gjestgiveri']);
+  assert.equal(start.id, 'R1');
+  assert.equal(bunke.length, 72 + 12 + 18 - 1);
+  const elv = bunke.slice(-10);
+  assert.ok(elv.every((b) => BRIKKE[b.id].utvidelse === 'elva' && !BRIKKE[b.id].innsjo));
+  assert.equal(bunke.at(-11).id, 'R2');
+  assert.equal(bunke.filter((b) => b.id === 'D').length, 4); // Borgveien blandes inn i resten
+  assert.equal(lagBunke(frø(3)).bunke.length, 71);
+});
+
+test('elva må henge sammen og kan ikke snu', () => {
+  const spill = nyttSpill({ utvidelser: ['elva'] });
+  assert.equal(spill.brikke(0, 0).id, 'R1'); // elva renner ut mot vest
+  assert.ok(spill.passer('R3', -1, 0, 0));
+  assert.ok(!spill.passer('R3', 1, 0, 0)); // elv mot eng
+  assert.ok(!spill.passer('R3', 0, -1, 1));
+  leggDirekte(spill, 'R4', -1, 0, 2); // svinger mot nord (høyresving)
+  assert.ok(!spill.passer('R4', -1, -1, 3)); // en høyresving til ville vært en U-sving
+  assert.ok(spill.passer('R4', -1, -1, 0)); // venstresving går fint
+  // Ingen vikinger i selve elva
+  const r = new Spill([{ navn: 'A' }, { navn: 'B' }], { tilfeldig: frø(1), utvidelser: ['elva'] });
+  r.aktiv = { brikke: { id: 'R3', nr: 99 }, x: -1, y: 0, rot: 0 };
+  r.bunke.push({ id: 'U', nr: 98 });
+  assert.ok(r.legg());
+  assert.ok(!r.vikingDeler().includes(0));
+});
+
+test('gjestgiveri: dobbelt for ferdig vei, ingenting for uferdig', () => {
+  const spill = nyttSpill({ utvidelser: ['gjestgiveri'] });
+  leggDirekte(spill, 'G14', 1, 0, 0, 0); // Astrid: vei med gjestgiveri øst for start
+  leggDirekte(spill, 'W', 2, 0, 0); // Bjørn lukker østenden
+  leggDirekte(spill, 'W', -1, 0, 0); // Astrid lukker vestenden: 4 brikker
+  assert.equal(spill.spillere[0].poeng, 8);
+
+  const uferdig = nyttSpill({ utvidelser: ['gjestgiveri'] });
+  leggDirekte(uferdig, 'G14', 1, 0, 0, 0);
+  uferdig.sluttelling();
+  assert.equal(uferdig.spillere[0].poeng, 0);
+  assert.equal(uferdig.sluttposter[0].poeng, 0);
+});
+
+test('storhov: tre ganger for ferdig borg', () => {
+  const spill = nyttSpill({ utvidelser: ['gjestgiveri'] });
+  leggDirekte(spill, 'G1', 0, -1, 0, 0); // Astrid: storhov nord for startbrikken
+  leggDirekte(spill, 'E', 0, -2, 2);
+  leggDirekte(spill, 'E', 1, -1, 3);
+  leggDirekte(spill, 'E', -1, -1, 1); // lukker borgen: 5 brikker
+  assert.equal(spill.spillere[0].poeng, 15);
+});
+
+test('storvikingen teller som to', () => {
+  const spill = nyttSpill({ utvidelser: ['gjestgiveri'] });
+  assert.equal(spill.spillere[0].storvikinger, 1);
+  leggDirekte(spill, 'W', 1, 0, 0);
+  leggDirekte(spill, 'U', -1, 0, 1);
+  spill.brikke(1, 0).viking = { del: 2, spiller: 0, stor: true };
+  spill.spillere[0].storvikinger = 0;
+  spill.brikke(-1, 0).viking = { del: 0, spiller: 1 };
+  spill.brikke(0, 0).viking = { del: 1, spiller: 1 }; // Bjørn har to vanlige: likt
+  leggDirekte(spill, 'W', -2, 0, 0);
+  assert.equal(spill.spillere[0].poeng, 4);
+  assert.equal(spill.spillere[1].poeng, 4);
+  assert.equal(spill.spillere[0].storvikinger, 1); // storvikingen er hjemme igjen
+});
+
+test('et helt parti med begge utvidelsene og seks spillere går opp', () => {
+  const tilfeldig = frø(11);
+  const spill = new Spill(['A', 'B', 'C', 'D', 'E', 'F'].map((navn) => ({ navn })), { tilfeldig, utvidelser: ['elva', 'gjestgiveri'] });
+  let trekk = 0;
+  while (spill.fase !== 'slutt') {
+    const plasser = spill.gyldigePlasser(spill.aktiv.brikke.id);
+    const p = plasser[Math.floor(tilfeldig() * plasser.length)];
+    Object.assign(spill.aktiv, { x: p.x, y: p.y, rot: p.rot[0] });
+    assert.ok(spill.legg());
+    trekk++;
+    if (spill.fase === 'viking') {
+      const deler = spill.vikingDeler();
+      const stor = spill.aktivSpiller.storvikinger > 0 && tilfeldig() < 0.3;
+      spill.settViking(deler.length && tilfeldig() < 0.5 ? deler[0] : null, stor);
+    }
+  }
+  assert.equal(trekk + spill.kastet, 101);
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  for (const s of spill.spillere) {
+    assert.equal(sum(s.underveis) + sum(s.slutt), s.poeng);
+    assert.equal(s.vikinger, 7);
+    assert.equal(s.storvikinger, 1);
+  }
+});
+
+test('et nytt rom får alltid en gyldig modus', async () => {
+  const { Rom } = await import('../server/rom.js');
+  assert.equal(new Rom('ABCD', null).modus, 'tv');
+  assert.equal(new Rom('ABCD').modus, 'tv');
+  assert.equal(new Rom('ABCD', 'bord').modus, 'bord');
+  assert.equal(new Rom('ABCD', 'tull').modus, 'tv');
 });

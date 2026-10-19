@@ -1,7 +1,7 @@
 // Spillveiledningen: bygger brikkelisten fra brikkedataene, slik at antall, kanter
 // og områder alltid stemmer med spillet. Beskrivelsene av motivene står her.
 
-import { BRIKKER } from '/delt/brikker.js';
+import { BRIKKER, UTVIDELSER } from '/delt/brikker.js';
 import { lastBilder, brikkeUrl, vikingSvg, elementFra } from './felles.js';
 
 const OM = {
@@ -29,9 +29,36 @@ const OM = {
   V: 'En vei som svinger fra vest til sør. Det finnes flest av denne brikken.',
   W: 'Tre veier møtes ved et lite tun. Hver vei ender her.',
   X: 'Fire veier møtes ved en brønn midt på brikken. Hver vei ender her.',
+  R1: 'Startbrikken når Elva er med. En kilde vokser fram mellom mosegrodde steiner midt på brikken, og elva renner ut midt på vestkanten.',
+  R2: 'Elva kommer inn fra vest og renner ut i et stille vatn. Siste elvebrikke.',
+  R3: 'Elva renner rett tvers over brikken fra vest til øst.',
+  R4: 'Elva kommer inn fra vest og svinger ut mot sør.',
+  R5: 'To adskilte borgkapper i nord og sør, med elva mellom seg.',
+  R6: 'Borgen dekker den nordøstlige halvdelen. Elva svinger gjennom det sørvestlige hjørnet.',
+  R7: 'En borgkappe i nord, elva tvers over brikken, og en vei fra sør som ender ved et vadested.',
+  R8: 'Et lite hov nord for elva. En vei fra sør krysser elva på en bro og ender ved hovet.',
+  R9: 'En veisving i nordøst og en elvesving i sørvest. De møtes ikke.',
+  R10: 'Elva renner fra vest til øst, og veien går over den på en solid trebro.',
+  G1: 'Midt inne i en stor borg står et storhov, et stort gudehus med takene i flere lag og dragehoder. Ingen palisade.',
+  G2: 'Fire små borger, én langs hver kant, som ikke henger sammen. Eng i midten.',
+  G3: 'Tre små borger i nord, øst og sør, hver for seg. Enga når vestkanten.',
+  G4: 'En liten borgkappe i nord og en større borg med runestein i sørøst. De henger ikke sammen.',
+  G5: 'Borgen dekker nordøst. En vei fra vest ender ved en port, og ved veien ligger et gjestgiveri.',
+  G6: 'Borgen dekker nordøst. En vei fra sør ender ved en port.',
+  G7: 'Borgen med runestein dekker nordøst. En vei svinger fra vest til sør, med et gjestgiveri ved veien.',
+  G8: 'En dyp borgkappe i nord, og eng på resten av brikken.',
+  G9: 'En borgkappe i nord. En rett vei fra sør ender ved porten.',
+  G10: 'En borgkappe i nord og en vei som svinger fra vest til sør, med et gjestgiveri ved veien.',
+  G11: 'En borg går fra nord til sør. To veier fra vest og øst ender ved hver sin port. Runestein i borgen.',
+  G12: 'To borgkapper i nord og sør. Veier fra vest og øst og stier fra begge borgene møtes ved en brønn.',
+  G13: 'En vei svinger fra vest til sør, med et gjestgiveri ved veien.',
+  G14: 'En rett vei fra vest til øst, med et gjestgiveri på nordsiden.',
+  G15: 'Et lite hov midt på brikken. Veiene fra vest og øst ender ved hovet.',
+  G16: 'Et T-kryss med brønn, og et gjestgiveri ved veien mot øst.',
+  G17: 'To veisvinger som ikke møtes: fra nord til vest og fra øst til sør.',
 };
 
-const KANT = { borg: 'borg', vei: 'vei', eng: 'eng' };
+const KANT = { borg: 'borg', vei: 'vei', eng: 'eng', elv: 'elv' };
 
 // Det spilleren må vite om områdene på brikken, utledet fra brikkedataene
 function egenskaper(b) {
@@ -40,7 +67,9 @@ function egenskaper(b) {
   const linjer = [];
   if (borger.length) {
     const rune = borger.some((d) => d.runestein);
-    linjer.push(`<span class="type borg">Borg</span> ${borger.length > 1 ? 'To adskilte borger som hver er et eget område. ' : ''}Ferdig borg: 2 p per brikke. Uferdig ved slutt: 1 p per brikke.`);
+    const antall = ['', '', 'To', 'Tre', 'Fire'][borger.length];
+    linjer.push(`<span class="type borg">Borg</span> ${borger.length > 1 ? `${antall} adskilte borger som hver er et eget område. ` : ''}Ferdig borg: 2 p per brikke. Uferdig ved slutt: 1 p per brikke.`);
+    if (borger.some((d) => d.storhov)) linjer.push('<span class="type storhov">Storhov</span> Ferdig borg: 3 p per brikke og runestein. Uferdig ved slutt: 0 p.');
     if (rune) linjer.push('<span class="type rune">Runestein</span> Borgen gir 2 ekstra poeng når den er ferdig (1 hvis den er uferdig ved slutt).');
   }
   if (veier.length) {
@@ -48,9 +77,13 @@ function egenskaper(b) {
     const ender = veier.filter((d) => d.porter.length === 1).length;
     const tekst = ender > 1 ? ` ${ender} veier ender her.` : ender === 1 ? ' Veien ender på denne brikken.' : '';
     linjer.push(`<span class="type vei">Vei</span> 1 p per brikke.${tekst}`);
+    if (veier.some((d) => d.gjestgiveri)) linjer.push('<span class="type gjest">Gjestgiveri</span> Ferdig vei: 2 p per brikke. Uferdig ved slutt: 0 p.');
   }
   if (b.deler.some((d) => d.type === 'hov')) {
     linjer.push('<span class="type hov">Hov</span> 9 p når alle de 8 rutene rundt er fylt. Ellers 1 p + 1 per nabo ved slutt.');
+  }
+  if (b.deler.some((d) => d.type === 'elv')) {
+    linjer.push(`<span class="type elv">Elv</span> ${b.kilde ? 'Startbrikken når Elva er med.' : b.innsjo ? 'Siste elvebrikke.' : 'Legges før resten av brikkene.'} Elva deler enga, og man kan ikke sette vikinger i den.`);
   }
   const enger = b.deler.filter((d) => d.type === 'eng');
   if (enger.length) {
@@ -63,13 +96,25 @@ function egenskaper(b) {
 await lastBilder();
 document.getElementById('viking-bilde').innerHTML = vikingSvg('#1e88e5');
 
-for (const b of BRIKKER) {
+// Grunnspillet først, så én seksjon per utvidelse
+const seksjoner = [{ id: 'grunn', navn: 'Grunnspillet', om: '' }, ...UTVIDELSER];
+for (const seksjon of seksjoner) {
+  const brikker = BRIKKER.filter((b) => (b.utvidelse ?? 'grunn') === seksjon.id);
+  const antall = brikker.reduce((a, b) => a + b.antall, 0);
+  const overskrift = elementFra(`<div class="seksjon" id="seksjon-${seksjon.id}"><h3></h3><p class="dempet"></p></div>`);
+  overskrift.querySelector('h3').textContent = `${seksjon.navn} · ${antall} brikker`;
+  overskrift.querySelector('p').textContent = seksjon.om;
+  document.getElementById('brikker').append(overskrift);
+  for (const b of brikker) visBrikke(b);
+}
+
+function visBrikke(b) {
   const kort = elementFra(`
     <article class="brikke" id="brikke-${b.id}">
       <img alt="" loading="lazy" src="${brikkeUrl(b.id)}">
       <div>
         <h3>${b.id} – ${b.navn}</h3>
-        <p class="fakta">${b.antall} stk · kanter: ${b.kanter.map((k) => KANT[k]).join(' / ')}${b.start ? ' · startbrikke' : ''}</p>
+        <p class="fakta">${b.antall} stk · kanter: ${b.kanter.map((k) => KANT[k]).join(' / ')}${b.start ? ' · startbrikke uten Elva' : ''}</p>
         <p>${OM[b.id]}</p>
         <ul>${egenskaper(b).map((l) => `<li>${l}</li>`).join('')}</ul>
       </div>

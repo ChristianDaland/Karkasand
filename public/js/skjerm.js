@@ -102,6 +102,13 @@ function visLobby(rom) {
     li.children[1].textContent = s.navn + (s.id === rom.vertId ? ' · starter' : '') + (s.tilkoblet ? '' : ' (frakoblet)');
     liste.append(li);
   }
+  // Utvidelsene verten har valgt, og hvor mange brikker det blir
+  const valgte = rom.katalog.utvidelser.filter((u) => rom.utvidelser.includes(u.id));
+  const sum = rom.katalog.grunn + valgte.reduce((a, u) => a + u.antall, 0);
+  $('lobby-utvidelser').textContent = valgte.length
+    ? `Utvidelser: ${valgte.map((u) => u.navn).join(' · ')} – ${sum} brikker`
+    : `Grunnspillet: ${sum} brikker`;
+
   const ledige = rom.maksSpillere - rom.spillere.length;
   if (ledige) liste.append(elementFra(`<li class="tom">Plass til ${ledige} ${ledige === 1 ? 'spiller' : 'spillere'} til …</li>`));
   const nok = rom.spillere.length >= rom.minSpillere;
@@ -152,6 +159,17 @@ function visPaneler(rom) {
       vikinger.dataset.farge = s.farge;
     }
     [...vikinger.children].forEach((v, n) => v.classList.toggle('borte', n >= s.vikinger));
+    // Storvikingen vises etter de vanlige når Gjestgiveri og storhov er med
+    let stor = panel.querySelector('.storviking');
+    if (spill.utvidelser?.includes('gjestgiveri')) {
+      if (!stor || stor.dataset.farge !== s.farge) {
+        stor?.remove();
+        stor = elementFra(`<span class="storviking" title="Storviking">${vikingSvg(s.farge)}</span>`);
+        stor.dataset.farge = s.farge;
+        vikinger.append(stor);
+      }
+      stor.classList.toggle('borte', s.storvikinger <= 0);
+    } else stor?.remove();
 
     let turTekst = '';
     if (harTur) turTekst = spill.fase === 'viking' ? 'Setter ut viking …' : 'Legger brikke …';
@@ -203,7 +221,7 @@ async function spillOpptelling(rom, { igjen = false } = {}) {
   const brettet = spill.brett.map((b) => ({ ...b, viking: null }));
   const paPlass = (x, y) => brettet.find((b) => b.x === x && b.y === y);
   for (const post of spill.sluttposter) {
-    for (const v of post.vikinger) paPlass(v.x, v.y).viking = { del: v.del, spiller: v.spiller };
+    for (const v of post.vikinger) paPlass(v.x, v.y).viking = { del: v.del, spiller: v.spiller, ...(v.stor ? { stor: true } : {}) };
   }
   const visning = () => ({ ...spill, brett: brettet, spillere: visSpillere, hendelser: [] });
   const tegn = () => {

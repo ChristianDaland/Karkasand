@@ -160,7 +160,9 @@ export class BrettVisning {
     for (const b of spill.brett) {
       if (!b.viking) continue;
       const del = BRIKKE[b.id].deler[b.viking.del];
-      this.vikingLag.append(this.lagViking(b, b.viking.del, farge(b.viking.spiller), del.type === 'eng'));
+      const v = this.lagViking(b, b.viking.del, farge(b.viking.spiller), del.type === 'eng');
+      v.classList.toggle('stor', Boolean(b.viking.stor));
+      this.vikingLag.append(v);
     }
 
     // Hint og markør i leggefasen

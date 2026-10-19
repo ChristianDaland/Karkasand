@@ -2,10 +2,11 @@
 
 import { randomUUID } from 'node:crypto';
 import { Spill } from '../delt/motor.js';
+import { UTVIDELSER, ANTALL } from '../delt/brikker.js';
 
 export const MIN_SPILLERE = 2;
-export const MAKS_SPILLERE = 5;
-export const FARGER = ['#e53935', '#1e88e5', '#fdd835', '#43a047', '#8e24aa'];
+export const MAKS_SPILLERE = 5; // 6 med Gjestgiveri og storhov
+export const FARGER = ['#e53935', '#1e88e5', '#fdd835', '#43a047', '#8e24aa', '#ec407a'];
 export const PLASSER = ['S', 'N', 'V', 'Ø']; // side av bordet spilleren sitter ved
 const PER_SIDE = 2; // med 5 spillere må to dele en side av bordet
 
@@ -17,11 +18,14 @@ const RETNING = { opp: 0, hoyre: 1, ned: 2, venstre: 3 };
 const BOKSTAVER = 'ABCDEFGHJKLMNPRSTUVWXYZ';
 
 export class Rom {
-  constructor(kode, modus = 'tv') {
+  constructor(kode, modus) {
     this.kode = kode;
-    this.modus = modus; // 'tv' eller 'bord'
+    // 'tv' eller 'bord'. Alt annet blir TV, også null: en skjerm som kobler seg til igjen
+    // etter at serveren har startet på nytt, sender modus: null og får et nytt rom.
+    this.modus = modus === 'bord' ? 'bord' : 'tv';
     this.spillere = []; // { id, navn, farge, plass, tilkoblet }
     this.spill = null;
+    this.utvidelser = []; // id-ene til utvidelsene verten har valgt
     this.opptelling = null; // null, 'pågår' eller 'ferdig': sluttellingen som vises på skjermen
     this.sistAktiv = Date.now();
   }
@@ -41,7 +45,7 @@ export class Rom {
   leggTilSpiller() {
     if (this.spill) return null;
     // Er lobbyen full, tar den nye spilleren over plassen til en som har koblet fra
-    if (this.spillere.length >= MAKS_SPILLERE) {
+    if (this.spillere.length >= this.maksSpillere) {
       const borte = this.spillere.find((s) => !s.tilkoblet);
       if (!borte) return null;
       this.fjernSpiller(borte.id);
@@ -57,6 +61,19 @@ export class Rom {
   ledigsteSide(utenom = null) {
     const antall = (p) => this.spillere.filter((s) => s !== utenom && s.plass === p).length;
     return PLASSER.reduce((best, p) => (antall(p) < antall(best) ? p : best));
+  }
+
+  get maksSpillere() {
+    return this.utvidelser.includes('gjestgiveri') ? MAKS_SPILLERE + 1 : MAKS_SPILLERE;
+  }
+
+  // Verten velger utvidelser i lobbyen. Gjestgiveri kan ikke velges bort med 6 spillere inne.
+  settUtvidelser(id, liste) {
+    if (this.spill || this.vert?.id !== id || !Array.isArray(liste)) return false;
+    const nye = UTVIDELSER.map((u) => u.id).filter((u) => liste.includes(u));
+    if (!nye.includes('gjestgiveri') && this.spillere.length > MAKS_SPILLERE) return false;
+    this.utvidelser = nye;
+    return true;
   }
 
   // Den første spilleren i lobbyen er verten og den eneste som kan starte spillet
@@ -89,7 +106,7 @@ export class Rom {
 
   start(id) {
     if (this.spill || this.spillere.length < MIN_SPILLERE || this.vert?.id !== id) return false;
-    this.spill = new Spill(this.spillere.map(({ id, navn, farge }) => ({ id, navn, farge })));
+    this.spill = new Spill(this.spillere.map(({ id, navn, farge }) => ({ id, navn, farge })), { utvidelser: this.utvidelser });
     return true;
   }
 
@@ -100,7 +117,7 @@ export class Rom {
   }
 
   // Handlinger fra mobilen. Bare spilleren som har tur kan gjøre noe.
-  handling(id, { type, retning, del }) {
+  handling(id, { type, retning, del, stor }) {
     const spill = this.spill;
     if (!spill || spill.fase === 'slutt') return false;
     if (spill.aktivSpiller.id !== id) return false;
@@ -121,7 +138,7 @@ export class Rom {
       case 'velg':
         return spill.velgDel(del ?? null);
       case 'viking':
-        return spill.settViking(del ?? null);
+        return spill.settViking(del ?? null, Boolean(stor));
       default:
         return false;
     }
@@ -135,7 +152,9 @@ export class Rom {
       vertId: this.vert?.id ?? null,
       opptelling: this.opptelling,
       minSpillere: MIN_SPILLERE,
-      maksSpillere: MAKS_SPILLERE,
+      maksSpillere: this.maksSpillere,
+      utvidelser: this.utvidelser,
+      katalog: { grunn: ANTALL.grunn, utvidelser: UTVIDELSER },
       farger: FARGER,
       spill: this.spill?.tilstand() ?? null,
     };

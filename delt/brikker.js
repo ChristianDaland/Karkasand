@@ -1,6 +1,7 @@
 // Brikketypene i Karkasand, tegnet med nord øverst.
 //
-// kanter: [nord, øst, sør, vest], hver av dem 'borg', 'vei' eller 'eng'.
+// kanter: [nord, øst, sør, vest], hver av dem 'borg', 'vei', 'eng' eller 'elv'.
+// utvidelse: 'elva' eller 'gjestgiveri' for brikkene fra utvidelsene (se UTVIDELSER).
 //
 // deler: de sammenhengende områdene på brikken. Hver kant er delt i tre
 // porter, nummerert 0–2 med klokka rundt brikken:
@@ -12,6 +13,9 @@
 //   punkt:     hvor en viking står på delen (0–1, kanonisk retning)
 //   borger:    for eng: indeksene til borgdelene enga grenser til
 //   runestein: borgdelen har en runestein (bonuspoeng)
+//   gjestgiveri: veien har et gjestgiveri (dobbelt for ferdig vei, ingenting for uferdig)
+//   storhov:   borgen har et storhov (tre ganger for ferdig borg, ingenting for uferdig)
+// En elv bruker midtporten som en vei, men er ikke et område man kan sette vikinger i.
 
 const alle = (side) => [`${side}0`, `${side}1`, `${side}2`];
 
@@ -219,8 +223,279 @@ export const BRIKKER = [
       { type: 'eng', porter: ['V2', 'N0'], punkt: [0.2, 0.2], borger: [] },
     ],
   },
+
+  // ---------- Utvidelse: Elva ----------
+  // Elvebrikkene legges først, fra kilden til vatnet. Elv møter bare elv.
+  {
+    id: 'R1', navn: 'Kilden', antall: 1, utvidelse: 'elva', kilde: true, kanter: ['eng', 'eng', 'eng', 'elv'],
+    deler: [
+      { type: 'elv', porter: ['V1'], punkt: [0.3, 0.5] },
+      { type: 'eng', porter: [...alle('N'), ...alle('Ø'), ...alle('S'), 'V0', 'V2'], punkt: [0.66, 0.3], borger: [] },
+    ],
+  },
+  {
+    id: 'R2', navn: 'Vatnet', antall: 1, utvidelse: 'elva', innsjo: true, kanter: ['eng', 'eng', 'eng', 'elv'],
+    deler: [
+      { type: 'elv', porter: ['V1'], punkt: [0.4, 0.5] },
+      { type: 'eng', porter: [...alle('N'), ...alle('Ø'), ...alle('S'), 'V0', 'V2'], punkt: [0.8, 0.2], borger: [] },
+    ],
+  },
+  {
+    id: 'R3', navn: 'Elva', antall: 2, utvidelse: 'elva', kanter: ['eng', 'elv', 'eng', 'elv'],
+    deler: [
+      { type: 'elv', porter: ['Ø1', 'V1'], punkt: [0.5, 0.5] },
+      { type: 'eng', porter: ['V2', ...alle('N'), 'Ø0'], punkt: [0.5, 0.18], borger: [] },
+      { type: 'eng', porter: ['Ø2', ...alle('S'), 'V0'], punkt: [0.5, 0.82], borger: [] },
+    ],
+  },
+  {
+    id: 'R4', navn: 'Elvekroken', antall: 2, utvidelse: 'elva', kanter: ['eng', 'eng', 'elv', 'elv'],
+    deler: [
+      { type: 'elv', porter: ['S1', 'V1'], punkt: [0.375, 0.625] },
+      { type: 'eng', porter: [...alle('N'), ...alle('Ø'), 'S0', 'V2'], punkt: [0.66, 0.36], borger: [] },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.14, 0.86], borger: [] },
+    ],
+  },
+  {
+    id: 'R5', navn: 'Borgene ved elva', antall: 1, utvidelse: 'elva', kanter: ['borg', 'elv', 'borg', 'elv'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.5, 0.12] },
+      { type: 'borg', porter: alle('S'), punkt: [0.5, 0.88] },
+      { type: 'elv', porter: ['Ø1', 'V1'], punkt: [0.5, 0.5] },
+      { type: 'eng', porter: ['V2', 'Ø0'], punkt: [0.15, 0.37], borger: [0] },
+      { type: 'eng', porter: ['Ø2', 'V0'], punkt: [0.85, 0.63], borger: [1] },
+    ],
+  },
+  {
+    id: 'R6', navn: 'Hjørneborgen ved elva', antall: 1, utvidelse: 'elva', kanter: ['borg', 'borg', 'elv', 'elv'],
+    deler: [
+      { type: 'borg', porter: [...alle('N'), ...alle('Ø')], punkt: [0.72, 0.28] },
+      { type: 'elv', porter: ['S1', 'V1'], punkt: [0.3, 0.7] },
+      { type: 'eng', porter: ['S0', 'V2'], punkt: [0.6, 0.78], borger: [0] },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.12, 0.88], borger: [] },
+    ],
+  },
+  {
+    id: 'R7', navn: 'Vadestedet', antall: 1, utvidelse: 'elva', kanter: ['borg', 'elv', 'vei', 'elv'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.5, 0.12] },
+      { type: 'elv', porter: ['Ø1', 'V1'], punkt: [0.5, 0.5] },
+      { type: 'vei', porter: ['S1'], punkt: [0.5, 0.8] },
+      { type: 'eng', porter: ['V2', 'Ø0'], punkt: [0.15, 0.37], borger: [0] },
+      { type: 'eng', porter: ['Ø2', 'S0'], punkt: [0.8, 0.8], borger: [] },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.2, 0.8], borger: [] },
+    ],
+  },
+  {
+    id: 'R8', navn: 'Hovet ved brua', antall: 1, utvidelse: 'elva', kanter: ['eng', 'elv', 'vei', 'elv'],
+    deler: [
+      { type: 'hov', porter: [], punkt: [0.5, 0.24] },
+      { type: 'elv', porter: ['Ø1', 'V1'], punkt: [0.5, 0.55] },
+      { type: 'vei', porter: ['S1'], punkt: [0.5, 0.84] },
+      { type: 'eng', porter: ['V2', ...alle('N'), 'Ø0'], punkt: [0.16, 0.2], borger: [] },
+      { type: 'eng', porter: ['Ø2', 'S0'], punkt: [0.8, 0.84], borger: [] },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.2, 0.84], borger: [] },
+    ],
+  },
+  {
+    id: 'R9', navn: 'Vei og elv i sving', antall: 1, utvidelse: 'elva', kanter: ['vei', 'vei', 'elv', 'elv'],
+    deler: [
+      { type: 'vei', porter: ['N1', 'Ø1'], punkt: [0.66, 0.34] },
+      { type: 'elv', porter: ['S1', 'V1'], punkt: [0.34, 0.66] },
+      { type: 'eng', porter: ['N2', 'Ø0'], punkt: [0.88, 0.12], borger: [] },
+      { type: 'eng', porter: ['N0', 'V2', 'Ø2', 'S0'], punkt: [0.5, 0.5], borger: [] },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.12, 0.88], borger: [] },
+    ],
+  },
+  {
+    id: 'R10', navn: 'Brua', antall: 1, utvidelse: 'elva', kanter: ['vei', 'elv', 'vei', 'elv'],
+    deler: [
+      { type: 'vei', porter: ['N1', 'S1'], punkt: [0.5, 0.24] },
+      { type: 'elv', porter: ['Ø1', 'V1'], punkt: [0.5, 0.5] },
+      { type: 'eng', porter: ['V2', 'N0'], punkt: [0.2, 0.2], borger: [] },
+      { type: 'eng', porter: ['N2', 'Ø0'], punkt: [0.8, 0.2], borger: [] },
+      { type: 'eng', porter: ['Ø2', 'S0'], punkt: [0.8, 0.8], borger: [] },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.2, 0.8], borger: [] },
+    ],
+  },
+
+  // ---------- Utvidelse: Gjestgiveri og storhov ----------
+  {
+    id: 'G1', navn: 'Storhovet', antall: 2, utvidelse: 'gjestgiveri', kanter: ['borg', 'borg', 'borg', 'borg'],
+    deler: [
+      { type: 'borg', porter: [...alle('N'), ...alle('Ø'), ...alle('S'), ...alle('V')], punkt: [0.5, 0.84], storhov: true },
+    ],
+  },
+  {
+    id: 'G2', navn: 'Firborgen', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'borg', 'borg', 'borg'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.5, 0.1] },
+      { type: 'borg', porter: alle('Ø'), punkt: [0.9, 0.5] },
+      { type: 'borg', porter: alle('S'), punkt: [0.5, 0.9] },
+      { type: 'borg', porter: alle('V'), punkt: [0.1, 0.5] },
+      { type: 'eng', porter: [], punkt: [0.5, 0.5], borger: [0, 1, 2, 3] },
+    ],
+  },
+  {
+    id: 'G3', navn: 'Treborgen', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'borg', 'borg', 'eng'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.5, 0.1] },
+      { type: 'borg', porter: alle('Ø'), punkt: [0.9, 0.5] },
+      { type: 'borg', porter: alle('S'), punkt: [0.5, 0.9] },
+      { type: 'eng', porter: alle('V'), punkt: [0.35, 0.5], borger: [0, 1, 2] },
+    ],
+  },
+  {
+    id: 'G4', navn: 'Runehjørnet', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'borg', 'borg', 'eng'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.4, 0.1] },
+      { type: 'borg', porter: [...alle('Ø'), ...alle('S')], punkt: [0.72, 0.72], runestein: true },
+      { type: 'eng', porter: alle('V'), punkt: [0.25, 0.5], borger: [0, 1] },
+    ],
+  },
+  {
+    id: 'G5', navn: 'Gjestgiveriet ved muren', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'borg', 'eng', 'vei'],
+    deler: [
+      { type: 'borg', porter: [...alle('N'), ...alle('Ø')], punkt: [0.75, 0.25] },
+      { type: 'vei', porter: ['V1'], punkt: [0.22, 0.47], gjestgiveri: true },
+      { type: 'eng', porter: ['V2'], punkt: [0.1, 0.2], borger: [0] },
+      { type: 'eng', porter: ['V0', ...alle('S')], punkt: [0.4, 0.8], borger: [0] },
+    ],
+  },
+  {
+    id: 'G6', navn: 'Porten i hjørnet', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'borg', 'vei', 'eng'],
+    deler: [
+      { type: 'borg', porter: [...alle('N'), ...alle('Ø')], punkt: [0.75, 0.25] },
+      { type: 'vei', porter: ['S1'], punkt: [0.5, 0.78] },
+      { type: 'eng', porter: ['S0'], punkt: [0.78, 0.88], borger: [0] },
+      { type: 'eng', porter: ['S2', ...alle('V')], punkt: [0.25, 0.6], borger: [0] },
+    ],
+  },
+  {
+    id: 'G7', navn: 'Runeborgen ved gjestgiveriet', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'borg', 'vei', 'vei'],
+    deler: [
+      { type: 'borg', porter: [...alle('N'), ...alle('Ø')], punkt: [0.75, 0.25], runestein: true },
+      { type: 'vei', porter: ['S1', 'V1'], punkt: [0.375, 0.625], gjestgiveri: true },
+      { type: 'eng', porter: ['S0', 'V2'], punkt: [0.6, 0.72], borger: [0] },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.14, 0.86], borger: [] },
+    ],
+  },
+  {
+    id: 'G8', navn: 'Storkappa', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'eng', 'eng', 'eng'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.5, 0.16] },
+      { type: 'eng', porter: [...alle('Ø'), ...alle('S'), ...alle('V')], punkt: [0.5, 0.72], borger: [0] },
+    ],
+  },
+  {
+    id: 'G9', navn: 'Veien til borgen', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'eng', 'vei', 'eng'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.5, 0.12] },
+      { type: 'vei', porter: ['S1'], punkt: [0.5, 0.72] },
+      { type: 'eng', porter: [...alle('Ø'), 'S0'], punkt: [0.78, 0.6], borger: [0] },
+      { type: 'eng', porter: ['S2', ...alle('V')], punkt: [0.22, 0.6], borger: [0] },
+    ],
+  },
+  {
+    id: 'G10', navn: 'Gjestgiveriet under borgen', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'eng', 'vei', 'vei'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.5, 0.13] },
+      { type: 'vei', porter: ['S1', 'V1'], punkt: [0.375, 0.625], gjestgiveri: true },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.14, 0.86], borger: [] },
+      { type: 'eng', porter: [...alle('Ø'), 'S0', 'V2'], punkt: [0.7, 0.55], borger: [0] },
+    ],
+  },
+  {
+    id: 'G11', navn: 'Tvillingportene', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'vei', 'borg', 'vei'],
+    deler: [
+      { type: 'borg', porter: [...alle('N'), ...alle('S')], punkt: [0.5, 0.25], runestein: true },
+      { type: 'vei', porter: ['Ø1'], punkt: [0.86, 0.5] },
+      { type: 'vei', porter: ['V1'], punkt: [0.14, 0.5] },
+      { type: 'eng', porter: ['Ø0'], punkt: [0.9, 0.3], borger: [0] },
+      { type: 'eng', porter: ['Ø2'], punkt: [0.9, 0.7], borger: [0] },
+      { type: 'eng', porter: ['V0'], punkt: [0.1, 0.7], borger: [0] },
+      { type: 'eng', porter: ['V2'], punkt: [0.1, 0.3], borger: [0] },
+    ],
+  },
+  {
+    id: 'G12', navn: 'Krysset mellom borgene', antall: 1, utvidelse: 'gjestgiveri', kanter: ['borg', 'vei', 'borg', 'vei'],
+    deler: [
+      { type: 'borg', porter: alle('N'), punkt: [0.5, 0.1] },
+      { type: 'borg', porter: alle('S'), punkt: [0.5, 0.9] },
+      { type: 'vei', porter: ['Ø1'], punkt: [0.8, 0.5] },
+      { type: 'vei', porter: ['V1'], punkt: [0.2, 0.5] },
+      { type: 'eng', porter: ['V2'], punkt: [0.2, 0.32], borger: [0] },
+      { type: 'eng', porter: ['Ø0'], punkt: [0.8, 0.32], borger: [0] },
+      { type: 'eng', porter: ['Ø2'], punkt: [0.8, 0.68], borger: [1] },
+      { type: 'eng', porter: ['V0'], punkt: [0.2, 0.68], borger: [1] },
+    ],
+  },
+  {
+    id: 'G13', navn: 'Gjestgiveriet i svingen', antall: 1, utvidelse: 'gjestgiveri', kanter: ['eng', 'eng', 'vei', 'vei'],
+    deler: [
+      { type: 'vei', porter: ['S1', 'V1'], punkt: [0.375, 0.625], gjestgiveri: true },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.14, 0.86], borger: [] },
+      { type: 'eng', porter: [...alle('N'), ...alle('Ø'), 'S0', 'V2'], punkt: [0.66, 0.4], borger: [] },
+    ],
+  },
+  {
+    id: 'G14', navn: 'Gjestgiveriet', antall: 1, utvidelse: 'gjestgiveri', kanter: ['eng', 'vei', 'eng', 'vei'],
+    deler: [
+      { type: 'vei', porter: ['Ø1', 'V1'], punkt: [0.5, 0.5], gjestgiveri: true },
+      { type: 'eng', porter: ['V2', ...alle('N'), 'Ø0'], punkt: [0.5, 0.18], borger: [] },
+      { type: 'eng', porter: ['Ø2', ...alle('S'), 'V0'], punkt: [0.5, 0.82], borger: [] },
+    ],
+  },
+  {
+    id: 'G15', navn: 'Hovet på veien', antall: 1, utvidelse: 'gjestgiveri', kanter: ['eng', 'vei', 'eng', 'vei'],
+    deler: [
+      { type: 'hov', porter: [], punkt: [0.5, 0.42] },
+      { type: 'vei', porter: ['Ø1'], punkt: [0.86, 0.5] },
+      { type: 'vei', porter: ['V1'], punkt: [0.14, 0.5] },
+      { type: 'eng', porter: ['V2', ...alle('N'), 'Ø0'], punkt: [0.5, 0.1], borger: [] },
+      { type: 'eng', porter: ['Ø2', ...alle('S'), 'V0'], punkt: [0.5, 0.9], borger: [] },
+    ],
+  },
+  {
+    id: 'G16', navn: 'Gjestgiveriet ved veidelet', antall: 1, utvidelse: 'gjestgiveri', kanter: ['eng', 'vei', 'vei', 'vei'],
+    deler: [
+      { type: 'vei', porter: ['Ø1'], punkt: [0.82, 0.5], gjestgiveri: true },
+      { type: 'vei', porter: ['S1'], punkt: [0.5, 0.82] },
+      { type: 'vei', porter: ['V1'], punkt: [0.18, 0.5] },
+      { type: 'eng', porter: ['V2', ...alle('N'), 'Ø0'], punkt: [0.5, 0.3], borger: [] },
+      { type: 'eng', porter: ['Ø2', 'S0'], punkt: [0.78, 0.78], borger: [] },
+      { type: 'eng', porter: ['S2', 'V0'], punkt: [0.22, 0.78], borger: [] },
+    ],
+  },
+  {
+    id: 'G17', navn: 'Dobbelsvingen', antall: 1, utvidelse: 'gjestgiveri', kanter: ['vei', 'vei', 'vei', 'vei'],
+    deler: [
+      { type: 'vei', porter: ['N1', 'V1'], punkt: [0.3, 0.3] },
+      { type: 'vei', porter: ['Ø1', 'S1'], punkt: [0.7, 0.7] },
+      { type: 'eng', porter: ['V2', 'N0'], punkt: [0.1, 0.1], borger: [] },
+      { type: 'eng', porter: ['N2', 'Ø0', 'S2', 'V0'], punkt: [0.5, 0.5], borger: [] },
+      { type: 'eng', porter: ['Ø2', 'S0'], punkt: [0.9, 0.9], borger: [] },
+    ],
+  },
+];
+
+// Utvidelsene man kan velge i lobbyen. Grunnspillet er alltid med.
+export const UTVIDELSER = [
+  {
+    id: 'elva', navn: 'Elva',
+    om: 'Spillet starter ved kilden. Elvebrikkene legges først, og elva renner ut i vatnet før resten av brikkene kommer.',
+  },
+  {
+    id: 'gjestgiveri', navn: 'Gjestgiveri og storhov',
+    om: 'Gjestgiverier gir dobbelt for ferdige veier og storhov tre ganger for ferdige borger, men ingenting hvis de er uferdige. Hver spiller får en storviking som teller som to, og det blir plass til en sjette spiller.',
+  },
 ];
 
 export const BRIKKE = Object.fromEntries(BRIKKER.map((b) => [b.id, b]));
 
-export const ANTALL_BRIKKER = BRIKKER.reduce((sum, b) => sum + b.antall, 0); // 72
+export const utvidelseAv = (b) => b.utvidelse ?? 'grunn';
+
+// Antall brikker i grunnspillet (72) og i hver utvidelse
+export const ANTALL = BRIKKER.reduce((tall, b) => ({ ...tall, [utvidelseAv(b)]: (tall[utvidelseAv(b)] ?? 0) + b.antall }), {});
+export const ANTALL_BRIKKER = ANTALL.grunn;
+for (const u of UTVIDELSER) u.antall = ANTALL[u.id];

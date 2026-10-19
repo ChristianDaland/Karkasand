@@ -187,3 +187,12 @@ button.primar { background: var(--gull); color: #1b140d; }
 
 #telles, #sluttresultat { display: grid; gap: 14px; width: 100%; max-width: 420px; justify-items: center; }
 #sluttresultat .spillerliste { width: 100%; }
+
+.utvidelser { display: grid; gap: 8px; }
+.utvidelse { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--kort); }
+.utvidelse input { width: 24px; height: 24px; margin-top: 2px; accent-color: var(--gull); flex: none; }
+.utvidelse small { color: var(--gull); }
+.utvidelse em { color: var(--dempet); font-style: normal; font-size: 0.9rem; }
+.hjelp.venstre { text-align: left; margin-top: 8px; }
+#storviking.valgt { background: var(--gull); color: #1b140d; }
+.topp .stor svg { width: 1.35em; height: 1.35em; }

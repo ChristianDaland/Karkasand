@@ -89,6 +89,14 @@ for (const knapp of document.querySelectorAll('[data-plass]')) {
   knapp.addEventListener('click', () => socket.emit('mobil:oppsett', { plass: knapp.dataset.plass }));
 }
 
+// Storvikingen: velges før man trykker «Sett ut viking». Tilbakestilles hver tur.
+let brukStor = false;
+$('storviking').addEventListener('click', () => {
+  brukStor = !brukStor;
+  $('storviking').classList.toggle('valgt', brukStor);
+  $('storviking').textContent = brukStor ? 'Storvikingen er valgt' : 'Bruk storvikingen';
+});
+
 // Bare verten (den første spilleren) kan starte, og må bekrefte at alle er klare
 $('start').addEventListener('click', () => {
   $('navn').blur();
@@ -153,6 +161,8 @@ function visOppsett(meg) {
   );
   if ($('bekreft-start').open) visBekreftListe();
 
+  visUtvidelser(meg);
+
   const erVert = meg.id === rom.vertId;
   const vert = rom.spillere.find((s) => s.id === rom.vertId);
   const nok = rom.spillere.length >= rom.minSpillere;
@@ -164,6 +174,35 @@ function visOppsett(meg) {
   else $('start-hjelp').textContent = `Skriv navnet ditt og velg farge. ${vert?.navn ?? 'Verten'} starter spillet når alle er klare.`;
 }
 
+// Verten krysser av for utvidelser. De andre ser hva som er valgt.
+function visUtvidelser(meg) {
+  const erVert = meg.id === rom.vertId;
+  const liste = $('utvidelser');
+  if (liste.children.length !== rom.katalog.utvidelser.length) {
+    liste.replaceChildren(...rom.katalog.utvidelser.map((u) => {
+      const rad = elementFra(`<label class="utvidelse"><input type="checkbox"><span><b></b> <small></small><br><em></em></span></label>`);
+      rad.querySelector('input').value = u.id;
+      rad.querySelector('b').textContent = u.navn;
+      rad.querySelector('small').textContent = `+${u.antall} brikker`;
+      rad.querySelector('em').textContent = u.om;
+      rad.querySelector('input').addEventListener('change', () => {
+        const valgt = [...liste.querySelectorAll('input:checked')].map((i) => i.value);
+        socket.emit('mobil:utvidelser', valgt);
+      });
+      return rad;
+    }));
+  }
+  for (const input of liste.querySelectorAll('input')) {
+    input.checked = rom.utvidelser.includes(input.value);
+    input.disabled = !erVert;
+  }
+  const valgte = rom.katalog.utvidelser.filter((u) => rom.utvidelser.includes(u.id));
+  const sum = rom.katalog.grunn + valgte.reduce((a, u) => a + u.antall, 0);
+  $('brikketall').textContent = valgte.length
+    ? `${[rom.katalog.grunn, ...valgte.map((u) => u.antall)].join(' + ')} = ${sum} brikker`
+    : `${sum} brikker (grunnspillet)${erVert ? '' : ' · verten velger utvidelser'}`;
+}
+
 // ---------- Spillet ----------
 
 for (const knapp of document.querySelectorAll('[data-retning]')) {
@@ -173,7 +212,10 @@ $('roter').addEventListener('click', () => handling({ type: 'roter' }));
 $('neste').addEventListener('click', () => handling({ type: 'neste' }));
 $('legg').addEventListener('click', () => handling({ type: 'legg' }));
 $('ingen-viking').addEventListener('click', () => handling({ type: 'viking', del: null }));
-$('sett-viking').addEventListener('click', () => handling({ type: 'viking', del: rom.spill.aktiv?.valgtDel ?? null }));
+$('sett-viking').addEventListener('click', () => {
+  const jeg = rom.spill.spillere.find((s) => s.id === spillerId);
+  handling({ type: 'viking', del: rom.spill.aktiv?.valgtDel ?? null, stor: brukStor || jeg.vikinger === 0 });
+});
 $('nytt-spill').addEventListener('click', () => socket.emit('mobil:nytt-spill'));
 $('hopp-over').addEventListener('click', () => socket.emit('mobil:hopp-over'));
 
@@ -204,7 +246,8 @@ function visSpill(meg) {
   $('min-farge').style.background = jeg.farge;
   $('mitt-navn').textContent = jeg.navn;
   $('mine-poeng').textContent = jeg.poeng;
-  $('mine-vikinger').innerHTML = `${vikingSvg(jeg.farge)} ${jeg.vikinger}`;
+  $('mine-vikinger').innerHTML = `${vikingSvg(jeg.farge)} ${jeg.vikinger}` +
+    (spill.utvidelser?.includes('gjestgiveri') ? ` <span class="stor">${vikingSvg(jeg.farge)}</span> ${jeg.storvikinger}` : '');
 
   const aktiv = spill.aktiv;
   const navnPaaTur = spill.spillere[spill.tur].navn;
@@ -215,6 +258,7 @@ function visSpill(meg) {
   else status.textContent = `${navnPaaTur} sin tur …`;
 
   if (harTur && !haddeTur) navigator.vibrate?.([60, 40, 60]);
+  if (!(harTur && spill.fase === 'viking') && brukStor) $('storviking').click(); // ny tur: vanlig viking igjen
   haddeTur = harTur;
 
   // Forhåndsvisning, snudd slik spilleren ser brettet fra sin plass
@@ -254,6 +298,8 @@ function visSpill(meg) {
   $('viking-kontroll').hidden = !(harTur && spill.fase === 'viking');
   $('legg').disabled = !aktiv?.passer;
   $('sett-viking').disabled = aktiv?.valgtDel == null;
+  // Storvikingen kan velges når den er hjemme; har man bare den igjen, brukes den uansett
+  $('storviking').hidden = !(harTur && spill.fase === 'viking' && jeg.storvikinger > 0 && jeg.vikinger > 0);
 }
 
 function visSlutt(meg) {
