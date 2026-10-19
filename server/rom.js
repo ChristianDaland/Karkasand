@@ -135,6 +135,8 @@ export class Rom {
         return spill.roter();
       case 'neste':
         return spill.nestePlass();
+      case 'trekk':
+        return spill.trekkBrikke();
       case 'legg':
         return spill.legg();
       case 'velg':

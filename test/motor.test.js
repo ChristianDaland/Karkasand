@@ -110,6 +110,7 @@ test('man kan ikke sette viking på en vei som allerede er tatt', () => {
   const spill = nyttSpill();
   leggDirekte(spill, 'V', 1, 0, 1, 0); // Astrid: sving øst for start, viking på veien
   spill.aktiv = { brikke: { id: 'V', nr: 99 }, x: -1, y: 0, rot: 2 };
+  spill.fase = 'legg';
   spill.bunke.push({ id: 'U', nr: 98 });
   assert.ok(spill.legg()); // Bjørn: sving vest for start, samme vei
   assert.ok(!spill.vikingDeler().includes(0));
@@ -165,6 +166,8 @@ test('mange hele spill kan spilles ferdig uten feil', () => {
     let trekk = 0;
     while (spill.fase !== 'slutt') {
       assert.ok(trekk++ < 200, 'spillet stopper ikke');
+      if (spill.fase === 'trekk') assert.ok(spill.trekkBrikke());
+      if (spill.fase === 'slutt') break;
       assert.equal(spill.fase, 'legg');
       const plasser = spill.gyldigePlasser(spill.aktiv.brikke.id);
       const p = plasser[Math.floor(tilfeldig() * plasser.length)];
@@ -211,6 +214,8 @@ test('sluttellingen lagres område for område, og poengfordelingen går opp', (
   const tilfeldig = frø(7);
   const spill = new Spill(['A', 'B', 'C', 'D', 'E'].map((navn) => ({ navn })), { tilfeldig });
   while (spill.fase !== 'slutt') {
+    if (spill.fase === 'trekk') spill.trekkBrikke();
+    if (spill.fase === 'slutt') break;
     const plasser = spill.gyldigePlasser(spill.aktiv.brikke.id);
     const p = plasser[Math.floor(tilfeldig() * plasser.length)];
     Object.assign(spill.aktiv, { x: p.x, y: p.y, rot: p.rot[0] });
@@ -308,6 +313,8 @@ test('et helt parti med begge utvidelsene og seks spillere går opp', () => {
   const spill = new Spill(['A', 'B', 'C', 'D', 'E', 'F'].map((navn) => ({ navn })), { tilfeldig, utvidelser: ['elva', 'gjestgiveri'] });
   let trekk = 0;
   while (spill.fase !== 'slutt') {
+    if (spill.fase === 'trekk') spill.trekkBrikke();
+    if (spill.fase === 'slutt') break;
     const plasser = spill.gyldigePlasser(spill.aktiv.brikke.id);
     const p = plasser[Math.floor(tilfeldig() * plasser.length)];
     Object.assign(spill.aktiv, { x: p.x, y: p.y, rot: p.rot[0] });
@@ -352,24 +359,28 @@ test('angre brikken mens man velger viking', () => {
   assert.deepEqual([spill.aktiv.x, spill.aktiv.y], [0, -1]);
 });
 
-test('angre et helt trekk med viking og poeng, helt til neste spiller legger brikke', () => {
+test('angre et helt trekk med viking og poeng, helt til neste spiller trekker', () => {
   const spill = nyttSpill();
   const bunke = spill.bunke.length;
   leggDirekte(spill, 'E', 0, -1, 2, 0); // Astrid lukker borgen og får 4 poeng
   assert.equal(spill.spillere[0].poeng, 4);
   assert.equal(spill.tur, 1);
-  spill.flytt(1); // Bjørn flytter markøren; det hindrer ikke angring
+  assert.equal(spill.fase, 'trekk'); // Bjørn har ikke trukket ennå
+  assert.equal(spill.aktiv, null);
   assert.equal(spill.tilstand().kanAngre, 0);
+  assert.equal(spill.angre(1), false);
   assert.ok(spill.angre(0));
   assert.equal(spill.tur, 0);
+  assert.equal(spill.fase, 'legg');
   assert.equal(spill.spillere[0].poeng, 0);
   assert.equal(spill.spillere[0].vikinger, 7);
   assert.equal(spill.brikke(0, -1), undefined);
-  assert.equal(spill.bunke.length, bunke + 1); // som før trekket (leggDirekte la én brikke i bunken), med Bjørns brikke tilbake
+  assert.equal(spill.bunke.length, bunke + 1); // som før trekket (leggDirekte la én brikke i bunken)
   assert.equal(spill.angre(0), false); // bare ett steg tilbake
 
   leggDirekte(spill, 'E', 0, -1, 2); // Astrid legger igjen, uten viking
-  leggDirekte(spill, 'U', 1, 0, 1); // Bjørn legger sin brikke
+  assert.ok(spill.trekkBrikke()); // Bjørn trekker
+  assert.equal(spill.fase, 'legg');
   assert.equal(spill.angre(0), false); // nå er det for sent for Astrid
-  assert.equal(spill.tilstand().kanAngre, 1);
+  assert.equal(spill.tilstand().kanAngre, null);
 });

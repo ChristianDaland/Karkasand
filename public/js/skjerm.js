@@ -172,7 +172,7 @@ function visPaneler(rom) {
     } else stor?.remove();
 
     let turTekst = '';
-    if (harTur) turTekst = spill.fase === 'viking' ? 'Setter ut viking …' : 'Legger brikke …';
+    if (harTur) turTekst = { viking: 'Setter ut viking …', trekk: 'Trekker brikke …' }[spill.fase] ?? 'Legger brikke …';
     panel.querySelector('.tur-tekst').textContent = turTekst;
     panel.querySelector('.frakoblet').hidden = info.tilkoblet !== false;
 

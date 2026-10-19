@@ -349,10 +349,21 @@ export class Spill {
     return true;
   }
 
+  // Neste spiller må selv trekke brikken sin (fase 'trekk'). Til da kan forrige spiller
+  // angre. Er bunken tom, er spillet slutt med en gang.
   fullforTur() {
     this.tellFullforte();
     this.tur = (this.tur + 1) % this.spillere.length;
+    if (!this.bunke.length) return this.trekk();
+    this.fase = 'trekk';
+    this.aktiv = null;
+  }
+
+  trekkBrikke() {
+    if (this.fase !== 'trekk') return false;
+    this.angrepunkt = null; // nå er det for sent å angre forrige trekk
     this.trekk();
+    return true;
   }
 
   // ---------- Angre ----------
@@ -368,7 +379,7 @@ export class Spill {
   // Spilleren som la siste brikke, kan ta hele trekket tilbake: brikken, vikingen og
   // poengene. Brikken blir liggende som aktiv brikke der den ble lagt, så den kan flyttes.
   angre(spiller) {
-    if (!this.angrepunkt || this.angrepunkt.spiller !== spiller || this.fase === 'slutt') return false;
+    if (!this.angrepunkt || this.angrepunkt.spiller !== spiller || !['viking', 'trekk'].includes(this.fase)) return false;
     Object.assign(this, structuredClone(this.angrepunkt.tilstand));
     this.angrepunkt = null;
     this.hendelse({ type: 'angret', spiller });
@@ -521,7 +532,7 @@ export class Spill {
       resultat: this.resultat,
       sluttposter: this.fase === 'slutt' ? this.sluttposter : [],
       utvidelser: this.utvidelser,
-      kanAngre: this.fase === 'slutt' ? null : this.angrepunkt?.spiller ?? null,
+      kanAngre: ['viking', 'trekk'].includes(this.fase) ? this.angrepunkt?.spiller ?? null : null,
     };
   }
 }

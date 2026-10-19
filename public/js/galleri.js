@@ -28,6 +28,8 @@ function tilfeldigBrett() {
   const spill = new Spill(spillere, { utvidelser: UTVIDELSER.map((u) => u.id) });
   const medVikinger = $('vis-vikinger').checked;
   while (spill.fase !== 'slutt' && spill.bunke.length > 0) {
+    if (spill.fase === 'trekk') spill.trekkBrikke();
+    if (spill.fase !== 'legg') break;
     const plasser = spill.gyldigePlasser(spill.aktiv.brikke.id);
     const p = plasser[Math.floor(Math.random() * plasser.length)];
     Object.assign(spill.aktiv, { x: p.x, y: p.y, rot: p.rot[Math.floor(Math.random() * p.rot.length)] });

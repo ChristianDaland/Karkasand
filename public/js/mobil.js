@@ -218,6 +218,7 @@ $('sett-viking').addEventListener('click', () => {
 });
 $('nytt-spill').addEventListener('click', () => socket.emit('mobil:nytt-spill'));
 $('angre-brikke').addEventListener('click', () => handling({ type: 'angre' }));
+$('trekk').addEventListener('click', () => handling({ type: 'trekk' }));
 $('angre-trekk').addEventListener('click', () => handling({ type: 'angre' }));
 $('hopp-over').addEventListener('click', () => socket.emit('mobil:hopp-over'));
 
@@ -228,7 +229,7 @@ document.addEventListener('keydown', (e) => {
   if (TASTER[e.key]) handling({ type: 'flytt', retning: TASTER[e.key] });
   else if (e.key === 'r' || e.key === ' ') handling({ type: 'roter' });
   else if (e.key === 'n') handling({ type: 'neste' });
-  else if (e.key === 'Enter') (rom.spill.fase === 'viking' ? $('sett-viking') : $('legg')).click();
+  else if (e.key === 'Enter') ({ viking: $('sett-viking'), trekk: $('trekk') }[rom.spill.fase] ?? $('legg')).click();
   else return;
   e.preventDefault();
 });
@@ -255,7 +256,9 @@ function visSpill(meg) {
   const navnPaaTur = spill.spillere[spill.tur].navn;
   const status = $('status');
   status.classList.toggle('din-tur', harTur);
-  if (harTur && spill.fase === 'legg') status.textContent = aktiv.passer ? 'Din tur! Brikken passer her.' : 'Din tur! Flytt eller roter brikken.';
+  if (harTur && spill.fase === 'trekk') status.textContent = 'Din tur! Trekk en brikke.';
+  else if (spill.fase === 'trekk') status.textContent = `${navnPaaTur} skal trekke …`;
+  else if (harTur && spill.fase === 'legg') status.textContent = aktiv.passer ? 'Din tur! Brikken passer her.' : 'Din tur! Flytt eller roter brikken.';
   else if (harTur) status.textContent = 'Vil du sette ut en viking?';
   else status.textContent = `${navnPaaTur} sin tur …`;
 
@@ -296,7 +299,8 @@ function visSpill(meg) {
     bilde.style.transform = `rotate(${vis.rot * 90}deg)`;
   }
 
-  // Den som la siste brikke, kan angre trekket til neste spiller har lagt sin
+  // Den som la siste brikke, kan angre trekket til neste spiller har trukket sin
+  $('trekk-kontroll').hidden = !(harTur && spill.fase === 'trekk');
   $('angre-trekk').hidden = !(spill.kanAngre === i && !harTur);
   $('legg-kontroll').hidden = !(harTur && spill.fase === 'legg');
   $('viking-kontroll').hidden = !(harTur && spill.fase === 'viking');
