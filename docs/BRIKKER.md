@@ -424,7 +424,7 @@ a dirt road enters at the exact middle of the left edge, curves smoothly and exi
 
 **Prompt:**
 ```
-three dirt roads from the exact middles of the left, right and bottom edges meet at a small farmyard with a stone well and a tiny storehouse in the center; open meadow on the top half
+a T-shaped road junction: one dirt road runs straight across the tile from the middle of the left edge to the middle of the right edge, and a second dirt road comes up from the middle of the bottom edge and ends at a small farmyard with a stone well in the center; no road goes north, the whole upper half is unbroken open meadow with a small storehouse
 ```
 
 ---

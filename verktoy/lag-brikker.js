@@ -29,9 +29,13 @@ const valg = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith
   .map((a) => a.slice(2).split('=')));
 const ider = process.argv.slice(2).filter((a) => !a.startsWith('--')).map((a) => a.toUpperCase());
 const seed = Number(valg.seed ?? 1066);
-// Brikker der standard-seed ga feil: B fikk en sti ned til kanten (har ingen vei),
-// og X fikk åtte veier i stedet for fire
-const SEED = { B: 7, X: 99 };
+// Brikker der standard-seed ga feil: B fikk en sti ned til kanten (har ingen vei), X fikk
+// åtte veier, H og I fikk borger av gress, og M og O fikk to runesteiner
+const SEED = { B: 7, X: 99, H: 42, I: 42, M: 99, O: 99 };
+// Eng som males på nytt som ren eng etter runde 1. W (tre veier) får ellers alltid en fjerde
+// vei mot nord, fordi kantkartet er tomt der og modellen ser brønn i krysset som firveiskryss.
+// «omrade» er rektangelet (x0,y0 x1,y1) som males på nytt; bare enga innenfor tas med.
+const RENSK_ENG = { W: { omrade: '420,0 604,430' } };
 const denoise = Number(valg.denoise ?? 1.0);
 const styrke = Number(valg.styrke ?? 1.0);
 const stoy = Number(valg.stoy ?? 0);
@@ -108,12 +112,56 @@ const sampler = (modell, prompt, latent, d, brikkeseed = seed) => ({
   },
 });
 
+const styrtModell = (kantbilde) => ({
+  patch: { class_type: 'ModelPatchLoader', inputs: { name: 'Z-Image-Turbo-Fun-Controlnet-Union-2.1-lite-2602-8steps.safetensors' } },
+  kant: { class_type: 'LoadImage', inputs: { image: kantbilde } },
+  styrt: {
+    class_type: 'ZImageFunControlnet',
+    inputs: { model: ['modell', 0], model_patch: ['patch', 0], vae: ['vae', 0], image: ['kant', 0], strength: styrke },
+  },
+});
+
 // Hvit der skissen har en av fargene, svart ellers
 const fargemaske = (skisse, farger, ut, ...etter) => magick(skisse, '-fuzz', '4%', '-fill', 'white',
   farger.flatMap((f) => ['-opaque', f]), '-fill', 'black', '+opaque', 'white', '-colorspace', 'gray', etter, ut);
 
 const skisseAv = (id) => `${ROT}kunst/skisser/${id}.png`;
 const filAv = (id) => (navn) => `${ARBEID}${id}_${navn}.png`;
+
+// Maler ett område av brikken på nytt med en egen prompt. Området (masken fil(navn), med
+// en myk utgave fil(navn + 'myk')) klippes ut og skaleres opp til ca. 1024 px, så modellen
+// ser det som et helt bilde. Under området legges skissen, så runden starter fra riktig farge.
+async function malPaaNytt(b, navn, prompt, d, { kontroll = true } = {}) {
+  const fil = filAv(b.id);
+  // Rammen rundt området. Svart kant først, ellers regnes et område som dekker hjørnene som bakgrunn.
+  const [, w, h, xr, yr] = execFileSync('convert', [fil(navn), '-bordercolor', 'black', '-border', '1', '-format', '%@', 'info:'])
+    .toString().match(/(\d+)x(\d+)\+(\d+)\+(\d+)/).map(Number);
+  const x = xr - 1, y = yr - 1;
+  const x0 = Math.max(0, x - 48), y0 = Math.max(0, y - 48);
+  const bw = Math.min(1024, x + w + 48) - x0, bh = Math.min(1024, y + h + 48) - y0;
+  const skala = 1024 / Math.max(bw, bh);
+  const [sw, sh] = [bw, bh].map((v) => Math.round((v * skala) / 16) * 16);
+  const klipp = (inn, ut, ...etter) => magick(inn, '-crop', `${bw}x${bh}+${x0}+${y0}`, '+repage', '-resize', `${sw}x${sh}!`, etter, ut);
+  magick(fil('malt'), fil('start'), fil(navn), '-composite', fil(`${navn}_grunn`));
+  klipp(fil(`${navn}_grunn`), fil(`${navn}_grunn_klipp`));
+  klipp(fil('kant'), fil(`${navn}_kant_klipp`), '-threshold', '50%');
+  klipp(fil(navn), fil(`${navn}_klipp`));
+  writeFileSync(fil(`${navn}_malt`), await kjor({
+    ...lastere,
+    ...styrtModell(await lastOpp(fil(`${navn}_kant_klipp`), `karkasand_${b.id}_${navn}_kant.png`)),
+    start: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil(`${navn}_grunn_klipp`), `karkasand_${b.id}_${navn}_grunn.png`) } },
+    maskebilde: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil(`${navn}_klipp`), `karkasand_${b.id}_${navn}.png`) } },
+    maske: { class_type: 'ImageToMask', inputs: { image: ['maskebilde', 0], channel: 'red' } },
+    ...tekst('p', prompt),
+    latent: { class_type: 'VAEEncode', inputs: { pixels: ['start', 0], vae: ['vae', 0] } },
+    maskert: { class_type: 'SetLatentNoiseMask', inputs: { samples: ['latent', 0], mask: ['maske', 0] } },
+    k: sampler(kontroll ? 'styrt' : 'modell', 'p', 'maskert', d),
+    bilde: { class_type: 'VAEDecode', inputs: { samples: ['k', 0], vae: ['vae', 0] } },
+    lagre: { class_type: 'SaveImage', inputs: { images: ['bilde', 0], filename_prefix: `karkasand/${b.id}_${navn}` } },
+  }));
+  magick(fil('malt'), '(', fil(`${navn}_malt`), '-resize', `${bw}x${bh}!`, ')', '-geometry', `+${x0}+${y0}`, '-composite', fil(`${navn}_innsatt`));
+  magick(fil('malt'), fil(`${navn}_innsatt`), fil(`${navn}myk`), '-composite', fil('malt'));
+}
 
 // Runde 1 og 2. Gir stien til det malte bildet, før kantstripen.
 async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id]}, ${stil}`, borgrunde = true, kontroll = true } = {}) {
@@ -129,15 +177,6 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id
     '-morphology', 'Close', 'Disk:8');
   magick(fil('borg'), '-blur', '0x4', fil('borgmyk'));
   const harBorg = borgrunde && snitt(fil('borg')) > 0.01;
-
-  const styrtModell = (kantbilde) => ({
-    patch: { class_type: 'ModelPatchLoader', inputs: { name: 'Z-Image-Turbo-Fun-Controlnet-Union-2.1-lite-2602-8steps.safetensors' } },
-    kant: { class_type: 'LoadImage', inputs: { image: kantbilde } },
-    styrt: {
-      class_type: 'ZImageFunControlnet',
-      inputs: { model: ['modell', 0], model_patch: ['patch', 0], vae: ['vae', 0], image: ['kant', 0], strength: styrke },
-    },
-  });
 
   // Runde 1: hele brikken
   writeFileSync(fil('malt'), await kjor({
@@ -155,35 +194,16 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id
   // borg med hus og ikke bare fortsetter enga rundt. Under borgen legges den brune
   // skissen, så runden starter fra jord.
   if (harBorg) {
-    // Rammen rundt borgen. Svart kant først, ellers regnes en borg som dekker hjørnene som bakgrunn.
-    const [, w, h, xr, yr] = execFileSync('convert', [fil('borg'), '-bordercolor', 'black', '-border', '1', '-format', '%@', 'info:'])
-      .toString().match(/(\d+)x(\d+)\+(\d+)\+(\d+)/).map(Number);
-    const x = xr - 1, y = yr - 1;
-    const x0 = Math.max(0, x - 48), y0 = Math.max(0, y - 48);
-    const bw = Math.min(1024, x + w + 48) - x0, bh = Math.min(1024, y + h + 48) - y0;
-    const skala = 1024 / Math.max(bw, bh);
-    const [sw, sh] = [bw, bh].map((v) => Math.round((v * skala) / 16) * 16);
-    const klipp = (inn, ut, ...etter) => magick(inn, '-crop', `${bw}x${bh}+${x0}+${y0}`, '+repage', '-resize', `${sw}x${sh}!`, etter, ut);
-    magick(fil('malt'), fil('start'), fil('borg'), '-composite', fil('jord'));
-    klipp(fil('jord'), fil('jord_klipp'));
-    klipp(fil('kant'), fil('kant_klipp'), '-threshold', '50%');
-    klipp(fil('borg'), fil('borg_klipp'));
     const runestein = b.deler.some((d) => d.runestein) ? `, ${RUNESTEIN}` : '';
-    writeFileSync(fil('borg_malt'), await kjor({
-      ...lastere,
-      ...styrtModell(await lastOpp(fil('kant_klipp'), `karkasand_${b.id}_kant_klipp.png`)),
-      start: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil('jord_klipp'), `karkasand_${b.id}_jord.png`) } },
-      maskebilde: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil('borg_klipp'), `karkasand_${b.id}_borg.png`) } },
-      maske: { class_type: 'ImageToMask', inputs: { image: ['maskebilde', 0], channel: 'red' } },
-      ...tekst('p', `${borgprompt}${runestein}, ${stil}`),
-      latent: { class_type: 'VAEEncode', inputs: { pixels: ['start', 0], vae: ['vae', 0] } },
-      maskert: { class_type: 'SetLatentNoiseMask', inputs: { samples: ['latent', 0], mask: ['maske', 0] } },
-      k: sampler('styrt', 'p', 'maskert', borgdenoise),
-      bilde: { class_type: 'VAEDecode', inputs: { samples: ['k', 0], vae: ['vae', 0] } },
-      lagre: { class_type: 'SaveImage', inputs: { images: ['bilde', 0], filename_prefix: `karkasand/${b.id}_borg` } },
-    }));
-    magick(fil('malt'), '(', fil('borg_malt'), '-resize', `${bw}x${bh}!`, ')', '-geometry', `+${x0}+${y0}`, '-composite', fil('borg_innsatt'));
-    magick(fil('malt'), fil('borg_innsatt'), fil('borgmyk'), '-composite', fil('malt'));
+    await malPaaNytt(b, 'borg', `${borgprompt}${runestein}, ${stil}`, borgdenoise);
+  }
+  // Rydd enga der modellen legger til noe som ikke skal være der (se RENSK_ENG)
+  if (RENSK_ENG[b.id]) {
+    fargemaske(skisse, [SKISSEFARGE.eng], fil('eng'), '(', '-size', '1024x1024', 'xc:black', '-fill', 'white',
+      '-draw', `rectangle ${RENSK_ENG[b.id].omrade}`, ')', '-compose', 'multiply', '-composite');
+    magick(fil('eng'), '-blur', '0x10', fil('engmyk'));
+    // Uten ControlNet og uten «board game tile» i stilen: ellers blir det rutemønster
+    await malPaaNytt(b, 'eng', `${kildeprompter.eng}, ${kildestil}`, 1, { kontroll: false });
   }
 
   return fil('malt');
