@@ -13,9 +13,12 @@
 </head>
 <body data-modus="tv">
   <div id="brett" class="brett-vindu"></div>
-  <div id="paneler"></div>
+  <div id="paneler">
+    <div id="kolonne-0" class="panel-kolonne"></div>
+    <div id="kolonne-1" class="panel-kolonne"></div>
+  </div>
   <div id="info" hidden>
-    <span class="bunke"><span class="bunke-ikon"></span><span id="igjen">0</span> brikker igjen</span>
+    <span class="bunke"><span class="bunke-ikon"></span><span id="igjen">0 brikker igjen</span></span>
   </div>
   <div id="melding" hidden></div>
   <img id="liten-qr" alt="" hidden>
@@ -37,10 +40,16 @@
     </div>
   </section>
 
-  <section id="slutt" class="overlegg" hidden>
-    <h1 class="tittel">Spillet er slutt</h1>
-    <ol id="resultat"></ol>
-    <p class="dempet">Trykk «Nytt spill» på mobilen for å spille igjen.</p>
+  <!-- Resultatet ligger som et kort over brettet, så man fortsatt kan se og zoome i byggverket -->
+  <section id="slutt" hidden>
+    <div class="slutt-topp">
+      <h2>Spillet er slutt</h2>
+      <button id="skjul-resultat" aria-expanded="true">Skjul</button>
+    </div>
+    <div id="slutt-innhold">
+      <ol id="resultat"></ol>
+      <p class="dempet">Zoom med musehjulet eller knappene, og dra for å se deg rundt.<br>Trykk «Nytt spill» på mobilen for å spille igjen.</p>
+    </div>
   </section>
 
   <script src="/socket.io/socket.io.js"></script>

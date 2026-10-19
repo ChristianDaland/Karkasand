@@ -1,16 +1,18 @@
 # Karkasand
 
-Et flisleggingsspill i nettleseren, inspirert av Carcassonne og satt i vikingtidens Norden. To spillere bygger borger, ferdaveier og hov sammen. Brettet vises på en felles skjerm, og hver spiller styrer med mobilen sin.
+Et flisleggingsspill i nettleseren, inspirert av Carcassonne og satt i vikingtidens Norden. 2–5 spillere bygger borger, ferdaveier og hov sammen. Brettet vises på en felles skjerm, og hver spiller styrer med mobilen sin.
 
 ## Slik spiller du
 
 1. Åpne spillet på storskjermen og velg **Spill på skjerm** (TV/PC) eller **Spill på bordet** (prosjektor som lyser ned på et bord).
-2. Begge spillerne skanner QR-koden med mobilen, skriver navnet sitt og velger farge. I bordmodus velger de også hvilken side av bordet de sitter ved.
-3. Trykk **Start spillet** på en av mobilene.
+2. Alle spillerne skanner QR-koden med mobilen, skriver navnet sitt og velger farge. En farge kan bare velges av én spiller. I bordmodus velger de også hvilken side av bordet de sitter ved, høyst to per side.
+3. Den som skannet først, er vert. Verten trykker **Start spillet** og bekrefter at alle er klare.
 4. Når det er din tur, flytter du brikken med pilene og roterer den med ⟳. «Neste plass» hopper til neste rute der brikken passer. Trykk **Legg brikken**.
 5. Velg om du vil sette ut en viking på brikken du nettopp la.
 
 I bordmodus følger pilene siden du sitter ved. «Opp» betyr alltid bort fra deg.
+
+På storskjermen kan du zoome med musehjulet, knappene + / − / ⤢ eller tastene + − 0, og dra for å flytte brettet. Når spillet er slutt, vises resultatet i et kort over brettet, så du fortsatt kan se på byggverket.
 
 ### Poeng
 

@@ -7,6 +7,9 @@ import { lastBilder, brikkeUrl, vikingSvg, elementFra, PLASS_GRADER } from './fe
 const $ = (id) => document.getElementById(id);
 const kode = location.pathname.split('/')[2]?.toUpperCase();
 const lagret = `karkasand:${kode}`;
+// Bildelisten hentes før socketen lages. Ellers kan «connect» komme mens vi venter,
+// før lytterne er satt opp, og siden blir stående uten å koble til.
+await lastBilder();
 const socket = io();
 
 let spillerId = hent(lagret);
@@ -29,7 +32,6 @@ function lagre(nokkel, verdi) {
   }
 }
 
-await lastBilder();
 
 function visSide(id) {
   for (const s of document.querySelectorAll('.side')) s.hidden = s.id !== id;
@@ -67,22 +69,48 @@ $('prov-igjen').addEventListener('click', () => {
 
 // ---------- Oppsett ----------
 
-$('navn').addEventListener('change', () => {
+// Navnet sendes mens spilleren skriver, så verten ser det før spillet startes
+let navnTimer;
+function sendNavn() {
+  clearTimeout(navnTimer);
   const navn = $('navn').value.trim();
   if (!navn) return;
   lagre('karkasand:navn', navn);
   socket.emit('mobil:oppsett', { navn });
+}
+$('navn').addEventListener('input', () => {
+  clearTimeout(navnTimer);
+  navnTimer = setTimeout(sendNavn, 400);
 });
+$('navn').addEventListener('change', sendNavn);
 $('navn').addEventListener('keydown', (e) => e.key === 'Enter' && $('navn').blur());
 
 for (const knapp of document.querySelectorAll('[data-plass]')) {
   knapp.addEventListener('click', () => socket.emit('mobil:oppsett', { plass: knapp.dataset.plass }));
 }
 
+// Bare verten (den første spilleren) kan starte, og må bekrefte at alle er klare
 $('start').addEventListener('click', () => {
   $('navn').blur();
+  visBekreftListe();
+  $('bekreft-start').showModal();
+});
+$('bekreft-nei').addEventListener('click', () => $('bekreft-start').close());
+$('bekreft-ja').addEventListener('click', () => {
+  $('bekreft-start').close();
   socket.emit('mobil:start');
 });
+
+function visBekreftListe() {
+  $('bekreft-liste').replaceChildren(
+    ...rom.spillere.map((s) => {
+      const li = elementFra(`<li><span class="prikk" style="background:${s.farge}"></span><span></span><span class="hoyre"></span></li>`);
+      li.children[1].textContent = s.navn;
+      li.children[2].textContent = s.tilkoblet ? '' : 'frakoblet';
+      return li;
+    }),
+  );
+}
 
 function visOppsett(meg) {
   visSide('oppsett');
@@ -96,29 +124,44 @@ function visOppsett(meg) {
       farger.append(b);
     }
   }
+  // Farger som andre har valgt, er låst og viser hvem som har dem
   [...farger.children].forEach((b, i) => {
     const f = rom.farger[i];
+    const eier = rom.spillere.find((s) => s.id !== meg.id && s.farge === f);
     b.classList.toggle('valgt', meg.farge === f);
-    b.disabled = rom.spillere.some((s) => s.id !== meg.id && s.farge === f);
+    b.disabled = Boolean(eier);
+    b.textContent = eier ? '🔒' : '';
+    b.title = eier ? `Valgt av ${eier.navn}` : '';
+    b.setAttribute('aria-label', eier ? `Opptatt, valgt av ${eier.navn}` : 'Velg farge');
   });
 
   $('plass-felt').hidden = rom.modus !== 'bord';
+  // Høyst to spillere per side av bordet
   for (const b of document.querySelectorAll('[data-plass]')) {
     b.classList.toggle('valgt', meg.plass === b.dataset.plass);
-    b.disabled = rom.spillere.some((s) => s.id !== meg.id && s.plass === b.dataset.plass);
+    b.disabled = rom.spillere.filter((s) => s.id !== meg.id && s.plass === b.dataset.plass).length >= 2;
   }
 
   $('spillerliste').replaceChildren(
     ...rom.spillere.map((s) => {
       const li = elementFra(`<li><span class="prikk" style="background:${s.farge}"></span><span></span><span class="hoyre"></span></li>`);
       li.children[1].textContent = s.navn;
-      li.children[2].textContent = s.id === meg.id ? 'deg' : s.tilkoblet ? '' : 'frakoblet';
+      const merker = [s.id === rom.vertId ? 'starter' : '', s.id === meg.id ? 'deg' : '', s.tilkoblet ? '' : 'frakoblet'];
+      li.children[2].textContent = merker.filter(Boolean).join(' · ');
       return li;
     }),
   );
-  const klare = rom.spillere.length >= rom.minSpillere;
-  $('start').disabled = !klare;
-  $('start-hjelp').textContent = klare ? '' : 'Venter på at en spiller til skal skanne QR-koden.';
+  if ($('bekreft-start').open) visBekreftListe();
+
+  const erVert = meg.id === rom.vertId;
+  const vert = rom.spillere.find((s) => s.id === rom.vertId);
+  const nok = rom.spillere.length >= rom.minSpillere;
+  const plass = rom.maksSpillere - rom.spillere.length;
+  $('start').hidden = !erVert;
+  $('start').disabled = !nok;
+  if (!nok) $('start-hjelp').textContent = 'Venter på at minst én spiller til skal skanne QR-koden.';
+  else if (erVert) $('start-hjelp').textContent = plass ? `Det er plass til ${plass} til. Start når alle som skal være med, er klare.` : 'Alle plassene er tatt.';
+  else $('start-hjelp').textContent = `Skriv navnet ditt og velg farge. ${vert?.navn ?? 'Verten'} starter spillet når alle er klare.`;
 }
 
 // ---------- Spillet ----------

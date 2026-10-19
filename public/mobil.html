@@ -51,6 +51,17 @@
     <p id="start-hjelp" class="hjelp"></p>
   </section>
 
+  <!-- Verten bekrefter at alle er ferdige med navn og farge før spillet starter -->
+  <dialog id="bekreft-start" class="bekreft">
+    <h2>Er alle klare?</h2>
+    <p>Sjekk at alle som skal være med, har skrevet navnet sitt og valgt farge.</p>
+    <ul id="bekreft-liste" class="spillerliste"></ul>
+    <div class="knapperad">
+      <button id="bekreft-nei" class="middels">Vent litt</button>
+      <button id="bekreft-ja" class="stor primar">Start spillet</button>
+    </div>
+  </dialog>
+
   <section id="spill" class="side" hidden>
     <header class="topp">
       <span class="prikk" id="min-farge"></span>

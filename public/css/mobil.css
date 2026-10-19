@@ -47,7 +47,20 @@ input:focus { outline: none; border-color: var(--gull); }
 }
 
 .farger button.valgt { border-color: #fff; box-shadow: 0 0 0 3px var(--gull); }
-.farger button:disabled { opacity: 0.15; }
+.farger button:disabled { opacity: 0.45; filter: grayscale(0.4); font-size: 1.2rem; cursor: not-allowed; }
+
+.bekreft {
+  width: min(420px, calc(100% - 32px));
+  border: 2px solid var(--gull);
+  border-radius: 16px;
+  background: var(--kort);
+  color: var(--tekst);
+  padding: 18px;
+}
+.bekreft::backdrop { background: rgba(0, 0, 0, 0.7); }
+.bekreft h2 { margin: 0 0 8px; color: var(--gull); }
+.bekreft p { margin: 0 0 12px; color: var(--dempet); }
+.bekreft .spillerliste { margin-bottom: 16px; }
 
 .bord-velger {
   display: grid;

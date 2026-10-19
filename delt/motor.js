@@ -54,7 +54,11 @@ export function lagBunke(tilfeldig = Math.random) {
 export class Spill {
   constructor(spillere, { tilfeldig = Math.random, bunke } = {}) {
     this.tilfeldig = tilfeldig;
-    this.spillere = spillere.map((s) => ({ ...s, poeng: 0, vikinger: VIKINGER_PER_SPILLER }));
+    // underveis/slutt: poengene fordelt på borg, vei, hov og eng, til oversikten på slutten
+    this.spillere = spillere.map((s) => ({
+      ...s, poeng: 0, vikinger: VIKINGER_PER_SPILLER,
+      underveis: { borg: 0, vei: 0, hov: 0, eng: 0 }, slutt: { borg: 0, vei: 0, hov: 0, eng: 0 },
+    }));
     const ny = lagBunke(tilfeldig);
     this.bunke = bunke ?? ny.bunke; // trekkes fra slutten
     this.brett = new Map();
@@ -67,6 +71,7 @@ export class Spill {
     this.hendelser = [];
     this.hendelseNr = 0;
     this.resultat = null;
+    this.sluttposter = []; // ett innslag per område som telles på slutten, til opptellingen på skjermen
     this.trekk();
   }
 
@@ -163,6 +168,18 @@ export class Spill {
     const runesteiner = deler.filter((d) => BRIKKE[d.brikke.id].deler[d.del].runestein).length;
     const id = [...sett].sort()[0];
     return { id, type, deler, brikker, apen, vikinger, runesteiner };
+  }
+
+  // Brikken og de som ligger rundt den
+  medNaboer(b) {
+    const ut = [];
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const n = this.brikke(b.x + dx, b.y + dy);
+        if (n) ut.push(n);
+      }
+    }
+    return ut;
   }
 
   naboerRundt(x, y) {
@@ -320,7 +337,19 @@ export class Spill {
     };
     for (const s of vinnere) {
       this.spillere[s].poeng += poeng;
+      this.spillere[s][this.fase === 'slutt' ? 'slutt' : 'underveis'][grunn] += poeng;
       this.hendelse({ type: 'poeng', spiller: s, poeng, grunn, ...midt });
+    }
+    if (this.fase === 'slutt') {
+      // For et hov lyser også brikkene rundt opp, siden det er de som gir poengene
+      const vis = grunn === 'hov' ? this.medNaboer(brikker[0]) : brikker;
+      this.sluttposter.push({
+        grunn,
+        poeng,
+        vinnere,
+        brikker: vis.map((b) => ({ x: b.x, y: b.y })),
+        vikinger: omrade.vikinger.map((v) => ({ x: v.brikke.x, y: v.brikke.y, del: v.brikke.viking.del, spiller: v.spiller })),
+      });
     }
     for (const v of omrade.vikinger) {
       v.brikke.viking = null;
@@ -426,6 +455,7 @@ export class Spill {
       vikingDeler: this.vikingDeler(),
       hendelser: this.hendelser,
       resultat: this.resultat,
+      sluttposter: this.fase === 'slutt' ? this.sluttposter : [],
     };
   }
 }

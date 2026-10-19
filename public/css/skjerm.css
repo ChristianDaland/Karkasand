@@ -78,9 +78,21 @@ body[data-modus='bord'] #brett { inset: 150px; }
   font-size: 0.95rem;
 }
 
-body[data-modus='tv'] .panel { top: 24px; }
-body[data-modus='tv'] .panel.side-0 { left: 20px; }
-body[data-modus='tv'] .panel.side-1 { right: 20px; }
+/* TV: panelene stables i en kolonne på hver side av brettet */
+.panel-kolonne { display: none; }
+body[data-modus='tv'] .panel-kolonne {
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+body[data-modus='tv'] #kolonne-0 { left: 20px; }
+body[data-modus='tv'] #kolonne-1 { right: 20px; }
+body[data-modus='tv'] .panel { position: relative; }
 
 /* Bordmodus: panelet ligger langs spillerens kant, med teksten vendt mot spilleren */
 body[data-modus='bord'] .panel {
@@ -91,7 +103,7 @@ body[data-modus='bord'] .panel {
   column-gap: 18px;
   padding: 12px 18px;
   background: rgba(20, 15, 10, 0.95);
-  transform: translate(-50%, -50%) rotate(var(--snu));
+  transform: translate(-50%, -50%) rotate(var(--snu)) translateX(var(--forskyv, 0px));
 }
 
 body[data-modus='bord'] .panel .navn { grid-area: navn; }
@@ -200,16 +212,39 @@ body[data-modus='bord'] #melding { top: 50%; transform: translate(-50%, -50%); }
 #lobby-status { color: var(--dempet); }
 #bytt-modus { padding: 10px 16px; font-size: 1rem; }
 
-#resultat { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; min-width: 360px; }
+/* Resultatkortet ligger øverst over brettet og dekker det ikke */
+#slutt {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  width: min(440px, calc(100% - 32px));
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(20, 15, 10, 0.9);
+  border: 2px solid var(--gull);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  z-index: 12;
+  text-align: center;
+}
+
+.slutt-topp { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.slutt-topp h2 { margin: 0; font-family: var(--tittelskrift); color: var(--gull); font-size: 1.5rem; }
+#skjul-resultat { padding: 6px 12px; font-size: 0.95rem; }
+#slutt-innhold p { margin: 12px 0 0; font-size: 0.95rem; }
+
+body[data-modus='bord'] #slutt { top: 50%; transform: translate(-50%, -50%); }
+
+#resultat { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
 
 #resultat li {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 20px;
+  padding: 10px 16px;
   border-radius: 14px;
   background: var(--kort);
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 800;
   border: 3px solid transparent;
 }

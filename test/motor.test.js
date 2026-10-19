@@ -205,3 +205,31 @@ test('markøren kan flyttes, roteres og hoppe til neste plass', () => {
   assert.ok(spill.passer(spill.aktiv.brikke.id, spill.aktiv.x, spill.aktiv.y, spill.aktiv.rot));
   assert.ok(x !== undefined);
 });
+
+test('sluttellingen lagres område for område, og poengfordelingen går opp', () => {
+  const tilfeldig = frø(7);
+  const spill = new Spill(['A', 'B', 'C', 'D', 'E'].map((navn) => ({ navn })), { tilfeldig });
+  while (spill.fase !== 'slutt') {
+    const plasser = spill.gyldigePlasser(spill.aktiv.brikke.id);
+    const p = plasser[Math.floor(tilfeldig() * plasser.length)];
+    Object.assign(spill.aktiv, { x: p.x, y: p.y, rot: p.rot[0] });
+    assert.ok(spill.legg());
+    if (spill.fase === 'viking') {
+      const deler = spill.vikingDeler();
+      spill.settViking(deler.length && tilfeldig() < 0.5 ? deler[0] : null);
+    }
+  }
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+  for (const [i, s] of spill.spillere.entries()) {
+    assert.equal(sum(s.underveis) + sum(s.slutt), s.poeng, `${s.navn}: fordelingen går ikke opp`);
+    const fraPoster = spill.sluttposter.filter((p) => p.vinnere.includes(i)).reduce((a, p) => a + p.poeng, 0);
+    assert.equal(fraPoster, sum(s.slutt), `${s.navn}: sluttpostene stemmer ikke`);
+  }
+  assert.ok(spill.sluttposter.length > 0);
+  for (const p of spill.sluttposter) {
+    assert.ok(p.brikker.length > 0 && p.vikinger.length > 0);
+    assert.ok(spill.tilstand().sluttposter.length === spill.sluttposter.length);
+  }
+  // Ingen vikinger står igjen på brettet etter sluttellingen
+  assert.ok([...spill.brett.values()].every((b) => !b.viking));
+});

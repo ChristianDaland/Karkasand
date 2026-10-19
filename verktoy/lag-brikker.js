@@ -23,7 +23,7 @@ import { BRIKKER } from '../delt/brikker.js';
 
 const COMFY = process.env.COMFY_URL ?? 'http://10.0.0.76:8188';
 const ROT = new URL('../', import.meta.url).pathname;
-const SKISSEFARGE = { eng: '#7fa65a', vei: '#c9a877', borg: '#9c7a55', stein: '#8a8f94', rune: '#b3322b', steinkant: '#3c3f42' };
+const SKISSEFARGE = { eng: '#7fa65a', vei: '#c9a877', borg: '#9c7a55', stein: '#8a8f94', rune: '#b3322b', steinkant: '#3c3f42', helle: '#b8b2a4' };
 
 const valg = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith('--'))
   .map((a) => a.slice(2).split('=')));
@@ -54,7 +54,7 @@ const prompter = Object.fromEntries(doc.split(/\n### /).slice(1)
   .map((del) => [del[0], kodeEtter(del, '**Prompt:**')]));
 // Stilen for kantkildene: uten leddene som får modellen til å fylle en ensfarget flate med mønstre
 const kildestil = stil.split(', ').filter((ledd) => !/board game|richly detailed|edge to edge|along all edges/.test(ledd)).join(', ');
-const RUNESTEIN = 'a prominent grey runestone with bright red serpent knotwork standing on a small stone-paved square';
+const RUNESTEIN = 'a large prominent grey runestone with bright red serpent knotwork standing in the middle of a round stone-paved square';
 
 const magick = (...args) => execFileSync('convert', args.flat());
 const snitt = (fil) => Number(execFileSync('convert', [fil, '-format', '%[fx:mean]', 'info:']).toString());
@@ -125,7 +125,7 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id
   magick(skisse, '-morphology', 'Edge', 'Diamond:1', '-separate', '-evaluate-sequence', 'max', '-threshold', '8%', fil('kant'));
   // Startbilde med fargestøy, ellers beholder modellen de flate feltene
   magick(skisse, ...(stoy ? ['-attenuate', String(stoy), '+noise', 'Gaussian', '-blur', '0x1.5'] : []), fil('start'));
-  fargemaske(skisse, [SKISSEFARGE.borg, SKISSEFARGE.stein, SKISSEFARGE.rune, SKISSEFARGE.steinkant], fil('borg'),
+  fargemaske(skisse, [SKISSEFARGE.borg, SKISSEFARGE.stein, SKISSEFARGE.rune, SKISSEFARGE.steinkant, SKISSEFARGE.helle], fil('borg'),
     '-morphology', 'Close', 'Disk:8');
   magick(fil('borg'), '-blur', '0x4', fil('borgmyk'));
   const harBorg = borgrunde && snitt(fil('borg')) > 0.01;
@@ -208,6 +208,18 @@ function kantstripe(b, malt, kilder) {
   magick(bilde, '-resize', '1024x1024!', '-colorspace', 'sRGB', '-quality', '88', `${UT}${b.id}.jpg`);
 }
 
+// Snittfargen gress, vei og borggrunn har inne på de malte brikkene. Kantkildene flyttes
+// hit, ellers blir kantbåndet brunere eller mørkere og rutenettet synes på brettet.
+const MALFARGE = { eng: [112, 120, 51], vei: [171, 155, 116], borg: [110, 100, 66] };
+
+// Flytter snittfargen i bildet (eller i utsnittet) til målfargen, kanal for kanal
+function fargejuster(inn, ut, maal, utsnitt) {
+  const snittfarge = execFileSync('convert', [inn, ...(utsnitt ? ['-crop', utsnitt, '+repage'] : []),
+    '-format', '%[fx:255*mean.r] %[fx:255*mean.g] %[fx:255*mean.b]', 'info:']).toString().split(' ').map(Number);
+  magick(inn, ['R', 'G', 'B'].flatMap((k, i) => ['-channel', k, '-evaluate', 'add', `${((maal[i] - snittfarge[i]) / 2.55).toFixed(2)}%`]),
+    '+channel', ut);
+}
+
 // Kildene til kantstripen: tre bilder malt med samme stil som brikkene, men med bare
 // eng, bare borggrunn og en rett vei nord–sør (promptene står under «Kantkilder» i
 // docs/BRIKKER.md). Veien brukes som den er langs nord- og sørkanten, og dreid 90°
@@ -236,7 +248,13 @@ async function lagKantkilder() {
       '-draw', 'polygon 0,1024 1024,1024 512,512', diagonal);
     magick('(', u, '-rotate', '90', ')', u, diagonal, '-composite', '-quality', '92', kilder.vei);
   }
-  return kilder;
+  // Veien ligger i en stripe midt på (457–567 px), så fargen måles bare der
+  const justert = {};
+  for (const [type, fil] of Object.entries(kilder)) {
+    justert[type] = `${ARBEID}kilde_${type}_justert.png`;
+    fargejuster(fil, justert[type], MALFARGE[type], type === 'vei' ? '110x1024+457+0' : null);
+  }
+  return justert;
 }
 
 const valgte = ider.length ? BRIKKER.filter((b) => ider.includes(b.id)) : BRIKKER;

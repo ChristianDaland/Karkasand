@@ -81,6 +81,21 @@ function nyttRom(modus) {
   return rom;
 }
 
+// Sluttellingen vises område for område på skjermen. Mobilene venter med resultatet til den
+// er ferdig. Er ingen skjerm koblet til, avsluttes den av seg selv etter en stund.
+function startOpptelling(rom) {
+  rom.opptelling = 'pågår';
+  const sekunder = 10 + rom.spill.sluttposter.length * 2;
+  rom.opptellingTimer = setTimeout(() => ferdigOpptelling(rom), sekunder * 1000);
+}
+
+function ferdigOpptelling(rom) {
+  if (rom.opptelling !== 'pågår') return;
+  rom.opptelling = 'ferdig';
+  clearTimeout(rom.opptellingTimer);
+  sendTilstand(rom);
+}
+
 io.on('connection', (socket) => {
   const hentRom = () => rommene.get(socket.data.rom);
 
@@ -123,12 +138,24 @@ io.on('connection', (socket) => {
 
   socket.on('mobil:start', () => {
     const rom = hentRom();
-    if (rom?.start()) sendTilstand(rom);
+    if (rom?.start(socket.data.spillerId)) sendTilstand(rom);
   });
 
   socket.on('mobil:handling', (handling = {}) => {
     const rom = hentRom();
-    if (rom?.handling(socket.data.spillerId, handling)) sendTilstand(rom);
+    if (!rom?.handling(socket.data.spillerId, handling)) return;
+    if (rom.spill.fase === 'slutt' && !rom.opptelling) startOpptelling(rom);
+    sendTilstand(rom);
+  });
+
+  // Skjermen er ferdig med å vise sluttellingen, eller verten vil hoppe over den
+  socket.on('skjerm:opptelling-ferdig', () => {
+    const rom = hentRom();
+    if (rom && socket.data.rolle === 'skjerm') ferdigOpptelling(rom);
+  });
+  socket.on('mobil:hopp-over', () => {
+    const rom = hentRom();
+    if (rom && rom.vert?.id === socket.data.spillerId) ferdigOpptelling(rom);
   });
 
   socket.on('mobil:nytt-spill', () => {

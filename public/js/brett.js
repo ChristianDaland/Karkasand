@@ -1,11 +1,14 @@
 // Tegner spillbrettet: brikker, vikinger, markøren, hint og poeng-animasjoner.
-// Brukes av storskjermen og galleriet.
+// Brukes av storskjermen og galleriet. Brettet tilpasses vinduet av seg selv, og
+// spillerne kan i tillegg zoome og flytte det (musehjul, dra, klyp, knapper, + − 0).
 
 import { BRIKKE } from '/delt/brikker.js';
 import { roterPunkt } from '/delt/motor.js';
 import { brikkeUrl, vikingSvg, elementFra } from './felles.js';
 
 const T = 100; // størrelsen på en brikke i brettets egne koordinater
+const MAKS_ZOOM = 12; // hvor langt inn man kan zoome, i forhold til tilpasset visning
+const MIN_ZOOM = 0.5;
 
 export class BrettVisning {
   constructor(vindu, { maksSkala = 2.2, marg = 24 } = {}) {
@@ -23,7 +26,102 @@ export class BrettVisning {
     this.brikker = new Map();
     this.sistHendelse = null;
     this.forrige = null;
+    // Spillerens egen zoom oppå den tilpassede visningen: skjerm = forskyvning + zoom × tilpasset
+    this.visning = { zoom: 1, x: 0, y: 0 };
+    this.lagZoom();
     new ResizeObserver(() => this.tilpass()).observe(vindu);
+  }
+
+  // ---------- Zoom og flytting ----------
+
+  lagZoom() {
+    const knapper = elementFra(`
+      <div class="zoom-knapper">
+        <button data-zoom="inn" title="Zoom inn (+)">+</button>
+        <button data-zoom="ut" title="Zoom ut (−)">−</button>
+        <button data-zoom="tilpass" title="Vis hele brettet (0)">⤢</button>
+      </div>`);
+    knapper.addEventListener('click', (e) => {
+      const valg = e.target.closest('button')?.dataset.zoom;
+      if (valg === 'tilpass') this.nullstillZoom();
+      else if (valg) this.zoomRundt(valg === 'inn' ? 1.4 : 1 / 1.4);
+    });
+    knapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+    this.vindu.append(knapper);
+
+    this.vindu.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const r = this.vindu.getBoundingClientRect();
+      this.zoomRundt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top);
+    }, { passive: false });
+
+    // Dra med én peker, klyp med to
+    const pekere = new Map();
+    let start = null;
+    const tilstand = () => {
+      const p = [...pekere.values()];
+      const midt = { x: p.reduce((s, q) => s + q.x, 0) / p.length, y: p.reduce((s, q) => s + q.y, 0) / p.length };
+      const avstand = p.length > 1 ? Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) : 0;
+      return { midt, avstand, visning: { ...this.visning } };
+    };
+    this.vindu.addEventListener('pointerdown', (e) => {
+      const r = this.vindu.getBoundingClientRect();
+      pekere.set(e.pointerId, { x: e.clientX - r.left, y: e.clientY - r.top });
+      this.vindu.setPointerCapture(e.pointerId);
+      start = tilstand();
+      this.vindu.classList.add('drar');
+    });
+    this.vindu.addEventListener('pointermove', (e) => {
+      if (!pekere.has(e.pointerId)) return;
+      const r = this.vindu.getBoundingClientRect();
+      pekere.set(e.pointerId, { x: e.clientX - r.left, y: e.clientY - r.top });
+      const n = tilstand();
+      const f = start.avstand && n.avstand ? n.avstand / start.avstand : 1;
+      const zoom = Math.min(MAKS_ZOOM, Math.max(MIN_ZOOM, start.visning.zoom * f));
+      const g = zoom / start.visning.zoom;
+      this.visning = {
+        zoom,
+        x: n.midt.x - g * (start.midt.x - start.visning.x),
+        y: n.midt.y - g * (start.midt.y - start.visning.y),
+      };
+      this.tegnVisning(false);
+    });
+    const slipp = (e) => {
+      pekere.delete(e.pointerId);
+      start = pekere.size ? tilstand() : null;
+      if (!pekere.size) this.vindu.classList.remove('drar');
+    };
+    this.vindu.addEventListener('pointerup', slipp);
+    this.vindu.addEventListener('pointercancel', slipp);
+
+    addEventListener('keydown', (e) => {
+      if (e.target.closest?.('input, textarea')) return;
+      if (e.key === '+' || e.key === '=') this.zoomRundt(1.4);
+      else if (e.key === '-') this.zoomRundt(1 / 1.4);
+      else if (e.key === '0') this.nullstillZoom();
+    });
+  }
+
+  // Zoom med faktor f rundt et punkt i vinduet (standard: midten)
+  zoomRundt(f, cx = this.vindu.clientWidth / 2, cy = this.vindu.clientHeight / 2) {
+    const v = this.visning;
+    const zoom = Math.min(MAKS_ZOOM, Math.max(MIN_ZOOM, v.zoom * f));
+    const g = zoom / v.zoom;
+    this.visning = { zoom, x: cx - g * (cx - v.x), y: cy - g * (cy - v.y) };
+    this.tegnVisning(false);
+  }
+
+  nullstillZoom() {
+    this.visning = { zoom: 1, x: 0, y: 0 };
+    this.tegnVisning(true);
+  }
+
+  tegnVisning(myk) {
+    if (!this.tilpasset) return;
+    const { dx, dy, skala } = this.tilpasset;
+    const { zoom, x, y } = this.visning;
+    this.lag.classList.toggle('manuell', !myk);
+    this.lag.style.transform = `translate(${x + zoom * dx}px, ${y + zoom * dy}px) scale(${zoom * skala})`;
   }
 
   oppdater(spill, spillere, { animer = true } = {}) {
@@ -81,6 +179,15 @@ export class BrettVisning {
       const url = brikkeUrl(a.brikke.id, a.brikke.nr);
       if (img.getAttribute('src') !== url) img.src = url;
       img.style.transform = `rotate(${a.rot * 90}deg)`;
+    }
+
+    // Brikken som nettopp ble lagt, beholder rammen i spillerens farge til turen er over
+    for (const el of this.brikkeLag.querySelectorAll('.lagt-na')) el.classList.remove('lagt-na');
+    if (spill.fase === 'viking' && spill.sistLagt) {
+      const b = spill.brett.find((t) => t.x === spill.sistLagt.x && t.y === spill.sistLagt.y);
+      const el = this.brikker.get(`${b.x},${b.y},${b.id},${b.nr},${b.rot}`);
+      el?.classList.add('lagt-na');
+      el?.style.setProperty('--farge', farge(spill.tur));
     }
 
     // Valg av vikingplass på brikken som nettopp ble lagt
@@ -159,6 +266,7 @@ export class BrettVisning {
     const skala = Math.min(this.maksSkala, b / ((maxX - minX) * T), h / ((maxY - minY) * T));
     const dx = this.marg + (b - (maxX - minX) * T * skala) / 2 - minX * T * skala;
     const dy = this.marg + (h - (maxY - minY) * T * skala) / 2 - minY * T * skala;
-    this.lag.style.transform = `translate(${dx}px, ${dy}px) scale(${skala})`;
+    this.tilpasset = { dx, dy, skala };
+    this.tegnVisning(true);
   }
 }

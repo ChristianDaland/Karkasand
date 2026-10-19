@@ -5,6 +5,9 @@ import { lastBilder, brikkeUrl, vikingSvg, elementFra, PLASS_GRADER, PLASS_NAVN,
 import { VIKINGER_PER_SPILLER } from '/delt/motor.js';
 
 const $ = (id) => document.getElementById(id);
+// Bildelisten hentes før socketen lages. Ellers kan «connect» komme mens vi venter,
+// før lytterne er satt opp, og siden blir stående uten å koble til.
+await lastBilder();
 const socket = io();
 const params = new URLSearchParams(location.search);
 let kode = location.pathname.split('/')[2];
@@ -12,8 +15,8 @@ let modus = params.get('modus');
 let sisteMelding = 0;
 let meldingTimer;
 
-await lastBilder();
 const brett = new BrettVisning($('brett'));
+const panelene = []; // spillerpanelene, i samme rekkefølge som spillerne
 
 socket.on('connect', () => {
   socket.emit('skjerm:koble', { kode, modus }, (svar) => {
@@ -29,6 +32,13 @@ socket.on('connect', () => {
 });
 
 socket.on('tilstand', vis);
+
+$('skjul-resultat').addEventListener('click', () => {
+  const skjult = !$('slutt-innhold').hidden;
+  $('slutt-innhold').hidden = skjult;
+  $('skjul-resultat').textContent = skjult ? 'Vis resultat' : 'Skjul';
+  $('skjul-resultat').setAttribute('aria-expanded', String(!skjult));
+});
 
 $('bytt-modus').addEventListener('click', () => {
   socket.emit('skjerm:modus', document.body.dataset.modus === 'tv' ? 'bord' : 'tv');
@@ -52,7 +62,7 @@ function vis(rom) {
   $('info').hidden = !spill;
   if (!spill) {
     visLobby(rom);
-    $('paneler').replaceChildren();
+    for (const panel of panelene.splice(0)) panel.remove();
     $('slutt').hidden = true;
     $('liten-qr').hidden = true;
     return;
@@ -61,7 +71,7 @@ function vis(rom) {
   brett.oppdater(spill, spill.spillere);
   visPaneler(rom);
   visMelding(spill);
-  $('igjen').textContent = spill.igjen;
+  $('igjen').textContent = `${spill.igjen} ${spill.igjen === 1 ? 'brikke' : 'brikker'} igjen`;
   $('liten-qr').hidden = rom.spillere.every((s) => s.tilkoblet) || spill.fase === 'slutt';
   visSlutt(spill);
 }
@@ -74,24 +84,26 @@ function visLobby(rom) {
     const li = elementFra(
       `<li><span class="prikk" style="background:${s.farge}"></span><span></span><span class="plass">${plass}</span></li>`,
     );
-    li.children[1].textContent = s.navn + (s.tilkoblet ? '' : ' (frakoblet)');
+    li.children[1].textContent = s.navn + (s.id === rom.vertId ? ' · starter' : '') + (s.tilkoblet ? '' : ' (frakoblet)');
     liste.append(li);
   }
-  for (let i = rom.spillere.length; i < rom.maksSpillere; i++) {
-    liste.append(elementFra('<li class="tom">Venter på spiller …</li>'));
-  }
-  const klare = rom.spillere.length >= rom.minSpillere;
-  $('lobby-status').textContent = klare
-    ? 'Alle er med! Trykk «Start spillet» på en av mobilene.'
-    : `Venter på spillere (${rom.spillere.length} av ${rom.maksSpillere}).`;
+  const ledige = rom.maksSpillere - rom.spillere.length;
+  if (ledige) liste.append(elementFra(`<li class="tom">Plass til ${ledige} ${ledige === 1 ? 'spiller' : 'spillere'} til …</li>`));
+  const nok = rom.spillere.length >= rom.minSpillere;
+  const vert = rom.spillere.find((s) => s.id === rom.vertId);
+  $('lobby-status').textContent = nok
+    ? `${vert.navn} starter spillet fra mobilen når alle er klare.`
+    : `Venter på spillere (minst ${rom.minSpillere}, høyst ${rom.maksSpillere}).`;
   $('bytt-modus').textContent = rom.modus === 'tv' ? 'Bytt til bordmodus (prosjektor)' : 'Bytt til skjermmodus (TV)';
 }
 
 function visPaneler(rom) {
   const spill = rom.spill;
-  const beholder = $('paneler');
+  // TV: annenhver spiller i venstre og høyre kolonne. Bord: hver ved sin side av bordet,
+  // og to som deler en side, legges ved siden av hverandre langs kanten.
+  const paSide = {};
   spill.spillere.forEach((s, i) => {
-    let panel = beholder.children[i];
+    let panel = panelene[i];
     if (!panel) {
       panel = elementFra(`
         <div class="panel">
@@ -102,10 +114,15 @@ function visPaneler(rom) {
           <div class="frakoblet" hidden>Frakoblet. Skann QR-koden igjen.</div>
           <img class="neste" alt="" hidden>
         </div>`);
-      beholder.append(panel);
+      panelene[i] = panel;
     }
     const info = rom.spillere.find((r) => r.id === s.id) ?? {};
     const plass = info.plass ?? 'S';
+    const forelder = rom.modus === 'tv' ? $(`kolonne-${i % 2}`) : $('paneler');
+    if (panel.parentElement !== forelder) forelder.append(panel);
+    const deler = spill.spillere.filter((t) => (rom.spillere.find((r) => r.id === t.id)?.plass ?? 'S') === plass).length;
+    const nr = (paSide[plass] = (paSide[plass] ?? -1) + 1);
+    panel.style.setProperty('--forskyv', `${deler > 1 ? (nr - (deler - 1) / 2) * 490 : 0}px`);
     const harTur = spill.tur === i && spill.fase !== 'slutt';
     panel.className = `panel side-${i} plass-${plass}${harTur ? ' tur' : ''}`;
     panel.style.setProperty('--farge', s.farge);
@@ -136,7 +153,7 @@ function visPaneler(rom) {
       neste.style.transform = `rotate(${spill.aktiv.rot * 90 + panelSnu}deg)`;
     }
   });
-  while (beholder.children.length > spill.spillere.length) beholder.lastElementChild.remove();
+  while (panelene.length > spill.spillere.length) panelene.pop().remove();
 }
 
 function visMelding(spill) {

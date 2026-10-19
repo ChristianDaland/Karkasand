@@ -18,6 +18,7 @@ export const FARGE = {
   bygg: '#6b3e26',
   stein: '#8a8f94',
   rune: '#b3322b',
+  helle: '#b8b2a4', // steinlagt plass rundt runesteinen
 };
 
 // Kappe = område avgrenset av en kant og en bue som når KAPPEDYBDE inn
@@ -108,10 +109,13 @@ const SKISSE = {
     `<rect x="${x - 34}" y="${y - 34}" width="68" height="68" rx="8" fill="${FARGE.bygg}"/>` +
     `<circle cx="${x}" cy="${y}" r="16" fill="#2f4f6f"/>`,
   hus: () => '',
+  // Ca. 14 % av brikkebredden, på en rund steinlagt plass, så den synes godt på brettet
   runestein: (x, y) =>
     `<g transform="translate(${x} ${y})">` +
+    `<circle r="125" fill="${FARGE.helle}"/>` +
+    `<g transform="scale(1.5)">` +
     `<path d="M-40 60 L-48 -20 Q-40 -70 0 -76 Q40 -70 48 -20 L40 60 Z" fill="${FARGE.stein}" stroke="#3c3f42" stroke-width="6"/>` +
-    `<path d="M-22 -40 Q20 -50 18 -10 Q14 26 -20 20 Q-30 50 6 44" fill="none" stroke="${FARGE.rune}" stroke-width="10"/></g>`,
+    `<path d="M-22 -40 Q20 -50 18 -10 Q14 26 -20 20 Q-30 50 6 44" fill="none" stroke="${FARGE.rune}" stroke-width="10"/></g></g>`,
   hov: (x, y) =>
     `<g transform="translate(${x} ${y})">` +
     `<rect x="-150" y="-190" width="300" height="380" rx="12" fill="${FARGE.bygg}"/>` +
