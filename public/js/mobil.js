@@ -219,6 +219,8 @@ $('sett-viking').addEventListener('click', () => {
 $('nytt-spill').addEventListener('click', () => socket.emit('mobil:nytt-spill'));
 $('angre-brikke').addEventListener('click', () => handling({ type: 'angre' }));
 $('trekk').addEventListener('click', () => handling({ type: 'trekk' }));
+// Hjelp om brikken: vises på storskjermen, og lukkes med samme knapp
+$('hjelp').addEventListener('click', () => socket.emit('mobil:hjelp', rom.hjelp?.spillerId !== spillerId));
 $('angre-trekk').addEventListener('click', () => handling({ type: 'angre' }));
 $('hopp-over').addEventListener('click', () => socket.emit('mobil:hopp-over'));
 
@@ -301,6 +303,10 @@ function visSpill(meg) {
 
   // Den som la siste brikke, kan angre trekket til neste spiller har trukket sin
   $('trekk-kontroll').hidden = !(harTur && spill.fase === 'trekk');
+  const hjelpApen = rom.hjelp?.spillerId === spillerId;
+  $('hjelp').hidden = !(harTur && aktiv);
+  $('hjelp').classList.toggle('apen', hjelpApen);
+  $('hjelp').textContent = hjelpApen ? '✕ Lukk hjelp' : '? Hva er denne brikken?';
   $('angre-trekk').hidden = !(spill.kanAngre === i && !harTur);
   $('legg-kontroll').hidden = !(harTur && spill.fase === 'legg');
   $('viking-kontroll').hidden = !(harTur && spill.fase === 'viking');

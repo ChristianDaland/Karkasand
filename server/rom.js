@@ -26,6 +26,7 @@ export class Rom {
     this.spillere = []; // { id, navn, farge, plass, tilkoblet }
     this.spill = null;
     this.utvidelser = []; // id-ene til utvidelsene verten har valgt
+    this.hjelp = null; // id-en til spilleren som har bedt om hjelp for brikken sin
     this.opptelling = null; // null, 'pågår' eller 'ferdig': sluttellingen som vises på skjermen
     this.sistAktiv = Date.now();
   }
@@ -110,8 +111,32 @@ export class Rom {
     return true;
   }
 
+  // Hjelpevinduet på skjermen: bare spilleren som har tur og har trukket brikke, kan åpne det
+  settHjelp(id, vis) {
+    const spill = this.spill;
+    if (!vis) {
+      if (this.hjelp !== id) return false;
+      this.hjelp = null;
+      return true;
+    }
+    if (!spill?.aktiv || spill.aktivSpiller.id !== id) return false;
+    this.hjelp = id;
+    return true;
+  }
+
+  // Brikken hjelpevinduet viser. Vinduet lukkes av seg selv når turen går videre.
+  hjelpBrikke() {
+    const spill = this.spill;
+    if (!this.hjelp || !spill?.aktiv || spill.aktivSpiller.id !== this.hjelp) {
+      this.hjelp = null;
+      return null;
+    }
+    return spill.aktiv.brikke.id;
+  }
+
   nyttSpill() {
     this.spill = null;
+    this.hjelp = null;
     this.opptelling = null;
     clearTimeout(this.opptellingTimer);
   }
@@ -155,6 +180,7 @@ export class Rom {
       spillere: this.spillere,
       vertId: this.vert?.id ?? null,
       opptelling: this.opptelling,
+      hjelp: this.hjelpBrikke() && { spillerId: this.hjelp, brikke: this.hjelpBrikke() },
       minSpillere: MIN_SPILLERE,
       maksSpillere: this.maksSpillere,
       utvidelser: this.utvidelser,

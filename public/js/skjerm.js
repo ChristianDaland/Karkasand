@@ -3,6 +3,7 @@
 import { BrettVisning } from './brett.js';
 import { lastBilder, brikkeUrl, vikingSvg, elementFra, PLASS_GRADER, PLASS_NAVN, GRUNN } from './felles.js';
 import { VIKINGER_PER_SPILLER } from '/delt/motor.js';
+import { brikkeTekst } from './brikkehjelp.js';
 
 const $ = (id) => document.getElementById(id);
 // Bildelisten hentes før socketen lages. Ellers kan «connect» komme mens vi venter,
@@ -76,6 +77,7 @@ function vis(rom) {
   }
 
   if (!spill) {
+    $('hjelp').hidden = true;
     visLobby(rom);
     for (const panel of panelene.splice(0)) panel.remove();
     $('slutt').hidden = true;
@@ -84,11 +86,27 @@ function vis(rom) {
   }
 
   brett.oppdater(spill, spill.spillere, { animer: spill.fase !== 'slutt' });
+  visHjelp(rom);
   visPaneler(rom);
   if (spill.fase !== 'slutt') visMelding(spill);
   $('igjen').textContent = `${spill.igjen} ${spill.igjen === 1 ? 'brikke' : 'brikker'} igjen`;
   $('liten-qr').hidden = rom.spillere.every((s) => s.tilkoblet) || spill.fase === 'slutt';
   visSlutt(spill);
+}
+
+// Hjelpevinduet: hva brikken spilleren har trukket, er og gir av poeng
+function visHjelp(rom) {
+  const hjelp = rom.hjelp;
+  $('hjelp').hidden = !hjelp;
+  if (!hjelp) return;
+  const spiller = rom.spill.spillere.find((s) => s.id === hjelp.spillerId);
+  $('hjelp').style.setProperty('--farge', spiller?.farge ?? 'var(--gull)');
+  $('hjelp-hvem').textContent = `${spiller?.navn ?? ''} spør: hva er denne brikken?`;
+  if ($('hjelp').dataset.brikke !== hjelp.brikke) {
+    $('hjelp').dataset.brikke = hjelp.brikke;
+    $('hjelp-bilde').src = brikkeUrl(hjelp.brikke);
+    $('hjelp-tekst').innerHTML = brikkeTekst(hjelp.brikke);
+  }
 }
 
 function visLobby(rom) {

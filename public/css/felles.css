@@ -46,3 +46,14 @@ button {
 }
 
 button:disabled { opacity: 0.35; cursor: default; }
+
+/* Merker for områdetypene, brukt i veiledningen og i hjelpevinduet */
+.type { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; color: #1b140d; white-space: nowrap; }
+.type.borg { background: #c99a62; }
+.type.vei { background: #e3cc98; }
+.type.eng { background: #8fb866; }
+.type.hov { background: #b98a6a; }
+.type.rune { background: #d0584f; color: #fff; }
+.type.elv { background: #6fa6d6; }
+.type.gjest { background: #c97a3c; color: #fff; }
+.type.storhov { background: #7a3a22; color: #fff; }

@@ -319,3 +319,35 @@ body[data-modus='bord'] #opptelling { top: 50%; }
 .dempet { color: var(--dempet); }
 
 .lobby-utvidelser { color: var(--gull); font-weight: 700; }
+
+/* Hjelpevinduet for brikken som skal legges */
+.hjelp-vindu {
+  --farge: var(--gull);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(820px, calc(100% - 560px));
+  min-width: 420px;
+  max-height: calc(100% - 40px);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 22px;
+  padding: 20px 24px;
+  border-radius: 18px;
+  background: rgba(20, 15, 10, 0.95);
+  border: 3px solid var(--farge);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--farge) 50%, transparent), 0 12px 40px rgba(0, 0, 0, 0.7);
+  z-index: 14;
+  font-size: 1.15rem;
+  line-height: 1.45;
+}
+.hjelp-vindu img { width: 240px; height: 240px; border-radius: 8px; }
+.hjelp-vindu h3 { margin: 0 0 4px; color: var(--gull); font-family: var(--tittelskrift); font-size: 1.5rem; }
+.hjelp-vindu .fakta { margin: 0 0 10px; color: var(--dempet); font-size: 1rem; }
+.hjelp-vindu p { margin: 0 0 10px; }
+.hjelp-vindu ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.hjelp-hvem { color: var(--farge); font-weight: 800; }
+.hjelp-merk { font-size: 0.9rem; margin-top: 12px !important; }
+body[data-modus='bord'] .hjelp-vindu { width: min(760px, calc(100% - 340px)); }

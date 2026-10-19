@@ -200,3 +200,6 @@ button.angre { background: #3d2f1f; border: 2px solid var(--kant); color: var(--
 .topp .stor svg { width: 1.35em; height: 1.35em; }
 
 .lenke { color: var(--gull); }
+
+.hjelp-knapp { flex: none; align-self: center; padding: 8px 16px; border-radius: 999px; background: #3d2f1f; border: 2px solid var(--kant); color: var(--gull); font-weight: 700; }
+.hjelp-knapp.apen { background: var(--gull); color: #1b140d; border-color: var(--gull); }

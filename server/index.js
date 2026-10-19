@@ -136,6 +136,11 @@ io.on('connection', (socket) => {
     sendTilstand(rom);
   });
 
+  socket.on('mobil:hjelp', (vis) => {
+    const rom = hentRom();
+    if (rom?.settHjelp(socket.data.spillerId, Boolean(vis))) sendTilstand(rom);
+  });
+
   socket.on('mobil:utvidelser', (liste) => {
     const rom = hentRom();
     if (rom?.settUtvidelser(socket.data.spillerId, liste)) sendTilstand(rom);
