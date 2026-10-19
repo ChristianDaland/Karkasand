@@ -198,3 +198,5 @@ button.angre { background: #3d2f1f; border: 2px solid var(--kant); color: var(--
 .hjelp.venstre { text-align: left; margin-top: 8px; }
 #storviking.valgt { background: var(--gull); color: #1b140d; }
 .topp .stor svg { width: 1.35em; height: 1.35em; }
+
+.lenke { color: var(--gull); }
