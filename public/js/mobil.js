@@ -175,6 +175,7 @@ $('legg').addEventListener('click', () => handling({ type: 'legg' }));
 $('ingen-viking').addEventListener('click', () => handling({ type: 'viking', del: null }));
 $('sett-viking').addEventListener('click', () => handling({ type: 'viking', del: rom.spill.aktiv?.valgtDel ?? null }));
 $('nytt-spill').addEventListener('click', () => socket.emit('mobil:nytt-spill'));
+$('hopp-over').addEventListener('click', () => socket.emit('mobil:hopp-over'));
 
 // Tastatur, praktisk for testing på PC
 const TASTER = { ArrowUp: 'opp', ArrowDown: 'ned', ArrowLeft: 'venstre', ArrowRight: 'hoyre' };
@@ -255,15 +256,21 @@ function visSpill(meg) {
   $('sett-viking').disabled = aktiv?.valgtDel == null;
 }
 
-function visSlutt() {
+function visSlutt(meg) {
   visSide('slutt');
   const spill = rom.spill;
+  // Resultatet vises først når skjermen er ferdig med opptellingen; verten kan hoppe over
+  const telles = rom.opptelling === 'pågår';
+  $('telles').hidden = !telles;
+  $('hopp-over').hidden = meg.id !== rom.vertId;
+  $('sluttresultat').hidden = telles;
   const rangert = spill.spillere.map((s, i) => ({ ...s, i })).sort((a, b) => b.poeng - a.poeng);
   $('resultat').replaceChildren(
     ...rangert.map((s) => {
       const li = elementFra(`<li><span class="prikk" style="background:${s.farge}"></span><span></span><span class="hoyre"></span></li>`);
       li.children[1].textContent = (spill.resultat?.vinnere.includes(s.i) ? '👑 ' : '') + s.navn;
-      li.children[2].textContent = `${s.poeng} poeng`;
+      const underveis = Object.values(s.underveis).reduce((a, b) => a + b, 0);
+      li.children[2].textContent = `${s.poeng} poeng (${underveis} + ${s.poeng - underveis} på slutten)`;
       return li;
     }),
   );
@@ -282,7 +289,7 @@ function vis() {
     return;
   }
   if (!rom.spill) visOppsett(meg);
-  else if (rom.spill.fase === 'slutt') visSlutt();
+  else if (rom.spill.fase === 'slutt') visSlutt(meg);
   else visSpill(meg);
 }
 

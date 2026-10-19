@@ -61,6 +61,15 @@
 
 .brikke.lagt-na { z-index: 2; }
 
+/* Opptellingen: området som telles lyser, resten dempes */
+.brikke img { transition: filter 0.4s; }
+.brett-lag.teller .brikke:not(.fremhevet) img { filter: brightness(0.4) saturate(0.6); }
+.brikke.fremhevet { z-index: 2; }
+.brikke.fremhevet::after {
+  inset: -2px;
+  box-shadow: 0 0 0 3px var(--farge), 0 0 18px var(--farge);
+}
+
 .brikke.lagt-na::after {
   inset: -5px;
   border: 5px solid var(--farge);

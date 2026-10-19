@@ -238,9 +238,8 @@ body[data-modus='bord'] #slutt { top: 50%; transform: translate(-50%, -50%); }
 #resultat { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
 
 #resultat li {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  display: grid;
+  gap: 6px;
   padding: 10px 16px;
   border-radius: 14px;
   background: var(--kort);
@@ -252,5 +251,48 @@ body[data-modus='bord'] #slutt { top: 50%; transform: translate(-50%, -50%); }
 #resultat li.vinner { border-color: var(--gull); box-shadow: 0 0 30px rgba(226, 181, 82, 0.4); }
 #resultat .prikk { width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
 #resultat .p { margin-left: auto; font-family: var(--tittelskrift); color: var(--gull); }
+#resultat .rad { display: flex; align-items: center; gap: 14px; }
+
+/* Stolpe per spiller: poengene fordelt på borg, vei, hov og eng */
+#resultat .stolpe { display: flex; height: 18px; border-radius: 6px; overflow: hidden; background: rgba(0, 0, 0, 0.3); }
+#resultat .stolpe span, .forklaring span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #1b140d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.borg { background: #c99a62; }
+.vei { background: #e3cc98; }
+.hov { background: #b98a6a; }
+.eng { background: #8fb866; }
+#resultat .fordeling { font-size: 0.85rem; font-weight: 400; color: var(--dempet); text-align: left; }
+.forklaring { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+.forklaring span { padding: 1px 10px; border-radius: 999px; }
+#se-igjen { margin-top: 12px; padding: 8px 14px; font-size: 0.95rem; }
+
+/* Banneret under opptellingen */
+#opptelling {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 12px 26px;
+  border-radius: 999px;
+  background: rgba(20, 15, 10, 0.92);
+  border: 2px solid var(--gull);
+  font-size: 1.3rem;
+  z-index: 12;
+  white-space: nowrap;
+}
+#opptelling b { font-family: var(--tittelskrift); color: var(--gull); font-size: 1.5rem; }
+#opptelling span { color: var(--dempet); }
+#opptelling .vinner { font-weight: 800; font-size: 1.5rem; -webkit-text-stroke: 0.5px #000; }
+body[data-modus='bord'] #opptelling { top: 50%; }
 
 .dempet { color: var(--dempet); }

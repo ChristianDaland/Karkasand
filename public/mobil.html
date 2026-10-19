@@ -102,8 +102,14 @@
 
   <section id="slutt" class="side midt" hidden>
     <h1 class="tittel liten">Spillet er slutt</h1>
-    <ol id="resultat" class="spillerliste"></ol>
-    <button id="nytt-spill" class="stor primar">Nytt spill</button>
+    <div id="telles">
+      <p>Poengene telles opp på skjermen …</p>
+      <button id="hopp-over" class="middels">Hopp over</button>
+    </div>
+    <div id="sluttresultat">
+      <ol id="resultat" class="spillerliste"></ol>
+      <button id="nytt-spill" class="stor primar">Nytt spill</button>
+    </div>
   </section>
 
   <script src="/socket.io/socket.io.js"></script>

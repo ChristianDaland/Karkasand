@@ -12,7 +12,7 @@ Et flisleggingsspill i nettleseren, inspirert av Carcassonne og satt i vikingtid
 
 I bordmodus følger pilene siden du sitter ved. «Opp» betyr alltid bort fra deg.
 
-På storskjermen kan du zoome med musehjulet, knappene + / − / ⤢ eller tastene + − 0, og dra for å flytte brettet. Når spillet er slutt, vises resultatet i et kort over brettet, så du fortsatt kan se på byggverket.
+På storskjermen kan du zoome med musehjulet, knappene + / − / ⤢ eller tastene + − 0, og dra for å flytte brettet. Når spillet er slutt, telles poengene opp på skjermen område for område, og verten kan hoppe over opptellingen fra mobilen. Resultatet vises i et kort over brettet, med poengene fordelt på borg, vei, hov og eng, så du fortsatt kan se på byggverket.
 
 ### Poeng
 

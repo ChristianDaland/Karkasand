@@ -184,3 +184,6 @@ button.primar { background: var(--gull); color: #1b140d; }
 .knapperad { display: flex; gap: 10px; }
 
 #start { flex: none; }
+
+#telles, #sluttresultat { display: grid; gap: 14px; width: 100%; max-width: 420px; justify-items: center; }
+#sluttresultat .spillerliste { width: 100%; }

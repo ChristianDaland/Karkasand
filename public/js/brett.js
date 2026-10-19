@@ -24,6 +24,7 @@ export class BrettVisning {
     this.lag.append(this.hintLag, this.brikkeLag, this.markor, this.vikingLag, this.effektLag);
     vindu.append(this.lag);
     this.brikker = new Map();
+    this.paPlass = new Map(); // "x,y" -> brikke-elementet, til fremheving i opptellingen
     this.sistHendelse = null;
     this.forrige = null;
     // Spillerens egen zoom oppå den tilpassede visningen: skjerm = forskyvning + zoom × tilpasset
@@ -143,11 +144,14 @@ export class BrettVisning {
       if (animer && this.brikker.size) el.classList.add('ny');
       this.brikkeLag.append(el);
       this.brikker.set(k, el);
+      this.paPlass.set(`${b.x},${b.y}`, el);
     }
     for (const [k, el] of this.brikker) {
       if (!finnes.has(k)) {
         el.remove();
         this.brikker.delete(k);
+        const [x, y] = k.split(',');
+        if (this.paPlass.get(`${x},${y}`) === el) this.paPlass.delete(`${x},${y}`);
       }
     }
 
@@ -221,6 +225,46 @@ export class BrettVisning {
     el.style.left = `${(b.x + px) * T}px`;
     el.style.top = `${(b.y + py) * T}px`;
     return el;
+  }
+
+  // ---------- Opptellingen på slutten ----------
+
+  // Lys opp brikkene i et område og demp resten. Uten brikker: vis alt som vanlig igjen.
+  fremhev(plasser = [], farge = 'var(--gull)') {
+    for (const el of this.brikkeLag.querySelectorAll('.fremhevet')) el.classList.remove('fremhevet');
+    this.lag.classList.toggle('teller', plasser.length > 0);
+    for (const { x, y } of plasser) {
+      const el = this.paPlass.get(`${x},${y}`);
+      el?.classList.add('fremhevet');
+      el?.style.setProperty('--farge', farge);
+    }
+  }
+
+  // «+N» som spretter opp midt på et sted på brettet (i brikkekoordinater)
+  sprett(x, y, tekst, farge) {
+    const el = elementFra(`<div class="poeng-sprett"></div>`);
+    el.textContent = tekst;
+    el.style.left = `${(x + 0.5) * T}px`;
+    el.style.top = `${(y + 0.5) * T}px`;
+    el.style.color = farge;
+    this.effektLag.append(el);
+    setTimeout(() => el.remove(), 2600);
+  }
+
+  // Gli og zoom slik at brikkene fyller en god del av vinduet
+  fokuser(plasser) {
+    if (!this.tilpasset || !plasser.length) return;
+    const xs = plasser.map((p) => p.x), ys = plasser.map((p) => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs) + 1;
+    const minY = Math.min(...ys), maxY = Math.max(...ys) + 1;
+    const b = this.vindu.clientWidth, h = this.vindu.clientHeight;
+    const maal = Math.min(2.6, (b * 0.6) / ((maxX - minX) * T), (h * 0.6) / ((maxY - minY) * T));
+    const { dx, dy, skala } = this.tilpasset;
+    const zoom = Math.max(1, maal / skala); // aldri lenger ut enn hele brettet
+    const sx = b / 2 - ((minX + maxX) / 2) * T * zoom * skala;
+    const sy = h / 2 - ((minY + maxY) / 2) * T * zoom * skala;
+    this.visning = { zoom, x: sx - zoom * dx, y: sy - zoom * dy };
+    this.tegnVisning(true);
   }
 
   visHendelser(hendelser, spillere, animer) {

@@ -17,6 +17,9 @@ let meldingTimer;
 
 const brett = new BrettVisning($('brett'));
 const panelene = []; // spillerpanelene, i samme rekkefølge som spillerne
+let sisteRom = null;
+let opptelling = null; // { avbrutt } mens sluttellingen spilles av
+let opptellingVist = false; // sluttellingen for dette spillet er spilt av
 
 socket.on('connect', () => {
   socket.emit('skjerm:koble', { kode, modus }, (svar) => {
@@ -31,7 +34,10 @@ socket.on('connect', () => {
   });
 });
 
-socket.on('tilstand', vis);
+socket.on('tilstand', (rom) => {
+  sisteRom = rom;
+  vis(rom);
+});
 
 $('skjul-resultat').addEventListener('click', () => {
   const skjult = !$('slutt-innhold').hidden;
@@ -60,6 +66,15 @@ function vis(rom) {
   const spill = rom.spill;
   $('lobby').hidden = Boolean(spill);
   $('info').hidden = !spill;
+  if (spill?.fase !== 'slutt') opptellingVist = false;
+
+  // Sluttellingen: spill den av én gang, og la den styre skjermen mens den pågår
+  if (spill?.fase === 'slutt') {
+    if (rom.opptelling === 'pågår' && !opptelling && !opptellingVist) spillOpptelling(rom);
+    if (rom.opptelling !== 'pågår' && opptelling && !opptelling.igjen) opptelling.avbrutt = true;
+    if (opptelling) return;
+  }
+
   if (!spill) {
     visLobby(rom);
     for (const panel of panelene.splice(0)) panel.remove();
@@ -68,9 +83,9 @@ function vis(rom) {
     return;
   }
 
-  brett.oppdater(spill, spill.spillere);
+  brett.oppdater(spill, spill.spillere, { animer: spill.fase !== 'slutt' });
   visPaneler(rom);
-  visMelding(spill);
+  if (spill.fase !== 'slutt') visMelding(spill);
   $('igjen').textContent = `${spill.igjen} ${spill.igjen === 1 ? 'brikke' : 'brikker'} igjen`;
   $('liten-qr').hidden = rom.spillere.every((s) => s.tilkoblet) || spill.fase === 'slutt';
   visSlutt(spill);
@@ -173,17 +188,93 @@ function visMelding(spill) {
   meldingTimer = setTimeout(() => (el.hidden = true), 3500);
 }
 
+// ---------- Opptellingen på slutten ----------
+
+// Går gjennom sluttellingen område for område: området lyser opp, brettet glir dit,
+// vikingene går hjem og poengene telles opp på panelene. Verten kan hoppe over.
+async function spillOpptelling(rom, { igjen = false } = {}) {
+  const spill = rom.spill;
+  const status = { avbrutt: false, igjen };
+  opptelling = status;
+  $('slutt').hidden = true;
+
+  // Start fra stillingen før sluttellingen, med vikingene tilbake på brettet
+  const visSpillere = spill.spillere.map((s) => ({ ...s, poeng: s.poeng - Object.values(s.slutt).reduce((a, b) => a + b, 0) }));
+  const brettet = spill.brett.map((b) => ({ ...b, viking: null }));
+  const paPlass = (x, y) => brettet.find((b) => b.x === x && b.y === y);
+  for (const post of spill.sluttposter) {
+    for (const v of post.vikinger) paPlass(v.x, v.y).viking = { del: v.del, spiller: v.spiller };
+  }
+  const visning = () => ({ ...spill, brett: brettet, spillere: visSpillere, hendelser: [] });
+  const tegn = () => {
+    brett.oppdater(visning(), visSpillere, { animer: false });
+    visPaneler({ ...rom, spill: visning() });
+  };
+  tegn();
+
+  const vent = (ms) => new Promise((r) => {
+    const t = setTimeout(r, ms);
+    const sjekk = setInterval(() => status.avbrutt && (clearTimeout(t), clearInterval(sjekk), r()), 100);
+    setTimeout(() => clearInterval(sjekk), ms + 50);
+  });
+  const tekst = $('opptelling');
+  tekst.hidden = false;
+  tekst.innerHTML = '<b>Sluttelling</b><span>Uferdige borger, veier og hov, og enga</span>';
+  await vent(1800);
+
+  const tempo = spill.sluttposter.length > 15 ? 0.7 : 1;
+  for (const post of spill.sluttposter) {
+    if (status.avbrutt) break;
+    const vinnerFarge = visSpillere[post.vinnere[0]]?.farge ?? 'var(--gull)';
+    brett.fokuser(post.brikker);
+    brett.fremhev(post.brikker, vinnerFarge);
+    const navn = post.vinnere.map((i) => visSpillere[i].navn).join(' og ');
+    const hva = { vei: 'Vei', borg: 'Borg', hov: 'Hov', eng: 'Eng' }[post.grunn];
+    const omfang = post.grunn === 'eng' ? `${post.poeng / 3} ferdige borger` : post.grunn === 'hov' ? `${post.brikker.length - 1} brikker rundt` : `${post.brikker.length} brikker`;
+    tekst.innerHTML = `<b>${hva}</b><span>${omfang}</span><span class="vinner" style="color:${vinnerFarge}"></span>`;
+    tekst.querySelector('.vinner').textContent = `${navn} +${post.poeng}`;
+    await vent(1100 * tempo);
+    if (status.avbrutt) break;
+
+    for (const v of post.vikinger) paPlass(v.x, v.y).viking = null;
+    for (const i of post.vinnere) visSpillere[i].poeng += post.poeng;
+    tegn();
+    const midt = post.brikker.reduce((m, b) => ({ x: m.x + b.x / post.brikker.length, y: m.y + b.y / post.brikker.length }), { x: 0, y: 0 });
+    post.vinnere.forEach((i, n) => brett.sprett(midt.x + n * 0.4, midt.y, `+${post.poeng}`, visSpillere[i].farge));
+    await vent(900 * tempo);
+  }
+
+  brett.fremhev([]);
+  brett.nullstillZoom();
+  tekst.hidden = true;
+  opptelling = null;
+  opptellingVist = true;
+  if (!igjen) socket.emit('skjerm:opptelling-ferdig');
+  if (sisteRom) vis(sisteRom);
+}
+
+$('se-igjen').addEventListener('click', () => sisteRom?.spill && !opptelling && spillOpptelling(sisteRom, { igjen: true }));
+
+const KATEGORIER = ['borg', 'vei', 'hov', 'eng'];
+const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+
+// Resultatet med en stolpe per spiller som viser hvor poengene kom fra
 function visSlutt(spill) {
   $('slutt').hidden = spill.fase !== 'slutt';
   if (spill.fase !== 'slutt') return;
   const rangert = spill.spillere.map((s, i) => ({ ...s, i })).sort((a, b) => b.poeng - a.poeng);
+  const mest = Math.max(1, ...rangert.map((s) => s.poeng));
   $('resultat').replaceChildren(
     ...rangert.map((s) => {
       const vinner = spill.resultat?.vinnere.includes(s.i);
-      const li = elementFra(
-        `<li class="${vinner ? 'vinner' : ''}"><span class="prikk" style="background:${s.farge}"></span><span></span><span class="p">${s.poeng}</span></li>`,
-      );
-      li.children[1].textContent = (vinner ? '👑 ' : '') + s.navn;
+      const deler = KATEGORIER.map((k) => ({ k, p: s.underveis[k] + s.slutt[k] })).filter((d) => d.p);
+      const li = elementFra(`
+        <li class="${vinner ? 'vinner' : ''}">
+          <div class="rad"><span class="prikk" style="background:${s.farge}"></span><span class="navn"></span><span class="p">${s.poeng}</span></div>
+          <div class="stolpe">${deler.map((d) => `<span class="${d.k}" style="width:${(100 * d.p) / mest}%" title="${GRUNN[d.k]}: ${d.p}">${d.p}</span>`).join('')}</div>
+          <div class="fordeling">${sum(s.underveis)} under spillet · ${sum(s.slutt)} i sluttellingen</div>
+        </li>`);
+      li.querySelector('.navn').textContent = (vinner ? '👑 ' : '') + s.navn;
       return li;
     }),
   );
