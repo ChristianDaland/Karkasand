@@ -120,6 +120,8 @@ export class Rom {
   handling(id, { type, retning, del, stor }) {
     const spill = this.spill;
     if (!spill || spill.fase === 'slutt') return false;
+    // Angre kan gjøres av den som la siste brikke, også etter at turen har gått videre
+    if (type === 'angre') return spill.angre(spill.spillere.findIndex((s) => s.id === id));
     if (spill.aktivSpiller.id !== id) return false;
     const spiller = this.finn(id);
     switch (type) {

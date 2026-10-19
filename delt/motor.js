@@ -84,6 +84,7 @@ export class Spill {
     this.hendelseNr = 0;
     this.resultat = null;
     this.sluttposter = []; // ett innslag per område som telles på slutten, til opptellingen på skjermen
+    this.angrepunkt = null; // { spiller, tilstand }: slik spillet var før siste brikke ble lagt
     this.trekk();
   }
 
@@ -294,6 +295,8 @@ export class Spill {
     if (this.fase !== 'legg') return false;
     const { brikke, x, y, rot } = this.aktiv;
     if (!this.passer(brikke.id, x, y, rot)) return false;
+    // Spilleren kan angre trekket helt til neste spiller legger sin brikke
+    this.angrepunkt = { spiller: this.tur, tilstand: this.lagre() };
     if (BRIKKE[brikke.id].kanter.includes('elv')) this.elvSving = this.elvTilkobling(brikke.id, x, y, rot);
     this.plasser(brikke, x, y, rot);
     this.sistLagt = { x, y };
@@ -350,6 +353,26 @@ export class Spill {
     this.tellFullforte();
     this.tur = (this.tur + 1) % this.spillere.length;
     this.trekk();
+  }
+
+  // ---------- Angre ----------
+
+  // Alt som endrer seg i løpet av en tur
+  lagre() {
+    // Hendelsene tas ikke med: nummeret må fortsette å øke, ellers ser ikke skjermen at
+    // noe nytt har skjedd etter angringen
+    const felter = ['brett', 'spillere', 'bunke', 'tur', 'fase', 'aktiv', 'markor', 'kastet', 'sistLagt', 'elvSving'];
+    return structuredClone(Object.fromEntries(felter.map((f) => [f, this[f]])));
+  }
+
+  // Spilleren som la siste brikke, kan ta hele trekket tilbake: brikken, vikingen og
+  // poengene. Brikken blir liggende som aktiv brikke der den ble lagt, så den kan flyttes.
+  angre(spiller) {
+    if (!this.angrepunkt || this.angrepunkt.spiller !== spiller || this.fase === 'slutt') return false;
+    Object.assign(this, structuredClone(this.angrepunkt.tilstand));
+    this.angrepunkt = null;
+    this.hendelse({ type: 'angret', spiller });
+    return true;
   }
 
   // ---------- Poeng ----------
@@ -498,6 +521,7 @@ export class Spill {
       resultat: this.resultat,
       sluttposter: this.fase === 'slutt' ? this.sluttposter : [],
       utvidelser: this.utvidelser,
+      kanAngre: this.fase === 'slutt' ? null : this.angrepunkt?.spiller ?? null,
     };
   }
 }

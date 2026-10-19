@@ -192,12 +192,14 @@ function visPaneler(rom) {
 function visMelding(spill) {
   const siste = spill.hendelser.at(-1)?.nr ?? 0;
   if (siste < sisteMelding) sisteMelding = 0; // nytt spill
-  const nye = spill.hendelser.filter((h) => h.nr > sisteMelding && h.type === 'poeng');
+  const nye = spill.hendelser.filter((h) => h.nr > sisteMelding && (h.type === 'poeng' || h.type === 'angret'));
   const forste = sisteMelding === 0;
   sisteMelding = siste;
   if (forste || !nye.length) return;
   const tekst = nye
-    .map((h) => `${spill.spillere[h.spiller].navn} fikk ${h.poeng} poeng for ${GRUNN[h.grunn].toLowerCase()}!`)
+    .map((h) => h.type === 'angret'
+      ? `${spill.spillere[h.spiller].navn} angret trekket`
+      : `${spill.spillere[h.spiller].navn} fikk ${h.poeng} poeng for ${GRUNN[h.grunn].toLowerCase()}!`)
     .join('  ·  ');
   const el = $('melding');
   el.textContent = tekst;

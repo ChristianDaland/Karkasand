@@ -335,3 +335,41 @@ test('et nytt rom får alltid en gyldig modus', async () => {
   assert.equal(new Rom('ABCD', 'bord').modus, 'bord');
   assert.equal(new Rom('ABCD', 'tull').modus, 'tv');
 });
+
+// ---------- Angre ----------
+
+test('angre brikken mens man velger viking', () => {
+  const spill = nyttSpill();
+  spill.aktiv = { brikke: { id: 'E', nr: 99 }, x: 0, y: -1, rot: 2 };
+  spill.bunke.push({ id: 'U', nr: 98 });
+  assert.ok(spill.legg());
+  assert.equal(spill.fase, 'viking');
+  assert.equal(spill.angre(1), false); // bare den som la brikken kan angre
+  assert.ok(spill.angre(0));
+  assert.equal(spill.fase, 'legg');
+  assert.equal(spill.brikke(0, -1), undefined);
+  assert.equal(spill.aktiv.brikke.id, 'E');
+  assert.deepEqual([spill.aktiv.x, spill.aktiv.y], [0, -1]);
+});
+
+test('angre et helt trekk med viking og poeng, helt til neste spiller legger brikke', () => {
+  const spill = nyttSpill();
+  const bunke = spill.bunke.length;
+  leggDirekte(spill, 'E', 0, -1, 2, 0); // Astrid lukker borgen og får 4 poeng
+  assert.equal(spill.spillere[0].poeng, 4);
+  assert.equal(spill.tur, 1);
+  spill.flytt(1); // Bjørn flytter markøren; det hindrer ikke angring
+  assert.equal(spill.tilstand().kanAngre, 0);
+  assert.ok(spill.angre(0));
+  assert.equal(spill.tur, 0);
+  assert.equal(spill.spillere[0].poeng, 0);
+  assert.equal(spill.spillere[0].vikinger, 7);
+  assert.equal(spill.brikke(0, -1), undefined);
+  assert.equal(spill.bunke.length, bunke + 1); // som før trekket (leggDirekte la én brikke i bunken), med Bjørns brikke tilbake
+  assert.equal(spill.angre(0), false); // bare ett steg tilbake
+
+  leggDirekte(spill, 'E', 0, -1, 2); // Astrid legger igjen, uten viking
+  leggDirekte(spill, 'U', 1, 0, 1); // Bjørn legger sin brikke
+  assert.equal(spill.angre(0), false); // nå er det for sent for Astrid
+  assert.equal(spill.tilstand().kanAngre, 1);
+});

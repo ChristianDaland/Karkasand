@@ -217,6 +217,8 @@ $('sett-viking').addEventListener('click', () => {
   handling({ type: 'viking', del: rom.spill.aktiv?.valgtDel ?? null, stor: brukStor || jeg.vikinger === 0 });
 });
 $('nytt-spill').addEventListener('click', () => socket.emit('mobil:nytt-spill'));
+$('angre-brikke').addEventListener('click', () => handling({ type: 'angre' }));
+$('angre-trekk').addEventListener('click', () => handling({ type: 'angre' }));
 $('hopp-over').addEventListener('click', () => socket.emit('mobil:hopp-over'));
 
 // Tastatur, praktisk for testing på PC
@@ -294,6 +296,8 @@ function visSpill(meg) {
     bilde.style.transform = `rotate(${vis.rot * 90}deg)`;
   }
 
+  // Den som la siste brikke, kan angre trekket til neste spiller har lagt sin
+  $('angre-trekk').hidden = !(spill.kanAngre === i && !harTur);
   $('legg-kontroll').hidden = !(harTur && spill.fase === 'legg');
   $('viking-kontroll').hidden = !(harTur && spill.fase === 'viking');
   $('legg').disabled = !aktiv?.passer;

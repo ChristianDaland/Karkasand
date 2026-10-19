@@ -189,6 +189,8 @@ button.primar { background: var(--gull); color: #1b140d; }
 #sluttresultat .spillerliste { width: 100%; }
 
 .utvidelser { display: grid; gap: 8px; }
+button.angre { background: #3d2f1f; border: 2px solid var(--kant); color: var(--tekst); }
+#angre-trekk { flex: none; align-self: center; padding: 12px 22px; }
 .utvidelse { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--kort); }
 .utvidelse input { width: 24px; height: 24px; margin-top: 2px; accent-color: var(--gull); flex: none; }
 .utvidelse small { color: var(--gull); }
