@@ -395,7 +395,7 @@ a Viking settlement covers the tile reaching the top, left and right edges; alon
 
 **Motiv:** En rett vei fra midten av nordkanten til midten av sørkanten, med eng på begge sider.
 
-**Detaljer:** Dette er en vanlig brikke, så lag gjerne **3 varianter**. Variant 1 kan ha en hest og kjerre, variant 2 en bautastein ved veien og et par bjørker, og variant 3 en bekk under en liten trebro.
+**Detaljer:** Dette er en vanlig brikke, så lag gjerne **3 varianter**. Variant 1 kan ha en hest og kjerre, variant 2 en bautastein ved veien og et par bjørker, og variant 3 en bekk under ei lita trebru.
 
 **Prompt:**
 ```
@@ -525,7 +525,7 @@ top edge: curved wooden palisade of a Viking settlement arcing between the top c
 ### R8 – Hovet ved brua · 1 stk
 **Kanter:** eng / elv / vei / elv · **Skisse:** [R8.png](../kunst/skisser/R8.png)
 
-**Motiv:** Et lite hov nord for elva. En vei fra sør krysser elva på en bro og ender ved hovet.
+**Motiv:** Et lite hov nord for elva. En vei fra sør krysser elva på ei bru og ender ved hovet.
 
 **Prompt:**
 ```
@@ -545,7 +545,7 @@ a dirt road enters at the exact middle of the top edge, curves and leaves at the
 ### R10 – Brua · 1 stk
 **Kanter:** vei / elv / vei / elv · **Skisse:** [R10.png](../kunst/skisser/R10.png)
 
-**Motiv:** Elva renner fra vest til øst, og veien går over den på en solid trebro.
+**Motiv:** Elva renner fra vest til øst, og veien går over den på ei solid trebru.
 
 **Prompt:**
 ```

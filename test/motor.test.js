@@ -284,7 +284,7 @@ test('gjestgiveri: dobbelt for ferdig vei, ingenting for uferdig', () => {
   assert.equal(uferdig.sluttposter[0].poeng, 0);
 });
 
-test('storhov: tre ganger for ferdig borg', () => {
+test('storhov: 3 poeng per brikke for ferdig borg', () => {
   const spill = nyttSpill({ utvidelser: ['gjestgiveri'] });
   leggDirekte(spill, 'G1', 0, -1, 0, 0); // Astrid: storhov nord for startbrikken
   leggDirekte(spill, 'E', 0, -2, 2);

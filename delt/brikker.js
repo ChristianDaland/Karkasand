@@ -14,7 +14,7 @@
 //   borger:    for eng: indeksene til borgdelene enga grenser til
 //   runestein: borgdelen har en runestein (bonuspoeng)
 //   gjestgiveri: veien har et gjestgiveri (dobbelt for ferdig vei, ingenting for uferdig)
-//   storhov:   borgen har et storhov (tre ganger for ferdig borg, ingenting for uferdig)
+//   storhov:   borgen har et storhov (3 per brikke og runestein for ferdig borg, ingenting for uferdig)
 // En elv bruker midtporten som en vei, men er ikke et område man kan sette vikinger i.
 
 const alle = (side) => [`${side}0`, `${side}1`, `${side}2`];
@@ -487,7 +487,7 @@ export const UTVIDELSER = [
   },
   {
     id: 'gjestgiveri', navn: 'Gjestgiveri og storhov',
-    om: 'Gjestgiverier gir dobbelt for ferdige veier og storhov tre ganger for ferdige borger, men ingenting hvis de er uferdige. Hver spiller får en storviking som teller som to, og det blir plass til en sjette spiller.',
+    om: 'Gjestgiverier gir 2 poeng per brikke for ferdige veier og storhov 3 poeng per brikke for ferdige borger, men begge gir ingenting hvis de er uferdige. Hver spiller får en storviking som teller som to, og det blir plass til en sjette spiller.',
   },
 ];
 
