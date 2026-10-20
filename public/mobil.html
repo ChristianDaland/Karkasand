@@ -68,6 +68,16 @@
     </div>
   </dialog>
 
+  <!-- Verten avslutter spillet og tar alle tilbake til lobbyen -->
+  <dialog id="bekreft-avslutt" class="bekreft">
+    <h2>Avslutte spillet?</h2>
+    <p>Spillet slutter for alle, og poengene blir borte. Dere kommer tilbake til lobbyen og kan starte et nytt spill.</p>
+    <div class="knapperad">
+      <button id="avslutt-nei" class="middels">Spill videre</button>
+      <button id="avslutt-ja" class="stor primar">Avslutt spillet</button>
+    </div>
+  </dialog>
+
   <section id="spill" class="side" hidden>
     <header class="topp">
       <span class="prikk" id="min-farge"></span>
@@ -75,6 +85,7 @@
       <span id="mine-vikinger" class="vikinger"></span>
       <span id="mine-varer" class="varer" hidden></span>
       <span id="mine-poeng" class="poeng"></span>
+      <button id="avslutt" class="avslutt-knapp" hidden aria-label="Avslutt spillet" title="Avslutt spillet">✕</button>
     </header>
     <p id="status" class="status"></p>
     <button id="hjelp" class="hjelp-knapp" hidden aria-label="Vis hjelp om brikken på skjermen">?</button>

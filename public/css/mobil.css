@@ -49,17 +49,6 @@ input:focus { outline: none; border-color: var(--gull); }
 .farger button.valgt { border-color: #fff; box-shadow: 0 0 0 3px var(--gull); }
 .farger button:disabled { opacity: 0.45; filter: grayscale(0.4); font-size: 1.2rem; cursor: not-allowed; }
 
-.bekreft {
-  width: min(420px, calc(100% - 32px));
-  border: 2px solid var(--gull);
-  border-radius: 16px;
-  background: var(--kort);
-  color: var(--tekst);
-  padding: 18px;
-}
-.bekreft::backdrop { background: rgba(0, 0, 0, 0.7); }
-.bekreft h2 { margin: 0 0 8px; color: var(--gull); }
-.bekreft p { margin: 0 0 12px; color: var(--dempet); }
 .bekreft .spillerliste { margin-bottom: 16px; }
 
 .bord-velger {
@@ -112,7 +101,6 @@ input:focus { outline: none; border-color: var(--gull); }
 
 button.stor { padding: 18px; font-size: 1.35rem; font-weight: 800; flex: 2; }
 button.middels { padding: 18px 12px; font-size: 1.05rem; font-weight: 700; flex: 1; }
-button.primar { background: var(--gull); color: #1b140d; }
 .hjelp { color: var(--dempet); font-size: 0.95rem; margin: 0; text-align: center; }
 
 /* ---------- Spill ---------- */
@@ -230,3 +218,6 @@ button.angre { background: #3d2f1f; border: 2px solid var(--kant); color: var(--
   #spill button.stor { padding: 12px; font-size: 1.15rem; }
   #spill button.middels { padding: 10px; }
 }
+
+/* Verten kan avslutte spillet fra mobilen */
+.avslutt-knapp { flex: none; width: 34px; height: 34px; padding: 0; border-radius: 50%; background: #3d2f1f; border: 2px solid var(--kant); color: var(--dempet); font-size: 1rem; font-weight: 800; }

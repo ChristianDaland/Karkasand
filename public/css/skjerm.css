@@ -135,11 +135,18 @@ body:is([data-modus='bord'], [data-modus='pad']) .panel.plass-Ø { left: calc(10
 /* ---------- Info og meldinger ---------- */
 
 /* Knappen til spillveiledningen: nede til venstre, over brikketelleren under spillet */
-.veiledning-knapp {
+.hjorneknapper {
   position: absolute;
   left: 24px;
   bottom: 56px;
   z-index: 25;
+  display: flex;
+  gap: 8px;
+}
+.veiledning-knapp {
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
   padding: 8px 14px;
   border-radius: 999px;
   background: rgba(42, 32, 22, 0.9);
@@ -149,7 +156,11 @@ body:is([data-modus='bord'], [data-modus='pad']) .panel.plass-Ø { left: calc(10
   text-decoration: none;
 }
 .veiledning-knapp:hover { border-color: var(--gull); }
-body:is([data-modus='bord'], [data-modus='pad']) .veiledning-knapp { bottom: auto; top: 16px; left: 16px; }
+body:is([data-modus='bord'], [data-modus='pad']) .hjorneknapper { bottom: auto; top: 16px; left: 16px; }
+#avslutt { color: var(--dempet); }
+#avslutt:hover { color: var(--tekst); }
+.bekreft .knapperad { display: flex; gap: 10px; justify-content: flex-end; }
+.bekreft .knapperad button { padding: 10px 18px; font-weight: 700; }
 
 #info {
   position: absolute;
@@ -399,7 +410,8 @@ body[data-modus='pad'] .panel.plass-N { top: 46px; }
 body[data-modus='pad'] .panel.plass-V { left: 46px; }
 body[data-modus='pad'] .panel.plass-Ø { left: calc(100% - 46px); }
 
-body[data-modus='pad'] .veiledning-knapp { top: 8px; left: 8px; padding: 4px 10px; font-size: 0.85rem; }
+body[data-modus='pad'] .hjorneknapper { top: 8px; left: 8px; gap: 6px; }
+body[data-modus='pad'] .veiledning-knapp { padding: 4px 10px; font-size: 0.85rem; }
 body[data-modus='pad'] .zoom-knapper { transform: scale(0.8); transform-origin: bottom right; }
 body[data-modus='pad'] .hjelp-vindu { width: min(640px, calc(100% - 200px)); }
 body[data-modus='pad'] .hjelp-vindu img { width: 160px; height: 160px; }

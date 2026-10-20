@@ -227,6 +227,12 @@ $('trekk').addEventListener('click', () => handling({ type: 'trekk' }));
 $('hjelp').addEventListener('click', () => socket.emit('mobil:hjelp', rom.hjelp?.spillerId !== spillerId));
 $('angre-trekk').addEventListener('click', () => handling({ type: 'angre' }));
 $('hopp-over').addEventListener('click', () => socket.emit('mobil:hopp-over'));
+$('avslutt').addEventListener('click', () => $('bekreft-avslutt').showModal());
+$('avslutt-nei').addEventListener('click', () => $('bekreft-avslutt').close());
+$('avslutt-ja').addEventListener('click', () => {
+  $('bekreft-avslutt').close();
+  socket.emit('spill:avslutt');
+});
 
 // Tastatur, praktisk for testing på PC
 const TASTER = { ArrowUp: 'opp', ArrowDown: 'ned', ArrowLeft: 'venstre', ArrowRight: 'hoyre' };
@@ -252,6 +258,7 @@ function visSpill(meg) {
   const harTur = spill.tur === i;
 
   visSide('spill');
+  $('avslutt').hidden = meg.id !== rom.vertId;
   $('min-farge').style.background = jeg.farge;
   $('mitt-navn').textContent = jeg.navn;
   $('mine-poeng').textContent = jeg.poeng;
@@ -379,6 +386,7 @@ function vis() {
     }
     return;
   }
+  if (!rom.spill && $('bekreft-avslutt').open) $('bekreft-avslutt').close();
   if (!rom.spill) visOppsett(meg);
   else if (rom.spill.fase === 'slutt') visSlutt(meg);
   else visSpill(meg);

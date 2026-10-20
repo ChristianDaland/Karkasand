@@ -17,7 +17,18 @@
     <div id="kolonne-0" class="panel-kolonne"></div>
     <div id="kolonne-1" class="panel-kolonne"></div>
   </div>
-  <a id="veiledning" class="veiledning-knapp" href="/veiledning" target="_blank" rel="noopener" title="Åpne spillveiledningen i en ny fane">? Slik spiller du</a>
+  <div class="hjorneknapper">
+    <a id="veiledning" class="veiledning-knapp" href="/veiledning" target="_blank" rel="noopener" title="Åpne spillveiledningen i en ny fane">? Slik spiller du</a>
+    <button id="avslutt" class="veiledning-knapp" hidden title="Avslutt spillet og gå tilbake til lobbyen">✕ Avslutt spillet</button>
+  </div>
+  <dialog id="bekreft-avslutt" class="bekreft">
+    <h2>Avslutte spillet?</h2>
+    <p>Spillet slutter for alle, og poengene blir borte. Dere kommer tilbake til lobbyen med de samme spillerne og kan starte et nytt spill.</p>
+    <div class="knapperad">
+      <button id="avslutt-nei">Spill videre</button>
+      <button id="avslutt-ja" class="primar">Avslutt spillet</button>
+    </div>
+  </dialog>
   <div id="info" hidden>
     <span class="bunke"><span class="bunke-ikon"></span><span id="igjen">0 brikker igjen</span></span>
   </div>

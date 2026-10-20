@@ -46,6 +46,21 @@ button {
 }
 
 button:disabled { opacity: 0.35; cursor: default; }
+button.primar { background: var(--gull); color: #1b140d; }
+
+/* Spørsmål som må bekreftes (start spillet, avslutt spillet) */
+.bekreft {
+  width: min(420px, calc(100% - 32px));
+  border: 2px solid var(--gull);
+  border-radius: 16px;
+  background: var(--kort);
+  color: var(--tekst);
+  padding: 18px;
+}
+.bekreft::backdrop { background: rgba(0, 0, 0, 0.7); }
+.bekreft h2 { margin: 0 0 8px; color: var(--gull); }
+.bekreft p { margin: 0 0 12px; color: var(--dempet); }
+
 
 /* Merker for områdetypene, brukt i veiledningen og i hjelpevinduet */
 .type { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; color: #1b140d; white-space: nowrap; }

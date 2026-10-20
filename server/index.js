@@ -168,6 +168,16 @@ io.on('connection', (socket) => {
     if (rom && rom.vert?.id === socket.data.spillerId) ferdigOpptelling(rom);
   });
 
+  // Avslutt spillet som pågår og gå tilbake til lobbyen. Spillerne, fargene og plassene
+  // beholdes. Bare storskjermen og verten kan gjøre det.
+  socket.on('spill:avslutt', () => {
+    const rom = hentRom();
+    if (!rom?.spill) return;
+    if (socket.data.rolle !== 'skjerm' && rom.vert?.id !== socket.data.spillerId) return;
+    rom.nyttSpill();
+    sendTilstand(rom);
+  });
+
   socket.on('mobil:nytt-spill', () => {
     const rom = hentRom();
     if (!rom?.spill || rom.spill.fase !== 'slutt') return;

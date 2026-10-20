@@ -68,6 +68,10 @@ function vis(rom) {
   const spill = rom.spill;
   $('lobby').hidden = Boolean(spill);
   $('info').hidden = !spill;
+  $('avslutt').hidden = !spill;
+  if (!spill && $('bekreft-avslutt').open) $('bekreft-avslutt').close();
+  // Avsluttet midt i sluttellingen: stopp den
+  if (!spill && opptelling) opptelling.avbrutt = true;
   if (spill?.fase !== 'slutt') opptellingVist = false;
 
   // Sluttellingen: spill den av én gang, og la den styre skjermen mens den pågår
@@ -323,6 +327,14 @@ async function spillOpptelling(rom, { igjen = false } = {}) {
   if (!igjen) socket.emit('skjerm:opptelling-ferdig');
   if (sisteRom) vis(sisteRom);
 }
+
+// Avslutt spillet og gå tilbake til lobbyen, etter et spørsmål
+$('avslutt').addEventListener('click', () => $('bekreft-avslutt').showModal());
+$('avslutt-nei').addEventListener('click', () => $('bekreft-avslutt').close());
+$('avslutt-ja').addEventListener('click', () => {
+  $('bekreft-avslutt').close();
+  socket.emit('spill:avslutt');
+});
 
 $('se-igjen').addEventListener('click', () => sisteRom?.spill && !opptelling && spillOpptelling(sisteRom, { igjen: true }));
 
