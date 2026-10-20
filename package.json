@@ -7,12 +7,12 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
-    "test": "node --test test/",
+    "test": "node --test 'test/**/*.test.js'",
     "skisser": "node verktoy/lag-skisser.js",
     "brikker": "node verktoy/lag-brikker.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "dependencies": {
     "express": "^4.22.3",
