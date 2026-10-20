@@ -128,10 +128,17 @@ button.primar { background: var(--gull); color: #1b140d; }
 .status.din-tur { color: var(--gull); }
 
 .forhand-ramme { flex: 1; min-height: 140px; display: grid; place-items: center; }
+/* Bildet fyller plassen som er igjen mellom teksten og knappene, og ikke mer. vh duger ikke
+   alene: i Safari på iPhone regnes den som om verktøylinjene var borte, så bildet ble for
+   stort og la seg over pil opp på små mobiler. */
+@supports (container-type: size) {
+  .forhand-ramme { flex: 1 1 0; min-height: 96px; container-type: size; }
+}
 
 .forhand {
   position: relative;
   width: min(62vw, 36vh, 280px);
+  width: min(62vw, 100cqmin, 280px);
   aspect-ratio: 1;
   transition: transform 0.25s ease-out;
 }
@@ -167,6 +174,7 @@ button.primar { background: var(--gull); color: #1b140d; }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, minmax(56px, 9vh));
+  grid-template-rows: repeat(3, minmax(52px, 9dvh));
   gap: 8px;
   max-width: 340px;
   width: 100%;
@@ -210,3 +218,15 @@ button.angre { background: #3d2f1f; border: 2px solid var(--kant); color: var(--
 
 .hjelp-knapp { flex: none; align-self: center; padding: 8px 16px; border-radius: 999px; background: #3d2f1f; border: 2px solid var(--kant); color: var(--gull); font-weight: 700; }
 .hjelp-knapp.apen { background: var(--gull); color: #1b140d; border-color: var(--gull); }
+
+/* Små mobiler (under ca. 640 px synlig høyde, f.eks. iPhone SE eller med Safari-linjene
+   synlige): lavere styrepute og knapper, så brikkebildet får mer plass */
+@media (max-height: 640px) {
+  .styrepute { grid-template-rows: repeat(3, 44px); gap: 6px; max-width: 300px; }
+  .styrepute button { font-size: 1.4rem; }
+  .styrepute .roter { font-size: 1.7rem; }
+  #spill { gap: 6px; }
+  .kontroll { gap: 8px; }
+  #spill button.stor { padding: 12px; font-size: 1.15rem; }
+  #spill button.middels { padding: 10px; }
+}
