@@ -527,3 +527,15 @@ test('uten Handel og håndverk har spillerne verken byggmester eller høne', () 
   assert.equal(spill.spillere[0].honer, 0);
   assert.ok(!spill.bunke.some((b) => b.id.startsWith('H') && b.id.length > 1));
 });
+
+test('døde plasser: ruter der ingen av brikkene som er igjen, passer', () => {
+  const spill = nyttSpill();
+  assert.deepEqual(spill.dodePlasser(), []); // i starten passer noe overalt
+  // Bare rette veier (U) igjen: ruten nord for startbrikkens borg kan ikke fylles
+  spill.bunke = [{ id: 'U', nr: 0 }];
+  spill.aktiv = { brikke: { id: 'U', nr: 1 }, x: 1, y: 0, rot: 1 };
+  const dode = spill.dodePlasser();
+  assert.ok(dode.some((p) => p.x === 0 && p.y === -1));
+  assert.ok(!dode.some((p) => p.x === 1 && p.y === 0)); // veien kan fortsette mot øst
+  assert.deepEqual(spill.tilstand().dode, dode);
+});

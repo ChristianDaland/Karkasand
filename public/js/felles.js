@@ -95,6 +95,25 @@ export function figurSvg(figur, farge, liggende = false) {
 
 export const FIGURNAVN = { viking: 'Viking', bygg: 'Byggmester', hone: 'Høne' };
 
+// Det røde krysset over en rute der ingen av brikkene som er igjen, passer. Formet som
+// runen gebo (ᚷ): to innhugne streker med kileformede ender, malt rød som runene på
+// runesteinene, på en mørk flekk så den synes på alle bakgrunner.
+export function kryssSvg() {
+  const strek = 'M26.4 13.6Q50.7 49.3 86.4 73.6L73.6 86.4Q49.3 50.7 13.6 26.4Z';
+  return (
+    `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">` +
+    `<circle cx="50" cy="50" r="44" fill="#140a05" opacity=".55"/>` +
+    `<circle cx="50" cy="50" r="42" fill="none" stroke="#8a2a1c" stroke-width="2.5" stroke-dasharray="14 5" opacity=".9"/>` +
+    `<defs><path id="gebo" d="${strek}"/></defs>` +
+    `<g stroke="#2a0d08" stroke-width="7" stroke-linejoin="round">` +
+    `<use href="#gebo"/><use href="#gebo" transform="rotate(90 50 50)"/></g>` +
+    `<g fill="#c0392b"><use href="#gebo"/><use href="#gebo" transform="rotate(90 50 50)"/></g>` +
+    `<g stroke="#e8705a" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".8">` +
+    `<path d="M22 22L46 46M54 54L78 78"/><path d="M78 22L54 46M46 54L22 78"/></g>` +
+    `</svg>`
+  );
+}
+
 // Hvor mange grader brettet må snus for å se riktig ut fra en side av bordet
 export const PLASS_GRADER = { S: 0, V: -90, N: 180, Ø: 90 };
 

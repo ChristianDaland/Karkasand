@@ -180,3 +180,18 @@
   80% { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, -160%) scale(1); }
 }
+
+/* Rødt kryss (gebo-runen) over ruter der ingen av brikkene som er igjen, passer */
+.dod {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  padding: 10px;
+  pointer-events: none;
+  animation: dod-inn 0.6s ease-out;
+}
+.dod svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6)); }
+
+@keyframes dod-inn {
+  from { opacity: 0; transform: scale(1.4); }
+}

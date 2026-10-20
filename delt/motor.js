@@ -165,6 +165,25 @@ export class Spill {
     return plasser.sort((a, b) => a.y - b.y || a.x - b.x);
   }
 
+  // Tomme ruter inntil brettet der ingen av brikkene som er igjen, passer i noen retning.
+  // Brikken spilleren har trukket og ikke lagt ennå, teller med. Vises med et rødt kryss.
+  dodePlasser() {
+    const igjen = new Set(this.bunke.map((b) => b.id));
+    if (this.aktiv && this.fase === 'legg') igjen.add(this.aktiv.brikke.id);
+    const sett = new Set();
+    const dode = [];
+    for (const b of this.brett.values()) {
+      for (let s = 0; s < 4; s++) {
+        const x = b.x + DX[s], y = b.y + DY[s];
+        const k = nokkel(x, y);
+        if (sett.has(k) || this.brett.has(k)) continue;
+        sett.add(k);
+        if (![...igjen].some((id) => this.gyldigeRotasjoner(id, x, y).length)) dode.push({ x, y });
+      }
+    }
+    return dode;
+  }
+
   // ---------- Områder (sammenhengende borg, vei, eng) ----------
 
   // Finner hele området som delen `del` på brikken i (x, y) hører til
@@ -622,6 +641,7 @@ export class Spill {
       aktiv,
       sistLagt: this.sistLagt ?? null,
       hint: this.fase === 'legg' ? this.gyldigePlasser(a.brikke.id).map(({ x, y }) => ({ x, y })) : [],
+      dode: this.fase === 'slutt' ? [] : this.dodePlasser(),
       vikingDeler: this.vikingDeler(),
       // Hvor mange steder hver figur kan stå på brikken som nettopp ble lagt
       figurValg: Object.fromEntries(FIGURER.map((f) => [f, this.figurDeler(f).length])),

@@ -4,7 +4,7 @@
 
 import { BRIKKE } from '/delt/brikker.js';
 import { roterPunkt } from '/delt/motor.js';
-import { brikkeUrl, figurSvg, elementFra } from './felles.js';
+import { brikkeUrl, figurSvg, kryssSvg, elementFra } from './felles.js';
 
 const T = 100; // størrelsen på en brikke i brettets egne koordinater
 const MAKS_ZOOM = 12; // hvor langt inn man kan zoome, i forhold til tilpasset visning
@@ -17,11 +17,12 @@ export class BrettVisning {
     this.marg = marg;
     this.lag = elementFra('<div class="brett-lag"></div>');
     this.hintLag = elementFra('<div class="hint-lag"></div>');
+    this.dodLag = elementFra('<div class="dod-lag"></div>');
     this.brikkeLag = elementFra('<div class="brikke-lag"></div>');
     this.vikingLag = elementFra('<div class="viking-lag"></div>');
     this.effektLag = elementFra('<div class="effekt-lag"></div>');
     this.markor = elementFra('<div class="markor" hidden><img alt=""></div>');
-    this.lag.append(this.hintLag, this.brikkeLag, this.markor, this.vikingLag, this.effektLag);
+    this.lag.append(this.hintLag, this.dodLag, this.brikkeLag, this.markor, this.vikingLag, this.effektLag);
     vindu.append(this.lag);
     this.brikker = new Map();
     this.paPlass = new Map(); // "x,y" -> brikke-elementet, til fremheving i opptellingen
@@ -167,6 +168,21 @@ export class BrettVisning {
       }
     }
 
+    // Rødt kryss der ingen av brikkene som er igjen, passer. Krysset som står fra før, får
+    // stå, så bare de nye tones inn.
+    const dode = new Set((spill.dode ?? []).map((p) => `${p.x},${p.y}`));
+    for (const el of [...this.dodLag.children]) if (!dode.has(el.dataset.plass)) el.remove();
+    const vises = new Set([...this.dodLag.children].map((el) => el.dataset.plass));
+    for (const k of dode) {
+      if (vises.has(k)) continue;
+      const [x, y] = k.split(',').map(Number);
+      const el = elementFra(`<div class="dod" title="Ingen brikker som er igjen, passer her">${kryssSvg()}</div>`);
+      el.dataset.plass = k;
+      el.style.left = `${x * T}px`;
+      el.style.top = `${y * T}px`;
+      this.dodLag.append(el);
+    }
+
     // Hint og markør i leggefasen
     const a = spill.aktiv;
     this.hintLag.replaceChildren();
@@ -299,7 +315,7 @@ export class BrettVisning {
     if (!spill?.brett.length) return;
     const xs = spill.brett.map((b) => b.x);
     const ys = spill.brett.map((b) => b.y);
-    for (const h of spill.hint) {
+    for (const h of [...spill.hint, ...(spill.dode ?? [])]) {
       xs.push(h.x);
       ys.push(h.y);
     }
