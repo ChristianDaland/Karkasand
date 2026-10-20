@@ -46,7 +46,11 @@
         <ul id="lobby-liste"></ul>
         <p id="lobby-status"></p>
         <p id="lobby-utvidelser" class="lobby-utvidelser"></p>
-        <button id="bytt-modus"></button>
+        <div class="modusvalg" role="group" aria-label="Hvordan spiller dere?">
+          <button data-velg-modus="tv" title="TV eller PC-skjerm. Alle ser brettet samme vei.">Skjerm</button>
+          <button data-velg-modus="bord" title="Prosjektor i taket som lyser ned på et bord">Prosjektor</button>
+          <button data-velg-modus="pad" title="Nettbrett som ligger flatt midt på bordet">Nettbrett</button>
+        </div>
       </div>
     </div>
   </section>

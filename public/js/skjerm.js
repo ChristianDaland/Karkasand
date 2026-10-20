@@ -48,9 +48,9 @@ $('skjul-resultat').addEventListener('click', () => {
   $('skjul-resultat').setAttribute('aria-expanded', String(!skjult));
 });
 
-$('bytt-modus').addEventListener('click', () => {
-  socket.emit('skjerm:modus', document.body.dataset.modus === 'tv' ? 'bord' : 'tv');
-});
+for (const knapp of document.querySelectorAll('[data-velg-modus]')) {
+  knapp.addEventListener('click', () => socket.emit('skjerm:modus', knapp.dataset.velgModus));
+}
 
 // Hold skjermen våken mens spillet står fremme
 async function holdVaaken() {
@@ -114,7 +114,7 @@ function visLobby(rom) {
   const liste = $('lobby-liste');
   liste.replaceChildren();
   for (const s of rom.spillere) {
-    const plass = rom.modus === 'bord' ? `${PLASS_NAVN[s.plass]} side` : '';
+    const plass = rom.modus !== 'tv' ? `${PLASS_NAVN[s.plass]} side` : '';
     const li = elementFra(
       `<li><span class="prikk" style="background:${s.farge}"></span><span></span><span class="plass">${plass}</span></li>`,
     );
@@ -135,7 +135,9 @@ function visLobby(rom) {
   $('lobby-status').textContent = nok
     ? `${vert.navn} starter spillet fra mobilen når alle er klare.`
     : `Venter på spillere (minst ${rom.minSpillere}, høyst ${rom.maksSpillere}).`;
-  $('bytt-modus').textContent = rom.modus === 'tv' ? 'Bytt til bordmodus (prosjektor)' : 'Bytt til skjermmodus (TV)';
+  for (const knapp of document.querySelectorAll('[data-velg-modus]')) {
+    knapp.setAttribute('aria-pressed', String(knapp.dataset.velgModus === rom.modus));
+  }
 }
 
 function visPaneler(rom) {
@@ -164,7 +166,8 @@ function visPaneler(rom) {
     if (panel.parentElement !== forelder) forelder.append(panel);
     const deler = spill.spillere.filter((t) => (rom.spillere.find((r) => r.id === t.id)?.plass ?? 'S') === plass).length;
     const nr = (paSide[plass] = (paSide[plass] ?? -1) + 1);
-    panel.style.setProperty('--forskyv', `${deler > 1 ? (nr - (deler - 1) / 2) * 490 : 0}px`);
+    // Avstanden mellom panelene (--panelsteg) står i CSS, fordi den er mindre på nettbrett
+    panel.style.setProperty('--nr', String(deler > 1 ? nr - (deler - 1) / 2 : 0));
     const harTur = spill.tur === i && spill.fase !== 'slutt';
     panel.className = `panel side-${i} plass-${plass}${harTur ? ' tur' : ''}`;
     panel.style.setProperty('--farge', s.farge);
@@ -212,7 +215,7 @@ function visPaneler(rom) {
     if (!neste.hidden) {
       const url = brikkeUrl(spill.aktiv.brikke.id, spill.aktiv.brikke.nr);
       if (neste.getAttribute('src') !== url) neste.src = url;
-      const panelSnu = rom.modus === 'bord' ? PLASS_GRADER[plass] : 0;
+      const panelSnu = rom.modus !== 'tv' ? PLASS_GRADER[plass] : 0;
       neste.style.transform = `rotate(${spill.aktiv.rot * 90 + panelSnu}deg)`;
     }
   });

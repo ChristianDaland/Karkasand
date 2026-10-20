@@ -8,6 +8,9 @@ export const MIN_SPILLERE = 2;
 export const MAKS_SPILLERE = 5; // 6 med Gjestgiveri og storhov
 export const FARGER = ['#e53935', '#1e88e5', '#fdd835', '#43a047', '#8e24aa', '#ec407a'];
 export const PLASSER = ['S', 'N', 'V', 'Ø']; // side av bordet spilleren sitter ved
+// 'tv': alle ser brettet samme vei. 'bord': prosjektor over et bord. 'pad': nettbrett som
+// ligger flatt på bordet. På bord og pad sitter spillerne rundt brettet, hver ved sin side.
+export const MODUSER = ['tv', 'bord', 'pad'];
 const PER_SIDE = 2; // med 5 spillere må to dele en side av bordet
 
 // Hvilken bretteretning «opp» på mobilen tilsvarer for hver side av bordet
@@ -20,9 +23,9 @@ const BOKSTAVER = 'ABCDEFGHJKLMNPRSTUVWXYZ';
 export class Rom {
   constructor(kode, modus) {
     this.kode = kode;
-    // 'tv' eller 'bord'. Alt annet blir TV, også null: en skjerm som kobler seg til igjen
+    // En av MODUSER. Alt annet blir TV, også null: en skjerm som kobler seg til igjen
     // etter at serveren har startet på nytt, sender modus: null og får et nytt rom.
-    this.modus = modus === 'bord' ? 'bord' : 'tv';
+    this.modus = MODUSER.includes(modus) ? modus : 'tv';
     this.spillere = []; // { id, navn, farge, plass, tilkoblet }
     this.spill = null;
     this.utvidelser = []; // id-ene til utvidelsene verten har valgt
@@ -52,7 +55,7 @@ export class Rom {
       this.fjernSpiller(borte.id);
     }
     const farge = FARGER.find((f) => !this.spillere.some((s) => s.farge === f));
-    const plass = this.modus === 'bord' ? this.ledigsteSide() : 'S';
+    const plass = this.rundtBrettet ? this.ledigsteSide() : 'S';
     const spiller = { id: randomUUID(), navn: `Spiller ${this.spillere.length + 1}`, farge, plass, tilkoblet: true };
     this.spillere.push(spiller);
     return spiller;
@@ -62,6 +65,11 @@ export class Rom {
   ledigsteSide(utenom = null) {
     const antall = (p) => this.spillere.filter((s) => s !== utenom && s.plass === p).length;
     return PLASSER.reduce((best, p) => (antall(p) < antall(best) ? p : best));
+  }
+
+  // Sitter spillerne rundt brettet (bord og pad), eller foran skjermen (tv)?
+  get rundtBrettet() {
+    return this.modus !== 'tv';
   }
 
   get maksSpillere() {
@@ -92,17 +100,20 @@ export class Rom {
     if (typeof navn === 'string' && navn.trim()) s.navn = navn.trim().slice(0, 16);
     if (FARGER.includes(farge) && !this.spillere.some((a) => a !== s && a.farge === farge)) s.farge = farge;
     const paaSiden = this.spillere.filter((a) => a !== s && a.plass === plass).length;
-    if (PLASSER.includes(plass) && (this.modus !== 'bord' || paaSiden < PER_SIDE)) {
+    if (PLASSER.includes(plass) && (!this.rundtBrettet || paaSiden < PER_SIDE)) {
       s.plass = plass;
     }
   }
 
   settModus(modus) {
-    if (modus !== 'tv' && modus !== 'bord') return;
+    if (!MODUSER.includes(modus)) return;
+    const varRundt = this.rundtBrettet;
     this.modus = modus;
-    // Fordel spillerne rundt bordet, høyst to per side, eller sett alle «foran skjermen»
-    for (const s of this.spillere) s.plass = modus === 'tv' ? 'S' : null;
-    if (modus === 'bord') for (const s of this.spillere) s.plass = this.ledigsteSide(s);
+    // Fordel spillerne rundt brettet, høyst to per side, eller sett alle «foran skjermen».
+    // Mellom bord og pad beholder spillerne plassene sine.
+    if (this.rundtBrettet && varRundt) return;
+    for (const s of this.spillere) s.plass = this.rundtBrettet ? null : 'S';
+    if (this.rundtBrettet) for (const s of this.spillere) s.plass = this.ledigsteSide(s);
   }
 
   start(id) {

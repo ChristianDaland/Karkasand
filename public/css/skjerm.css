@@ -5,7 +5,7 @@ body[data-modus='bord'] { background: #000; }
 /* ---------- Brettet ---------- */
 
 body[data-modus='tv'] #brett { left: 270px; right: 270px; }
-body[data-modus='bord'] #brett { inset: 150px; }
+body:is([data-modus='bord'], [data-modus='pad']) #brett { inset: 150px; }
 
 /* ---------- Spillerpaneler ---------- */
 
@@ -105,7 +105,7 @@ body[data-modus='tv'] #kolonne-1 { right: 20px; }
 body[data-modus='tv'] .panel { position: relative; }
 
 /* Bordmodus: panelet ligger langs spillerens kant, med teksten vendt mot spilleren */
-body[data-modus='bord'] .panel {
+body:is([data-modus='bord'], [data-modus='pad']) .panel {
   width: 470px;
   grid-template-columns: 1fr auto auto;
   grid-template-areas: 'navn poeng neste' 'vikinger poeng neste' 'tur tur neste';
@@ -113,24 +113,24 @@ body[data-modus='bord'] .panel {
   column-gap: 18px;
   padding: 12px 18px;
   background: rgba(20, 15, 10, 0.95);
-  transform: translate(-50%, -50%) rotate(var(--snu)) translateX(var(--forskyv, 0px));
+  transform: translate(-50%, -50%) rotate(var(--snu)) translateX(calc(var(--nr, 0) * var(--panelsteg, 490px)));
 }
 
-body[data-modus='bord'] .panel .navn { grid-area: navn; }
-body[data-modus='bord'] .panel .vikinger { grid-area: vikinger; }
-body[data-modus='bord'] .panel .lager { grid-area: lager; }
-body[data-modus='bord'] .panel:has(.lager:not([hidden])) {
+body:is([data-modus='bord'], [data-modus='pad']) .panel .navn { grid-area: navn; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel .vikinger { grid-area: vikinger; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel .lager { grid-area: lager; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel:has(.lager:not([hidden])) {
   grid-template-areas: 'navn poeng neste' 'vikinger poeng neste' 'lager poeng neste' 'tur tur neste';
 }
-body[data-modus='bord'] .panel .poeng { grid-area: poeng; }
-body[data-modus='bord'] .panel .tur-tekst { grid-area: tur; }
-body[data-modus='bord'] .panel .frakoblet { grid-area: tur; }
-body[data-modus='bord'] .panel .neste { grid-area: neste; width: 96px; height: 96px; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel .poeng { grid-area: poeng; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel .tur-tekst { grid-area: tur; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel .frakoblet { grid-area: tur; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel .neste { grid-area: neste; width: 96px; height: 96px; }
 
-body[data-modus='bord'] .panel.plass-S { left: 50%; top: calc(100% - 72px); --snu: 0deg; }
-body[data-modus='bord'] .panel.plass-N { left: 50%; top: 72px; --snu: 180deg; }
-body[data-modus='bord'] .panel.plass-V { left: 72px; top: 50%; --snu: 90deg; }
-body[data-modus='bord'] .panel.plass-Ø { left: calc(100% - 72px); top: 50%; --snu: -90deg; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel.plass-S { left: 50%; top: calc(100% - 72px); --snu: 0deg; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel.plass-N { left: 50%; top: 72px; --snu: 180deg; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel.plass-V { left: 72px; top: 50%; --snu: 90deg; }
+body:is([data-modus='bord'], [data-modus='pad']) .panel.plass-Ø { left: calc(100% - 72px); top: 50%; --snu: -90deg; }
 
 /* ---------- Info og meldinger ---------- */
 
@@ -149,7 +149,7 @@ body[data-modus='bord'] .panel.plass-Ø { left: calc(100% - 72px); top: 50%; --s
   text-decoration: none;
 }
 .veiledning-knapp:hover { border-color: var(--gull); }
-body[data-modus='bord'] .veiledning-knapp { bottom: auto; top: 16px; left: 16px; }
+body:is([data-modus='bord'], [data-modus='pad']) .veiledning-knapp { bottom: auto; top: 16px; left: 16px; }
 
 #info {
   position: absolute;
@@ -159,7 +159,7 @@ body[data-modus='bord'] .veiledning-knapp { bottom: auto; top: 16px; left: 16px;
   font-size: 1.1rem;
 }
 
-body[data-modus='bord'] #info { bottom: auto; top: 50%; left: auto; right: 160px; transform: none; display: none; }
+body:is([data-modus='bord'], [data-modus='pad']) #info { bottom: auto; top: 50%; left: auto; right: 160px; transform: none; display: none; }
 
 .bunke { display: inline-flex; align-items: center; gap: 8px; }
 
@@ -186,7 +186,7 @@ body[data-modus='bord'] #info { bottom: auto; top: 50%; left: auto; right: 160px
   animation: inn 0.3s ease-out;
 }
 
-body[data-modus='bord'] #melding { top: 50%; transform: translate(-50%, -50%); }
+body:is([data-modus='bord'], [data-modus='pad']) #melding { top: 50%; transform: translate(-50%, -50%); }
 
 @keyframes inn { from { opacity: 0; } }
 
@@ -241,7 +241,10 @@ body[data-modus='bord'] #melding { top: 50%; transform: translate(-50%, -50%); }
 #lobby-liste .plass { margin-left: auto; color: var(--dempet); font-weight: 400; font-size: 1rem; }
 
 #lobby-status { color: var(--dempet); }
-#bytt-modus { padding: 10px 16px; font-size: 1rem; }
+/* Valg av modus i lobbyen: skjerm, prosjektor eller nettbrett */
+.modusvalg { display: flex; gap: 6px; flex-wrap: wrap; }
+.modusvalg button { padding: 8px 14px; font-size: 1rem; }
+.modusvalg button[aria-pressed='true'] { background: var(--gull); color: #1b140d; border-color: var(--gull); }
 
 /* Resultatkortet ligger øverst over brettet og dekker det ikke */
 #slutt {
@@ -264,7 +267,7 @@ body[data-modus='bord'] #melding { top: 50%; transform: translate(-50%, -50%); }
 #skjul-resultat { padding: 6px 12px; font-size: 0.95rem; }
 #slutt-innhold p { margin: 12px 0 0; font-size: 0.95rem; }
 
-body[data-modus='bord'] #slutt { top: 50%; transform: translate(-50%, -50%); }
+body:is([data-modus='bord'], [data-modus='pad']) #slutt { top: 50%; transform: translate(-50%, -50%); }
 
 #resultat { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
 
@@ -325,7 +328,7 @@ body[data-modus='bord'] #slutt { top: 50%; transform: translate(-50%, -50%); }
 #opptelling b { font-family: var(--tittelskrift); color: var(--gull); font-size: 1.5rem; }
 #opptelling span { color: var(--dempet); }
 #opptelling .vinner { font-weight: 800; font-size: 1.5rem; -webkit-text-stroke: 0.5px #000; }
-body[data-modus='bord'] #opptelling { top: 50%; }
+body:is([data-modus='bord'], [data-modus='pad']) #opptelling { top: 50%; }
 
 .dempet { color: var(--dempet); }
 
@@ -361,4 +364,50 @@ body[data-modus='bord'] #opptelling { top: 50%; }
 .hjelp-vindu ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .hjelp-hvem { color: var(--farge); font-weight: 800; }
 .hjelp-merk { font-size: 0.9rem; margin-top: 12px !important; }
-body[data-modus='bord'] .hjelp-vindu { width: min(760px, calc(100% - 340px)); }
+body:is([data-modus='bord'], [data-modus='pad']) .hjelp-vindu { width: min(760px, calc(100% - 340px)); }
+
+/* ---------- Nettbrett (pad) ----------
+   Som bordmodus, men skjermen er bare ca. 1024 × 768 og ligger flatt på bordet. Panelene
+   blir mindre, så to spillere får plass på samme kortside, og brettet får mer av skjermen. */
+
+body[data-modus='pad'] #brett { inset: 92px; }
+
+body[data-modus='pad'] .panel {
+  --panelsteg: 300px;
+  width: 290px;
+  column-gap: 10px;
+  row-gap: 2px;
+  padding: 6px 10px;
+  border-width: 2px;
+  border-radius: 12px;
+}
+body[data-modus='pad'] .panel .navn { font-size: 1rem; gap: 6px; }
+body[data-modus='pad'] .panel .prikk { width: 12px; height: 12px; }
+body[data-modus='pad'] .panel .poeng { font-size: 1.9rem; }
+body[data-modus='pad'] .panel .poeng small { display: none; }
+body[data-modus='pad'] .panel .vikinger span { width: 16px; height: 16px; }
+body[data-modus='pad'] .panel .vikinger:has(.storviking) span:not(.storviking) { width: 15px; height: 15px; }
+body[data-modus='pad'] .panel .vikinger .storviking { width: 18px; height: 18px; margin-left: 3px; }
+body[data-modus='pad'] .panel .lager { gap: 5px; font-size: 0.85rem; }
+body[data-modus='pad'] .panel .lager svg { width: 15px; height: 15px; }
+body[data-modus='pad'] .panel .tur-tekst { font-size: 0.85rem; min-height: 1.1em; }
+body[data-modus='pad'] .panel .frakoblet { font-size: 0.8rem; }
+body[data-modus='pad'] .panel .neste { width: 58px; height: 58px; }
+
+body[data-modus='pad'] .panel.plass-S { top: calc(100% - 46px); }
+body[data-modus='pad'] .panel.plass-N { top: 46px; }
+body[data-modus='pad'] .panel.plass-V { left: 46px; }
+body[data-modus='pad'] .panel.plass-Ø { left: calc(100% - 46px); }
+
+body[data-modus='pad'] .veiledning-knapp { top: 8px; left: 8px; padding: 4px 10px; font-size: 0.85rem; }
+body[data-modus='pad'] .zoom-knapper { transform: scale(0.8); transform-origin: bottom right; }
+body[data-modus='pad'] .hjelp-vindu { width: min(640px, calc(100% - 200px)); }
+body[data-modus='pad'] .hjelp-vindu img { width: 160px; height: 160px; }
+body[data-modus='pad'] #slutt { max-width: calc(100% - 200px); max-height: calc(100% - 200px); overflow: auto; }
+
+/* Lobbyen på et liggende eller stående nettbrett */
+body[data-modus='pad'] .overlegg { gap: 12px; padding: 16px; }
+body[data-modus='pad'] .lobby-innhold { gap: 24px; }
+body[data-modus='pad'] .qr-boks img { width: min(260px, 34vh, 60vw); }
+body[data-modus='pad'] .lobby-spillere { min-width: 260px; }
+body[data-modus='pad'] #lobby-liste li { font-size: 1.1rem; padding: 8px 12px; }

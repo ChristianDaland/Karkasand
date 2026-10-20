@@ -144,7 +144,7 @@ function visOppsett(meg) {
     b.setAttribute('aria-label', eier ? `Opptatt, valgt av ${eier.navn}` : 'Velg farge');
   });
 
-  $('plass-felt').hidden = rom.modus !== 'bord';
+  $('plass-felt').hidden = rom.modus === 'tv'; // på bord og nettbrett sitter spillerne rundt brettet
   // Høyst to spillere per side av bordet
   for (const b of document.querySelectorAll('[data-plass]')) {
     b.classList.toggle('valgt', meg.plass === b.dataset.plass);
