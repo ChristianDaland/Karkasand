@@ -14,7 +14,7 @@
 //       npm run brikker -- A --ut=kunst/proeve --seed=7
 //
 // Valg: --ut=<mappe>  --seed=<tall>  --denoise=<0–1>  --styrke=<ControlNet, 0–1>
-//       --stoy=<fargestøy i startbildet>  --borgdenoise=<0–1>
+//       --stoy=<fargestøy i startbildet>  --borgdenoise=<0–1>  --borgseed=<seed for borgrunden>
 // Serveren settes med COMFY_URL (standard http://10.0.0.76:8188). Krever ImageMagick.
 
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
@@ -37,6 +37,9 @@ const SEED = { B: 7, X: 99, H: 42, I: 42, M: 99, O: 99, R5: 42, R1: 123 };
 // vei mot nord, fordi kantkartet er tomt der og modellen ser brønn i krysset som firveiskryss.
 // «omrade» er rektanglene (x0,y0 x1,y1) som males på nytt; bare enga innenfor tas med.
 // R1 (kilden) får elv i alle fire retninger, men elva skal bare renne mot vest.
+// Seed for borgrunden (runde 2), der standard-seed ga feil vare eller en vare som knapt synes.
+// Kan prøves med --borgseed=<tall>. En liste gir én seed per borg (for brikker med flere borger).
+const BORGSEED = { H2: 42, H5: 42, H7: 42, H13: 42, H14: [42, 99] };
 const RENSK_ENG = {
   W: { omrade: ['420,0 604,430'] },
   G16: { omrade: ['420,0 604,430'] },
@@ -66,6 +69,12 @@ const prompter = Object.fromEntries(doc.split(/\n### /).slice(1)
 const kildestil = stil.split(', ').filter((ledd) => !/board game|richly detailed|edge to edge|along all edges/.test(ledd)).join(', ');
 const STORHOV = 'a great stave-church-like temple hall with tiered shingled roofs and carved dragon heads in the middle of the settlement';
 const RUNESTEIN = 'a large prominent grey runestone with bright red serpent knotwork standing in the middle of a round stone-paved square';
+// Varene i Handel og håndverk (samme beskrivelse som i docs/BRIKKER.md)
+const VARE = {
+  fisk: 'a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard',
+  jern: 'an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard',
+  korn: 'a wooden grain store (stabbur) on stone posts with many golden sheaves of grain stacked in front of it, clearly visible in the open yard',
+};
 
 const magick = (...args) => execFileSync('convert', args.flat());
 const snitt = (fil) => Number(execFileSync('convert', [fil, '-format', '%[fx:mean]', 'info:']).toString());
@@ -138,7 +147,7 @@ const filAv = (id) => (navn) => `${ARBEID}${id}_${navn}.png`;
 // Maler ett område av brikken på nytt med en egen prompt. Området (masken fil(navn), med
 // en myk utgave fil(navn + 'myk')) klippes ut og skaleres opp til ca. 1024 px, så modellen
 // ser det som et helt bilde. Under området legges skissen, så runden starter fra riktig farge.
-async function malPaaNytt(b, navn, prompt, d, { kontroll = true } = {}) {
+async function malPaaNytt(b, navn, prompt, d, { kontroll = true, borgseed = BORGSEED[b.id] } = {}) {
   const fil = filAv(b.id);
   // Rammen rundt området. Svart kant først, ellers regnes et område som dekker hjørnene som bakgrunn.
   const [, w, h, xr, yr] = execFileSync('convert', [fil(navn), '-bordercolor', 'black', '-border', '1', '-format', '%@', 'info:'])
@@ -162,7 +171,7 @@ async function malPaaNytt(b, navn, prompt, d, { kontroll = true } = {}) {
     ...tekst('p', prompt),
     latent: { class_type: 'VAEEncode', inputs: { pixels: ['start', 0], vae: ['vae', 0] } },
     maskert: { class_type: 'SetLatentNoiseMask', inputs: { samples: ['latent', 0], mask: ['maske', 0] } },
-    k: sampler(kontroll ? 'styrt' : 'modell', 'p', 'maskert', d),
+    k: sampler(kontroll ? 'styrt' : 'modell', 'p', 'maskert', d, Number(valg.borgseed ?? borgseed ?? seed)),
     bilde: { class_type: 'VAEDecode', inputs: { samples: ['k', 0], vae: ['vae', 0] } },
     lagre: { class_type: 'SaveImage', inputs: { images: ['bilde', 0], filename_prefix: `karkasand/${b.id}_${navn}` } },
   }));
@@ -171,7 +180,10 @@ async function malPaaNytt(b, navn, prompt, d, { kontroll = true } = {}) {
 }
 
 // Runde 1 og 2. Gir stien til det malte bildet, før kantstripen.
-async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id]}, ${stil}`, borgrunde = true, kontroll = true } = {}) {
+// Brikkene i Handel og håndverk har formen til en grunnbrikke (b.form). Runde 1 bruker
+// prompten og seeden til den, ellers maler modellen en ekstra innhegning med varen ute
+// i enga. Varen males inn i runde 2, sammen med borgen.
+async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.form ?? b.id]}, ${stil}`, borgrunde = true, kontroll = true } = {}) {
   const fil = filAv(b.id);
   if (existsSync(fil('malt'))) return fil('malt');
 
@@ -198,7 +210,7 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id
     start: { class_type: 'LoadImage', inputs: { image: await lastOpp(fil('start'), `karkasand_${b.id}.png`) } },
     ...tekst('p', prompt),
     latent: { class_type: 'VAEEncode', inputs: { pixels: ['start', 0], vae: ['vae', 0] } },
-    k: sampler(kontroll ? 'styrt' : 'modell', 'p', 'latent', denoiseHer, valg.seed ? seed : SEED[b.id] ?? seed),
+    k: sampler(kontroll ? 'styrt' : 'modell', 'p', 'latent', denoiseHer, valg.seed ? seed : SEED[b.id] ?? SEED[b.form] ?? seed),
     bilde: { class_type: 'VAEDecode', inputs: { samples: ['k', 0], vae: ['vae', 0] } },
     lagre: { class_type: 'SaveImage', inputs: { images: ['bilde', 0], filename_prefix: `karkasand/${b.id}` } },
   }));
@@ -209,7 +221,24 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.id
   if (harBorg) {
     const runestein = b.deler.some((d) => d.runestein) ? `, ${RUNESTEIN}` : '';
     const storhov = b.deler.some((d) => d.storhov) ? `, ${STORHOV}` : '';
-    await malPaaNytt(b, 'borg', `${borgprompt}${runestein}${storhov}, ${stil}`, borgdenoise);
+    const medVare = b.deler.filter((d) => d.vare);
+    if (medVare.length < 2) {
+      const vare = medVare.length ? `, ${VARE[medVare[0].vare]}` : '';
+      await malPaaNytt(b, 'borg', `${borgprompt}${runestein}${storhov}${vare}, ${stil}`, borgdenoise);
+    } else {
+      // Flere borger med hver sin vare: hver borg males for seg, ellers får bare én av dem varen.
+      // Borgen er den delen av borgmasken som ligger nærmest vikingpunktet til delen.
+      const punkter = medVare.map((d) => d.punkt.map((v) => v * 1024));
+      for (const [i, d] of medVare.entries()) {
+        const [x, y] = punkter[i];
+        const naermest = punkter.filter((_, j) => j !== i)
+          .map(([px, py]) => `hypot(i-${x},j-${y})<hypot(i-${px},j-${py})`).join('&&');
+        magick(fil('borg'), '(', '+clone', '-fx', `${naermest}?1:0`, ')', '-compose', 'multiply', '-composite', fil(`borg${i}`));
+        magick(fil(`borg${i}`), '-blur', '0x4', fil(`borg${i}myk`));
+        await malPaaNytt(b, `borg${i}`, `${borgprompt}${runestein}${storhov}, ${VARE[d.vare]}, ${stil}`, borgdenoise,
+          { borgseed: [BORGSEED[b.id]].flat()[i] });
+      }
+    }
   }
   // Rydd enga der modellen legger til noe som ikke skal være der (se RENSK_ENG)
   if (RENSK_ENG[b.id]) {
