@@ -2,7 +2,8 @@
 
 import { BRIKKE } from '/delt/brikker.js';
 import { roterPunkt } from '/delt/motor.js';
-import { lastBilder, brikkeUrl, vikingSvg, elementFra, PLASS_GRADER } from './felles.js';
+import { lastBilder, brikkeUrl, vikingSvg, figurSvg, vareSvg, elementFra, PLASS_GRADER, FIGURNAVN } from './felles.js';
+import { VARER } from '/delt/brikker.js';
 
 const $ = (id) => document.getElementById(id);
 const kode = location.pathname.split('/')[2]?.toUpperCase();
@@ -212,6 +213,9 @@ $('roter').addEventListener('click', () => handling({ type: 'roter' }));
 $('neste').addEventListener('click', () => handling({ type: 'neste' }));
 $('legg').addEventListener('click', () => handling({ type: 'legg' }));
 $('ingen-viking').addEventListener('click', () => handling({ type: 'viking', del: null }));
+for (const knapp of document.querySelectorAll('[data-figur]')) {
+  knapp.addEventListener('click', () => handling({ type: 'figur', figur: knapp.dataset.figur }));
+}
 $('sett-viking').addEventListener('click', () => {
   const jeg = rom.spill.spillere.find((s) => s.id === spillerId);
   handling({ type: 'viking', del: rom.spill.aktiv?.valgtDel ?? null, stor: brukStor || jeg.vikinger === 0 });
@@ -251,17 +255,22 @@ function visSpill(meg) {
   $('min-farge').style.background = jeg.farge;
   $('mitt-navn').textContent = jeg.navn;
   $('mine-poeng').textContent = jeg.poeng;
+  const handel = spill.utvidelser?.includes('handel');
   $('mine-vikinger').innerHTML = `${vikingSvg(jeg.farge)} ${jeg.vikinger}` +
-    (spill.utvidelser?.includes('gjestgiveri') ? ` <span class="stor">${vikingSvg(jeg.farge)}</span> ${jeg.storvikinger}` : '');
+    (spill.utvidelser?.includes('gjestgiveri') ? ` <span class="stor">${vikingSvg(jeg.farge)}</span> ${jeg.storvikinger}` : '') +
+    (handel ? ` ${figurSvg('bygg', jeg.farge)} ${jeg.byggmestere} ${figurSvg('hone', jeg.farge)} ${jeg.honer}` : '');
+  $('mine-varer').hidden = !handel;
+  if (handel) $('mine-varer').innerHTML = Object.keys(VARER).map((v) => `${vareSvg(v)}${jeg.varer[v]}`).join(' ');
 
   const aktiv = spill.aktiv;
   const navnPaaTur = spill.spillere[spill.tur].navn;
   const status = $('status');
   status.classList.toggle('din-tur', harTur);
-  if (harTur && spill.fase === 'trekk') status.textContent = 'Din tur! Trekk en brikke.';
+  if (harTur && spill.fase === 'trekk' && spill.ekstraTur) status.textContent = 'Byggmesteren gir deg en ekstra tur! Trekk en brikke til.';
+  else if (harTur && spill.fase === 'trekk') status.textContent = 'Din tur! Trekk en brikke.';
   else if (spill.fase === 'trekk') status.textContent = `${navnPaaTur} skal trekke …`;
   else if (harTur && spill.fase === 'legg') status.textContent = aktiv.passer ? 'Din tur! Brikken passer her.' : 'Din tur! Flytt eller roter brikken.';
-  else if (harTur) status.textContent = 'Vil du sette ut en viking?';
+  else if (harTur) status.textContent = handel ? 'Vil du sette ut en figur?' : 'Vil du sette ut en viking?';
   else status.textContent = `${navnPaaTur} sin tur …`;
 
   if (harTur && !haddeTur) navigator.vibrate?.([60, 40, 60]);
@@ -284,7 +293,7 @@ function visSpill(meg) {
     if (harTur) {
       for (const d of spill.vikingDeler) {
         const [px, py] = roterPunkt(BRIKKE[lagt.id].deler[d].punkt, lagt.rot);
-        const b = elementFra(`<button class="${aktiv.valgtDel === d ? 'valgt' : ''}">${vikingSvg(jeg.farge)}</button>`);
+        const b = elementFra(`<button class="${aktiv.valgtDel === d ? 'valgt' : ''}">${figurSvg(aktiv.figur, jeg.farge)}</button>`);
         b.style.left = `${px * 100}%`;
         b.style.top = `${py * 100}%`;
         // Hold vikingen oppreist selv om brikken er snudd
@@ -307,13 +316,35 @@ function visSpill(meg) {
   $('hjelp').hidden = !(harTur && aktiv);
   $('hjelp').classList.toggle('apen', hjelpApen);
   $('hjelp').textContent = hjelpApen ? '✕ Lukk hjelp' : '? Hva er denne brikken?';
-  $('angre-trekk').hidden = !(spill.kanAngre === i && !harTur);
+  // På den ekstra turen fra byggmesteren kan spilleren også angre forrige brikke
+  $('angre-trekk').hidden = !(spill.kanAngre === i && (!harTur || spill.fase === 'trekk'));
   $('legg-kontroll').hidden = !(harTur && spill.fase === 'legg');
   $('viking-kontroll').hidden = !(harTur && spill.fase === 'viking');
   $('legg').disabled = !aktiv?.passer;
   $('sett-viking').disabled = aktiv?.valgtDel == null;
+  // Handel og håndverk: velg om du vil sette ut viking, byggmester eller høne
+  const figur = aktiv?.figur ?? 'viking';
+  // Knappene vises bare når byggmesteren eller høna kan stå et sted på brikken
+  const kanVelge = spill.figurValg?.bygg || spill.figurValg?.hone;
+  $('figurvalg').hidden = !(handel && harTur && spill.fase === 'viking' && kanVelge);
+  for (const knapp of document.querySelectorAll('[data-figur]')) {
+    const f = knapp.dataset.figur;
+    knapp.classList.toggle('valgt', f === figur);
+    knapp.disabled = !spill.figurValg?.[f];
+    if (knapp.dataset.farge !== jeg.farge) {
+      knapp.innerHTML = `${figurSvg(f, jeg.farge)}<span>${FIGURNAVN[f]}</span>`;
+      knapp.dataset.farge = jeg.farge;
+    }
+  }
+  $('sett-viking').textContent = { viking: 'Sett ut viking', bygg: 'Sett ut byggmesteren', hone: 'Sett ut høna' }[figur];
+  $('ingen-viking').textContent = handel ? 'Ingen figur' : 'Ingen viking';
+  $('viking-hjelp').textContent = {
+    viking: 'Trykk på et punkt på brikken for å velge hvor vikingen skal stå.',
+    bygg: 'Byggmesteren står i en vei eller borg der du har en viking. Legger du en brikke der senere, får du en ekstra tur.',
+    hone: 'Høna går i en eng der du har en viking. Vinner du enga, får du 4 poeng per ferdig borg i stedet for 3.',
+  }[figur];
   // Storvikingen kan velges når den er hjemme; har man bare den igjen, brukes den uansett
-  $('storviking').hidden = !(harTur && spill.fase === 'viking' && jeg.storvikinger > 0 && jeg.vikinger > 0);
+  $('storviking').hidden = !(harTur && spill.fase === 'viking' && figur === 'viking' && jeg.storvikinger > 0 && jeg.vikinger > 0);
 }
 
 function visSlutt(meg) {

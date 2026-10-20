@@ -57,3 +57,4 @@ button:disabled { opacity: 0.35; cursor: default; }
 .type.elv { background: #6fa6d6; }
 .type.gjest { background: #c97a3c; color: #fff; }
 .type.storhov { background: #7a3a22; color: #fff; }
+.type.vare { background: #9fbfd4; }

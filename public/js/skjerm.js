@@ -1,7 +1,8 @@
 // Storskjermen: viser lobbyen med QR-kode, brettet, spillerpanelene og resultatet.
 
 import { BrettVisning } from './brett.js';
-import { lastBilder, brikkeUrl, vikingSvg, elementFra, PLASS_GRADER, PLASS_NAVN, GRUNN } from './felles.js';
+import { lastBilder, brikkeUrl, vikingSvg, figurSvg, vareSvg, elementFra, PLASS_GRADER, PLASS_NAVN, GRUNN } from './felles.js';
+import { VARER } from '/delt/brikker.js';
 import { VIKINGER_PER_SPILLER } from '/delt/motor.js';
 import { brikkeTekst } from './brikkehjelp.js';
 
@@ -150,6 +151,7 @@ function visPaneler(rom) {
           <div class="navn"><span class="prikk"></span><span class="tekst"></span></div>
           <div class="poeng"></div>
           <div class="vikinger"></div>
+          <div class="lager" hidden></div>
           <div class="tur-tekst"></div>
           <div class="frakoblet" hidden>Frakoblet. Skann QR-koden igjen.</div>
           <img class="neste" alt="" hidden>
@@ -189,6 +191,16 @@ function visPaneler(rom) {
       stor.classList.toggle('borte', s.storvikinger <= 0);
     } else stor?.remove();
 
+    // Handel og håndverk: byggmesteren og høna (blasse når de er ute på brettet) og varene
+    const lager = panel.querySelector('.lager');
+    lager.hidden = !spill.utvidelser?.includes('handel');
+    if (!lager.hidden) {
+      lager.innerHTML =
+        `<span class="${s.byggmestere ? '' : 'borte'}" title="Byggmester">${figurSvg('bygg', s.farge)}</span>` +
+        `<span class="${s.honer ? '' : 'borte'}" title="Høne">${figurSvg('hone', s.farge)}</span>` +
+        Object.keys(VARER).map((v) => `<span title="${VARER[v]}">${vareSvg(v)}${s.varer[v]}</span>`).join('');
+    }
+
     let turTekst = '';
     if (harTur) turTekst = { viking: 'Setter ut viking …', trekk: 'Trekker brikke …' }[spill.fase] ?? 'Legger brikke …';
     panel.querySelector('.tur-tekst').textContent = turTekst;
@@ -210,20 +222,30 @@ function visPaneler(rom) {
 function visMelding(spill) {
   const siste = spill.hendelser.at(-1)?.nr ?? 0;
   if (siste < sisteMelding) sisteMelding = 0; // nytt spill
-  const nye = spill.hendelser.filter((h) => h.nr > sisteMelding && (h.type === 'poeng' || h.type === 'angret'));
+  const nye = spill.hendelser.filter((h) => h.nr > sisteMelding && ['poeng', 'angret', 'varer', 'ekstratur'].includes(h.type));
   const forste = sisteMelding === 0;
   sisteMelding = siste;
   if (forste || !nye.length) return;
   const tekst = nye
-    .map((h) => h.type === 'angret'
-      ? `${spill.spillere[h.spiller].navn} angret trekket`
-      : `${spill.spillere[h.spiller].navn} fikk ${h.poeng} poeng for ${GRUNN[h.grunn].toLowerCase()}!`)
+    .map((h) => {
+      const navn = spill.spillere[h.spiller].navn;
+      if (h.type === 'angret') return `${navn} angret trekket`;
+      if (h.type === 'ekstratur') return `Byggmesteren gir ${navn} en ekstra tur!`;
+      if (h.type === 'varer') return `${navn} fikk ${varetekst(h.varer)}`;
+      return `${navn} fikk ${h.poeng} poeng for ${GRUNN[h.grunn].toLowerCase()}!`;
+    })
     .join('  ·  ');
   const el = $('melding');
   el.textContent = tekst;
   el.hidden = false;
   clearTimeout(meldingTimer);
   meldingTimer = setTimeout(() => (el.hidden = true), 3500);
+}
+
+// «2 tørrfisk og 1 korn»
+function varetekst(varer) {
+  const deler = Object.keys(VARER).filter((v) => varer[v]).map((v) => `${varer[v]} ${VARER[v]}`);
+  return deler.length > 1 ? `${deler.slice(0, -1).join(', ')} og ${deler.at(-1)}` : deler[0];
 }
 
 // ---------- Opptellingen på slutten ----------
@@ -257,28 +279,36 @@ async function spillOpptelling(rom, { igjen = false } = {}) {
   });
   const tekst = $('opptelling');
   tekst.hidden = false;
-  tekst.innerHTML = '<b>Sluttelling</b><span>Uferdige borger, veier og hov, og enga</span>';
+  tekst.innerHTML = `<b>Sluttelling</b><span>Uferdige borger, veier og hov, og enga${spill.utvidelser?.includes('handel') ? ', og til slutt varene' : ''}</span>`;
   await vent(1800);
 
   const tempo = spill.sluttposter.length > 15 ? 0.7 : 1;
   for (const post of spill.sluttposter) {
     if (status.avbrutt) break;
     const vinnerFarge = visSpillere[post.vinnere[0]]?.farge ?? 'var(--gull)';
-    brett.fokuser(post.brikker);
+    // Varene ligger ikke på brettet, så da vises hele brettet
+    if (post.grunn === 'varer') brett.nullstillZoom();
+    else brett.fokuser(post.brikker);
     brett.fremhev(post.brikker, vinnerFarge);
-    const navn = post.vinnere.map((i) => visSpillere[i].navn).join(' og ');
-    const hva = { vei: 'Vei', borg: 'Borg', hov: 'Hov', eng: 'Eng' }[post.grunn];
-    const omfang = post.grunn === 'eng' ? `${post.poeng / 3} ferdige borger` : post.grunn === 'hov' ? `${post.brikker.length - 1} brikker rundt` : `${post.brikker.length} brikker`;
+    const poengPer = post.poengPer ?? post.vinnere.map(() => post.poeng);
+    const navn = post.vinnere.map((i, n) => `${visSpillere[i].navn} +${poengPer[n]}`).join(' og ');
+    const hva = post.grunn === 'varer' ? `Mest ${VARER[post.vare]}` : GRUNN[post.grunn];
+    const borger = post.borger ?? post.poeng / 3;
+    const omfang = post.grunn === 'varer' ? `${post.antall} stk`
+      : post.grunn === 'eng' ? `${borger} ferdige borger${post.honer?.length ? ' · høna gir 4 per borg' : ''}`
+        : post.grunn === 'hov' ? `${post.brikker.length - 1} brikker rundt` : `${post.brikker.length} brikker`;
     tekst.innerHTML = `<b>${hva}</b><span>${omfang}</span><span class="vinner" style="color:${vinnerFarge}"></span>`;
-    tekst.querySelector('.vinner').textContent = `${navn} +${post.poeng}`;
+    tekst.querySelector('.vinner').textContent = navn;
     await vent(1100 * tempo);
     if (status.avbrutt) break;
 
     for (const v of post.vikinger) paPlass(v.x, v.y).viking = null;
-    for (const i of post.vinnere) visSpillere[i].poeng += post.poeng;
+    post.vinnere.forEach((i, n) => (visSpillere[i].poeng += poengPer[n]));
     tegn();
-    const midt = post.brikker.reduce((m, b) => ({ x: m.x + b.x / post.brikker.length, y: m.y + b.y / post.brikker.length }), { x: 0, y: 0 });
-    post.vinnere.forEach((i, n) => brett.sprett(midt.x + n * 0.4, midt.y, `+${post.poeng}`, visSpillere[i].farge));
+    if (post.brikker.length) {
+      const midt = post.brikker.reduce((m, b) => ({ x: m.x + b.x / post.brikker.length, y: m.y + b.y / post.brikker.length }), { x: 0, y: 0 });
+      post.vinnere.forEach((i, n) => brett.sprett(midt.x + n * 0.4, midt.y, `+${poengPer[n]}`, visSpillere[i].farge));
+    }
     await vent(900 * tempo);
   }
 
@@ -293,19 +323,20 @@ async function spillOpptelling(rom, { igjen = false } = {}) {
 
 $('se-igjen').addEventListener('click', () => sisteRom?.spill && !opptelling && spillOpptelling(sisteRom, { igjen: true }));
 
-const KATEGORIER = ['borg', 'vei', 'hov', 'eng'];
+const KATEGORIER = ['borg', 'vei', 'hov', 'eng', 'varer'];
 const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
 
 // Resultatet med en stolpe per spiller som viser hvor poengene kom fra
 function visSlutt(spill) {
   $('slutt').hidden = spill.fase !== 'slutt';
   if (spill.fase !== 'slutt') return;
+  document.querySelector('.forklaring .varer').hidden = !spill.utvidelser?.includes('handel');
   const rangert = spill.spillere.map((s, i) => ({ ...s, i })).sort((a, b) => b.poeng - a.poeng);
   const mest = Math.max(1, ...rangert.map((s) => s.poeng));
   $('resultat').replaceChildren(
     ...rangert.map((s) => {
       const vinner = spill.resultat?.vinnere.includes(s.i);
-      const deler = KATEGORIER.map((k) => ({ k, p: s.underveis[k] + s.slutt[k] })).filter((d) => d.p);
+      const deler = KATEGORIER.map((k) => ({ k, p: (s.underveis[k] ?? 0) + (s.slutt[k] ?? 0) })).filter((d) => d.p);
       const li = elementFra(`
         <li class="${vinner ? 'vinner' : ''}">
           <div class="rad"><span class="prikk" style="background:${s.farge}"></span><span class="navn"></span><span class="p">${s.poeng}</span></div>

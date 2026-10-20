@@ -197,6 +197,13 @@ button.angre { background: #3d2f1f; border: 2px solid var(--kant); color: var(--
 .utvidelse em { color: var(--dempet); font-style: normal; font-size: 0.9rem; }
 .hjelp.venstre { text-align: left; margin-top: 8px; }
 #storviking.valgt { background: var(--gull); color: #1b140d; }
+/* Handel og håndverk: velg viking, byggmester eller høne */
+.figurvalg { display: flex; gap: 8px; }
+.figurvalg button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 6px; }
+.figurvalg button svg { width: 26px; height: 26px; flex: none; }
+.figurvalg button.valgt { background: var(--gull); color: #1b140d; }
+.topp .varer { display: flex; align-items: center; gap: 2px; color: var(--dempet); font-size: 0.9rem; }
+.topp .varer svg { width: 18px; height: 18px; }
 .topp .stor svg { width: 1.35em; height: 1.35em; }
 
 .lenke { color: var(--gull); }

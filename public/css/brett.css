@@ -135,6 +135,10 @@
 /* Storvikingen (Gjestgiveri og storhov) */
 .viking.stor { width: 42px; height: 42px; }
 
+/* Byggmesteren og høna (Handel og håndverk) */
+.viking.bygg { width: 30px; height: 30px; }
+.viking.hone { width: 24px; height: 24px; transform: translate(-50%, -70%); }
+
 .viking.forslag { animation: hopp 0.8s ease-in-out infinite; }
 
 @keyframes hopp {

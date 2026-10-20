@@ -73,6 +73,7 @@
       <span class="prikk" id="min-farge"></span>
       <strong id="mitt-navn"></strong>
       <span id="mine-vikinger" class="vikinger"></span>
+      <span id="mine-varer" class="varer" hidden></span>
       <span id="mine-poeng" class="poeng"></span>
     </header>
     <p id="status" class="status"></p>
@@ -104,7 +105,12 @@
     </div>
 
     <div id="viking-kontroll" class="kontroll" hidden>
-      <p class="hjelp">Trykk på et punkt på brikken for å velge hvor vikingen skal stå.</p>
+      <p id="viking-hjelp" class="hjelp">Trykk på et punkt på brikken for å velge hvor vikingen skal stå.</p>
+      <div id="figurvalg" class="figurvalg" hidden>
+        <button data-figur="viking" class="middels">Viking</button>
+        <button data-figur="bygg" class="middels">Byggmester</button>
+        <button data-figur="hone" class="middels">Høne</button>
+      </div>
       <button id="storviking" class="middels" hidden>Bruk storvikingen</button>
       <button id="angre-brikke" class="middels angre">↶ Angre brikken</button>
       <div class="knapperad">

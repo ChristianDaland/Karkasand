@@ -25,10 +25,10 @@ function leggDirekte(spill, id, x, y, rot, viking = null) {
   if (spill.fase === 'viking') assert.ok(spill.settViking(viking));
 }
 
-test('grunnspillet har 72 brikker i 24 typer, og utvidelsene 12 og 18', () => {
+test('grunnspillet har 72 brikker i 24 typer, og utvidelsene 12, 18 og 15', () => {
   assert.equal(BRIKKER.filter((b) => !b.utvidelse).length, 24);
   assert.equal(ANTALL_BRIKKER, 72);
-  assert.deepEqual(ANTALL, { grunn: 72, elva: 12, gjestgiveri: 18 });
+  assert.deepEqual(ANTALL, { grunn: 72, elva: 12, gjestgiveri: 18, handel: 15 });
 });
 
 test('portene til hver brikke stemmer med kantene', () => {
@@ -383,4 +383,147 @@ test('angre et helt trekk med viking og poeng, helt til neste spiller trekker', 
   assert.equal(spill.fase, 'legg');
   assert.equal(spill.angre(0), false); // nå er det for sent for Astrid
   assert.equal(spill.tilstand().kanAngre, null);
+});
+
+// ---------- Handel og håndverk ----------
+
+function handelSpill() {
+  return nyttSpill({ utvidelser: ['handel'] });
+}
+
+// Legg en brikke og sett ut en byggmester eller høne på delen `del`. Spilleren `tur` har turen.
+function leggMedFigur(spill, tur, id, x, y, rot, figur, del) {
+  spill.tur = tur;
+  spill.aktiv = { brikke: { id, nr: 99 }, x, y, rot };
+  spill.fase = 'legg';
+  spill.bunke.push({ id: 'U', nr: 98 });
+  assert.ok(spill.legg(), `${id} kunne ikke legges på ${x},${y}`);
+  assert.ok(spill.velgFigur(figur), `${figur} kan ikke stå på ${id}`);
+  assert.ok(spill.settViking(del));
+}
+
+test('handel: den som fullfører borgen, får varene, også uten vikinger der', () => {
+  const spill = handelSpill();
+  assert.deepEqual(spill.spillere[1].varer, { fisk: 0, jern: 0, korn: 0 });
+  spill.tur = 1;
+  leggDirekte(spill, 'H1', 0, -1, 2); // Bjørn lukker borgen med tørrfisk, uten viking
+  assert.equal(spill.spillere[1].varer.fisk, 1);
+  assert.equal(spill.spillere[1].poeng, 0);
+  assert.ok(spill.hendelser.some((h) => h.type === 'varer' && h.spiller === 1));
+});
+
+test('handel: flest av en vare gir 10 poeng på slutten, og likt gir begge 10', () => {
+  const spill = handelSpill();
+  spill.spillere[0].varer = { fisk: 3, jern: 1, korn: 0 };
+  spill.spillere[1].varer = { fisk: 1, jern: 1, korn: 0 };
+  spill.sluttelling();
+  assert.equal(spill.spillere[0].slutt.varer, 20); // fisk alene og jern delt
+  assert.equal(spill.spillere[1].slutt.varer, 10);
+  const poster = spill.sluttposter.filter((p) => p.grunn === 'varer');
+  assert.deepEqual(poster.map((p) => p.vare), ['fisk', 'jern']); // ingen har korn
+  assert.deepEqual(poster[1].vinnere, [0, 1]);
+});
+
+test('handel: byggmesteren må stå der spilleren har en viking, og gir én ekstra tur', () => {
+  const spill = handelSpill();
+  spill.tur = 0;
+  leggDirekte(spill, 'U', 1, 0, 1, 0); // Astrid setter en viking på veien
+  spill.tur = 0;
+  spill.aktiv = { brikke: { id: 'U', nr: 97 }, x: -1, y: 0, rot: 1 };
+  spill.fase = 'legg';
+  spill.bunke.push({ id: 'U', nr: 98 });
+  assert.ok(spill.legg());
+  assert.ok(spill.figurDeler('bygg').includes(0)); // veien
+  assert.ok(!spill.figurDeler('bygg').includes(1)); // enga har ingen viking
+  assert.ok(spill.settViking(null));
+
+  // Bjørn har ingen viking i veien og kan ikke sette byggmester der
+  spill.tur = 1;
+  spill.aktiv = { brikke: { id: 'U', nr: 96 }, x: 2, y: 0, rot: 1 };
+  spill.fase = 'legg';
+  spill.bunke.push({ id: 'U', nr: 98 });
+  assert.ok(spill.legg());
+  assert.equal(spill.velgFigur('bygg'), false);
+  assert.ok(spill.settViking(null));
+
+  leggMedFigur(spill, 0, 'U', 3, 0, 1, 'bygg', 0);
+  assert.equal(spill.spillere[0].byggmestere, 0);
+  assert.equal(spill.tur, 1); // å sette ut byggmesteren gir ingen ekstra tur
+
+  spill.tur = 0;
+  leggDirekte(spill, 'U', 4, 0, 1); // forlenger veien med byggmesteren
+  assert.equal(spill.tur, 0);
+  assert.equal(spill.fase, 'trekk');
+  assert.ok(spill.tilstand().ekstraTur);
+  assert.ok(spill.hendelser.some((h) => h.type === 'ekstratur'));
+
+  leggDirekte(spill, 'U', 5, 0, 1); // den ekstra turen gir ingen ny ekstra tur
+  assert.equal(spill.tur, 1);
+  assert.equal(spill.ekstraTur, false);
+});
+
+test('handel: byggmesteren går hjem når veien er ferdig, og teller ikke som viking', () => {
+  const spill = handelSpill();
+  leggDirekte(spill, 'U', 1, 0, 1, 0); // Astrid: viking på veien
+  leggMedFigur(spill, 0, 'U', 2, 0, 1, 'bygg', 0);
+  spill.tur = 1;
+  leggDirekte(spill, 'U', -1, 0, 1, null);
+  assert.equal(spill.omrade(0, 0, 1).vikinger.length, 1);
+  spill.tur = 1;
+  leggDirekte(spill, 'A', -2, 0, 3); // veien ender ved hovet i vest
+  spill.tur = 1;
+  leggDirekte(spill, 'A', 3, 0, 1); // og i øst: veien er ferdig
+  assert.equal(spill.spillere[0].poeng, 6);
+  assert.equal(spill.spillere[0].byggmestere, 1);
+  assert.equal(spill.spillere[0].vikinger, 7);
+  assert.equal(spill.brikke(2, 0).bygg, null);
+});
+
+test('handel: angre etter en ekstra tur tar også bort den ekstra turen', () => {
+  const spill = handelSpill();
+  leggDirekte(spill, 'U', 1, 0, 1, 0);
+  leggMedFigur(spill, 0, 'U', 2, 0, 1, 'bygg', 0);
+  spill.tur = 0;
+  leggDirekte(spill, 'U', 3, 0, 1);
+  assert.ok(spill.ekstraTur);
+  assert.equal(spill.tilstand().kanAngre, 0);
+  assert.ok(spill.angre(0));
+  assert.equal(spill.ekstraTur, false);
+  assert.equal(spill.fase, 'legg');
+  assert.equal(spill.brikke(3, 0), undefined);
+});
+
+test('handel: høna gir 4 i stedet for 3 per ferdig borg for enga', () => {
+  const lag = (medHone) => {
+    const spill = handelSpill();
+    spill.tur = 1;
+    leggDirekte(spill, 'E', 0, -1, 2); // borgen i nord blir ferdig
+    spill.tur = 0;
+    leggDirekte(spill, 'U', 1, 0, 1, 2); // Astrid: viking i enga nord for veien
+    if (medHone) leggMedFigur(spill, 0, 'U', 2, 0, 1, 'hone', 2);
+    spill.sluttelling();
+    return spill.spillere[0].slutt.eng;
+  };
+  assert.equal(lag(false), 3);
+  assert.equal(lag(true), 4);
+});
+
+test('handel: høna kan bare gå i en eng der spilleren har en viking', () => {
+  const spill = handelSpill();
+  spill.tur = 0;
+  spill.aktiv = { brikke: { id: 'U', nr: 97 }, x: 1, y: 0, rot: 1 };
+  spill.fase = 'legg';
+  spill.bunke.push({ id: 'U', nr: 98 });
+  assert.ok(spill.legg());
+  assert.deepEqual(spill.figurDeler('hone'), []);
+  assert.deepEqual(spill.figurDeler('bygg'), []);
+  assert.equal(spill.velgFigur('hone'), false);
+  assert.equal(spill.tilstand().figurValg.viking, 3);
+});
+
+test('uten Handel og håndverk har spillerne verken byggmester eller høne', () => {
+  const spill = nyttSpill();
+  assert.equal(spill.spillere[0].byggmestere, 0);
+  assert.equal(spill.spillere[0].honer, 0);
+  assert.ok(!spill.bunke.some((b) => b.id.startsWith('H') && b.id.length > 1));
 });

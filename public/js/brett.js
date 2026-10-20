@@ -4,7 +4,7 @@
 
 import { BRIKKE } from '/delt/brikker.js';
 import { roterPunkt } from '/delt/motor.js';
-import { brikkeUrl, vikingSvg, elementFra } from './felles.js';
+import { brikkeUrl, figurSvg, elementFra } from './felles.js';
 
 const T = 100; // størrelsen på en brikke i brettets egne koordinater
 const MAKS_ZOOM = 12; // hvor langt inn man kan zoome, i forhold til tilpasset visning
@@ -155,14 +155,16 @@ export class BrettVisning {
       }
     }
 
-    // Vikinger
+    // Vikinger, og byggmestere og høner fra Handel og håndverk
     this.vikingLag.replaceChildren();
     for (const b of spill.brett) {
-      if (!b.viking) continue;
-      const del = BRIKKE[b.id].deler[b.viking.del];
-      const v = this.lagViking(b, b.viking.del, farge(b.viking.spiller), del.type === 'eng');
-      v.classList.toggle('stor', Boolean(b.viking.stor));
-      this.vikingLag.append(v);
+      for (const figur of ['viking', 'bygg', 'hone']) {
+        const f = b[figur];
+        if (!f) continue;
+        const v = this.lagViking(b, f.del, farge(f.spiller), figur);
+        v.classList.toggle('stor', Boolean(f.stor));
+        this.vikingLag.append(v);
+      }
     }
 
     // Hint og markør i leggefasen
@@ -201,9 +203,8 @@ export class BrettVisning {
       const b = spill.brett.find((t) => t.x === spill.sistLagt.x && t.y === spill.sistLagt.y);
       for (const d of spill.vikingDeler) {
         const valgt = a?.valgtDel === d;
-        const type = BRIKKE[b.id].deler[d].type;
         if (valgt) {
-          const v = this.lagViking(b, d, farge(spill.tur), type === 'eng');
+          const v = this.lagViking(b, d, farge(spill.tur), a.figur ?? 'viking');
           v.classList.add('forslag');
           this.vikingLag.append(v);
         } else {
@@ -221,9 +222,11 @@ export class BrettVisning {
     this.tilpass();
   }
 
-  lagViking(b, del, farge, liggende) {
+  // En figur på delen `del` av brikken. Vikinger i enga ligger ned.
+  lagViking(b, del, farge, figur = 'viking') {
     const [px, py] = roterPunkt(BRIKKE[b.id].deler[del].punkt, b.rot);
-    const el = elementFra(`<div class="viking">${vikingSvg(farge, liggende)}</div>`);
+    const liggende = figur === 'viking' && BRIKKE[b.id].deler[del].type === 'eng';
+    const el = elementFra(`<div class="viking ${figur}">${figurSvg(figur, farge, liggende)}</div>`);
     el.style.left = `${(b.x + px) * T}px`;
     el.style.top = `${(b.y + py) * T}px`;
     return el;

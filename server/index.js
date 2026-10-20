@@ -35,7 +35,7 @@ app.get('/api/bilder', (req, res) => {
   const bilder = {};
   try {
     for (const fil of readdirSync(rot('kunst/brikker')).sort()) {
-      const treff = fil.match(/^([A-X]|[RG]\d+)(_\d+)?\.(jpe?g|png|webp)$/i);
+      const treff = fil.match(/^([A-X]|[RGH]\d+)(_\d+)?\.(jpe?g|png|webp)$/i);
       if (treff) (bilder[treff[1].toUpperCase()] ??= []).push(fil);
     }
   } catch {

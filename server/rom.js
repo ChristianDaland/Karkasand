@@ -142,7 +142,7 @@ export class Rom {
   }
 
   // Handlinger fra mobilen. Bare spilleren som har tur kan gjøre noe.
-  handling(id, { type, retning, del, stor }) {
+  handling(id, { type, retning, del, stor, figur }) {
     const spill = this.spill;
     if (!spill || spill.fase === 'slutt') return false;
     // Angre kan gjøres av den som la siste brikke, også etter at turen har gått videre
@@ -166,6 +166,8 @@ export class Rom {
         return spill.legg();
       case 'velg':
         return spill.velgDel(del ?? null);
+      case 'figur':
+        return spill.velgFigur(figur);
       case 'viking':
         return spill.settViking(del ?? null, Boolean(stor));
       default:

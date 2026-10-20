@@ -1,7 +1,7 @@
 // Brikketypene i Karkasand, tegnet med nord øverst.
 //
 // kanter: [nord, øst, sør, vest], hver av dem 'borg', 'vei', 'eng' eller 'elv'.
-// utvidelse: 'elva' eller 'gjestgiveri' for brikkene fra utvidelsene (se UTVIDELSER).
+// utvidelse: 'elva', 'gjestgiveri' eller 'handel' for brikkene fra utvidelsene (se UTVIDELSER).
 //
 // deler: de sammenhengende områdene på brikken. Hver kant er delt i tre
 // porter, nummerert 0–2 med klokka rundt brikken:
@@ -15,11 +15,12 @@
 //   runestein: borgdelen har en runestein (bonuspoeng)
 //   gjestgiveri: veien har et gjestgiveri (dobbelt for ferdig vei, ingenting for uferdig)
 //   storhov:   borgen har et storhov (3 per brikke og runestein for ferdig borg, ingenting for uferdig)
+//   vare:      borgen har en vare ('fisk', 'jern' eller 'korn'), se VARER
 // En elv bruker midtporten som en vei, men er ikke et område man kan sette vikinger i.
 
 const alle = (side) => [`${side}0`, `${side}1`, `${side}2`];
 
-export const BRIKKER = [
+const GRUNNFORMER = [
   {
     id: 'A', navn: 'Hov ved veien', antall: 2, kanter: ['eng', 'eng', 'vei', 'eng'],
     deler: [
@@ -479,6 +480,38 @@ export const BRIKKER = [
   },
 ];
 
+// ---------- Utvidelse: Handel og håndverk ----------
+// Formene er de samme som i grunnspillet, men borgene har varer: [id, navn, antall, form, varer]
+const HANDEL = [
+    ['H1', 'Fiskebua', 2, 'E', ['fisk']],
+    ['H2', 'Smia', 1, 'E', ['jern']],
+    ['H3', 'Kornloftet', 1, 'E', ['korn']],
+    ['H4', 'Fiskeveien', 1, 'D', ['fisk']],
+    ['H5', 'Smia ved veien', 1, 'D', ['jern']],
+    ['H6', 'Kornloftet ved svingen', 1, 'J', ['korn']],
+    ['H7', 'Jernsvingen', 1, 'J', ['jern']],
+    ['H8', 'Fiskesvingen', 1, 'K', ['fisk']],
+    ['H9', 'Hjørnesmia', 1, 'N', ['jern']],
+    ['H10', 'Kornhjørnet', 1, 'P', ['korn']],
+    ['H11', 'Fiskegården', 1, 'R', ['fisk']],
+    ['H12', 'Korngården', 1, 'R', ['korn']],
+    ['H13', 'Smieporten', 1, 'T', ['jern']],
+    ['H14', 'Fisk og korn', 1, 'H', ['fisk', 'korn']],
+];
+
+// En kopi av brikken `form` der borgene (i rekkefølge) får hver sin vare
+function medVarer([id, navn, antall, form, varer]) {
+  const b = GRUNNFORMER.find((g) => g.id === form);
+  let n = 0;
+  const deler = b.deler.map((d) => (d.type === 'borg' && varer[n] ? { ...d, vare: varer[n++] } : { ...d }));
+  return { id, navn, antall, utvidelse: 'handel', form, kanter: [...b.kanter], deler };
+}
+
+export const BRIKKER = [...GRUNNFORMER, ...HANDEL.map(medVarer)];
+
+// Varene i Handel og håndverk
+export const VARER = { fisk: 'tørrfisk', jern: 'jern', korn: 'korn' };
+
 // Utvidelsene man kan velge i lobbyen. Grunnspillet er alltid med.
 export const UTVIDELSER = [
   {
@@ -488,6 +521,10 @@ export const UTVIDELSER = [
   {
     id: 'gjestgiveri', navn: 'Gjestgiveri og storhov',
     om: 'Gjestgiverier gir 2 poeng per brikke for ferdige veier og storhov 3 poeng per brikke for ferdige borger, men begge gir ingenting hvis de er uferdige. Hver spiller får en storviking som teller som to, og det blir plass til en sjette spiller.',
+  },
+  {
+    id: 'handel', navn: 'Handel og håndverk',
+    om: 'Borger med tørrfisk, jern og korn. Den som fullfører borgen, får varene, og flest av hver vare gir 10 poeng på slutten. Hver spiller får en byggmester som gir ekstra tur, og en liten sort dvergkochin-høne som gjør enga mer verdt.',
   },
 ];
 

@@ -446,7 +446,7 @@ four dirt roads from the exact middles of all four edges meet at a stone well in
 
 ## Utvidelsene
 
-Brikkene fra utvidelsene følger de samme reglene og den samme stilen som grunnspillet. Filene heter `R1.jpg` til `R10.jpg` (Elva) og `G1.jpg` til `G17.jpg` (Gjestgiveri og storhov).
+Brikkene fra utvidelsene følger de samme reglene og den samme stilen som grunnspillet. Filene heter `R1.jpg` til `R10.jpg` (Elva), `G1.jpg` til `G17.jpg` (Gjestgiveri og storhov) og `H1.jpg` til `H14.jpg` (Handel og håndverk).
 
 - **Elv** treffer kanten **nøyaktig midt på**, akkurat som en vei, men er **150 px** bred (fra 437 til 587 px). Vannet er klart og blågrått, med siv og steiner langs breddene. Elva er ikke et område man kan sette vikinger i, og den deler enga i to.
 - **Gjestgiveri** er et lite hus ved veien, med et utskåret mjødskilt, tønner og benker. Det må synes godt, fordi det endrer poengene for veien.
@@ -722,6 +722,156 @@ a T-shaped road junction: one dirt road runs straight across the tile from the m
 two separate dirt road curves: one enters at the exact middle of the top edge and curves to the exact middle of the left edge, the other enters at the exact middle of the right edge and curves to the exact middle of the bottom edge; they do not touch, a meadow band between them
 ```
 
+## Handel og håndverk
+
+Brikkene `H1.jpg` til `H14.jpg` har **nøyaktig samme form** som en brikke i grunnspillet (se «Form» under hver brikke). Promptene under er prompten til den brikken, med varen lagt til. `npm run brikker` maler likevel hele brikken med grunnbrikkens prompt og seed, og legger varen til først når borgen males på nytt. Ellers maler modellen en ekstra innhegning med varen ute i enga. Skissen er den samme som for grunnbrikken. Varen må synes godt inne i borgen, fordi den gir poeng:
+
+- **Tørrfisk:** noen tørrfisker som henger parvis på en liten hjell.
+- **Jern:** en liten smie med glør i essa og en stabel mørke jernbarrer.
+- **Korn:** et lite stabbur med gylne kornband lent mot veggen.
+
+Ikke ha med høna eller byggmesteren på brikkene. De er figurer som spillerne setter ut.
+
+### H1 – Fiskebua · 2 stk
+**Kanter:** borg / eng / eng / eng · **Form:** som E · **Skisse:** [H1.png](../kunst/skisser/H1.png)
+
+**Motiv:** Samme som E, med tørrfisk på en liten hjell inne i borgen.
+
+**Prompt:**
+```
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with turf roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard
+```
+
+### H2 – Smia · 1 stk
+**Kanter:** borg / eng / eng / eng · **Form:** som E · **Skisse:** [H2.png](../kunst/skisser/H2.png)
+
+**Motiv:** Samme som E, med en liten smie med en stabel jernbarrer inne i borgen.
+
+**Prompt:**
+```
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with turf roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
+```
+
+### H3 – Kornloftet · 1 stk
+**Kanter:** borg / eng / eng / eng · **Form:** som E · **Skisse:** [H3.png](../kunst/skisser/H3.png)
+
+**Motiv:** Samme som E, med et lite stabbur med kornband inne i borgen.
+
+**Prompt:**
+```
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with turf roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: a wooden grain store (stabbur) on stone posts with many golden sheaves of grain stacked in front of it, clearly visible in the open yard
+```
+
+### H4 – Fiskeveien · 1 stk
+**Kanter:** borg / vei / eng / vei · **Form:** som D · **Skisse:** [H4.png](../kunst/skisser/H4.png)
+
+**Motiv:** Samme som D, med tørrfisk på en liten hjell inne i borgen.
+
+**Prompt:**
+```
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with a turf-roofed longhouse, the palisade arcs from the top-left corner to the top-right corner reaching 30% down at its middle; a straight dirt road crosses the tile horizontally from the middle of the left edge to the middle of the right edge; meadow elsewhere; inside the walled settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard
+```
+
+### H5 – Smia ved veien · 1 stk
+**Kanter:** borg / vei / eng / vei · **Form:** som D · **Skisse:** [H5.png](../kunst/skisser/H5.png)
+
+**Motiv:** Samme som D, med en liten smie med en stabel jernbarrer inne i borgen.
+
+**Prompt:**
+```
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with a turf-roofed longhouse, the palisade arcs from the top-left corner to the top-right corner reaching 30% down at its middle; a straight dirt road crosses the tile horizontally from the middle of the left edge to the middle of the right edge; meadow elsewhere; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
+```
+
+### H6 – Kornloftet ved svingen · 1 stk
+**Kanter:** borg / vei / vei / eng · **Form:** som J · **Skisse:** [H6.png](../kunst/skisser/H6.png)
+
+**Motiv:** Samme som J, med et lite stabbur med kornband inne i borgen.
+
+**Prompt:**
+```
+top edge: curved wooden palisade of a Viking settlement arcing between the top corners; a dirt road enters at the exact middle of the right edge, curves smoothly and exits at the exact middle of the bottom edge; meadow elsewhere; inside the walled settlement: a wooden grain store (stabbur) on stone posts with many golden sheaves of grain stacked in front of it, clearly visible in the open yard
+```
+
+### H7 – Jernsvingen · 1 stk
+**Kanter:** borg / vei / vei / eng · **Form:** som J · **Skisse:** [H7.png](../kunst/skisser/H7.png)
+
+**Motiv:** Samme som J, med en liten smie med en stabel jernbarrer inne i borgen.
+
+**Prompt:**
+```
+top edge: curved wooden palisade of a Viking settlement arcing between the top corners; a dirt road enters at the exact middle of the right edge, curves smoothly and exits at the exact middle of the bottom edge; meadow elsewhere; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
+```
+
+### H8 – Fiskesvingen · 1 stk
+**Kanter:** borg / eng / vei / vei · **Form:** som K · **Skisse:** [H8.png](../kunst/skisser/H8.png)
+
+**Motiv:** Samme som K, med tørrfisk på en liten hjell inne i borgen.
+
+**Prompt:**
+```
+top edge: curved wooden palisade of a Viking settlement arcing between the top corners; a dirt road enters at the exact middle of the left edge, curves smoothly and exits at the exact middle of the bottom edge; meadow elsewhere; inside the walled settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard
+```
+
+### H9 – Hjørnesmia · 1 stk
+**Kanter:** borg / eng / eng / borg · **Form:** som N · **Skisse:** [H9.png](../kunst/skisser/H9.png)
+
+**Motiv:** Samme som N, med en liten smie med en stabel jernbarrer inne i borgen.
+
+**Prompt:**
+```
+a Viking settlement fills the upper-left half of the tile, bounded by a curved wooden palisade running from the top-right corner to the bottom-left corner bulging slightly toward the lower right; turf-roofed longhouses inside; open meadow in the lower-right half, no runestone; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
+```
+
+### H10 – Kornhjørnet · 1 stk
+**Kanter:** borg / vei / vei / borg · **Form:** som P · **Skisse:** [H10.png](../kunst/skisser/H10.png)
+
+**Motiv:** Samme som P, med et lite stabbur med kornband inne i borgen.
+
+**Prompt:**
+```
+a Viking settlement fills the upper-left half, bounded by a curved wooden palisade from the top-right corner to the bottom-left corner; in the lower-right meadow a dirt road curves from the exact middle of the right edge to the exact middle of the bottom edge; no runestone; inside the walled settlement: a wooden grain store (stabbur) on stone posts with many golden sheaves of grain stacked in front of it, clearly visible in the open yard
+```
+
+### H11 – Fiskegården · 1 stk
+**Kanter:** borg / borg / eng / borg · **Form:** som R · **Skisse:** [H11.png](../kunst/skisser/H11.png)
+
+**Motiv:** Samme som R, med tørrfisk på en liten hjell inne i borgen.
+
+**Prompt:**
+```
+a Viking settlement covers the tile and reaches the top, left and right edges; along the bottom a curved wooden palisade arcs between the two bottom corners with meadow outside it; a large chieftain's longhouse in the middle, no runestone; inside the walled settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard
+```
+
+### H12 – Korngården · 1 stk
+**Kanter:** borg / borg / eng / borg · **Form:** som R · **Skisse:** [H12.png](../kunst/skisser/H12.png)
+
+**Motiv:** Samme som R, med et lite stabbur med kornband inne i borgen.
+
+**Prompt:**
+```
+a Viking settlement covers the tile and reaches the top, left and right edges; along the bottom a curved wooden palisade arcs between the two bottom corners with meadow outside it; a large chieftain's longhouse in the middle, no runestone; inside the walled settlement: a wooden grain store (stabbur) on stone posts with many golden sheaves of grain stacked in front of it, clearly visible in the open yard
+```
+
+### H13 – Smieporten · 1 stk
+**Kanter:** borg / borg / vei / borg · **Form:** som T · **Skisse:** [H13.png](../kunst/skisser/H13.png)
+
+**Motiv:** Samme som T, med en liten smie med en stabel jernbarrer inne i borgen.
+
+**Prompt:**
+```
+a Viking settlement covers the tile reaching the top, left and right edges; along the bottom a curved wooden palisade arcs between the bottom corners; a dirt road enters at the exact middle of the bottom edge and passes through a wooden gate in the palisade; no runestone; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
+```
+
+### H14 – Fisk og korn · 1 stk
+**Kanter:** borg / eng / borg / eng · **Form:** som H · **Skisse:** [H14.png](../kunst/skisser/H14.png)
+
+**Motiv:** Samme som H, med tørrfisk på en liten hjell og et lite stabbur med kornband inne i borgen (tørrfisk i den nordre borgen, korn i den søndre).
+
+**Prompt:**
+```
+two separate Viking settlements: one behind a curved wooden palisade at the top edge arcing between the top corners, one behind a curved palisade at the bottom edge arcing between the bottom corners, each reaching 30% into the tile; a band of open meadow with a small field of barley between them from left edge to right edge; inside the top settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard; inside the bottom settlement: a wooden grain store (stabbur) on stone posts with many golden sheaves of grain stacked in front of it, clearly visible in the open yard
+```
+
 ---
 
 ## 6. Varianter
@@ -755,7 +905,7 @@ Variantene er valgfrie. Spillet virker med én fil per brikketype.
 
 ## 8. Sjekkliste før du leverer
 
-- [ ] 51 filer i `kunst/brikker/`: `A.jpg` til `X.jpg`, `R1.jpg` til `R10.jpg` og `G1.jpg` til `G17.jpg`
+- [ ] 65 filer i `kunst/brikker/`: `A.jpg` til `X.jpg`, `R1.jpg` til `R10.jpg`, `G1.jpg` til `G17.jpg` og `H1.jpg` til `H14.jpg`
 - [ ] Alle er nøyaktig 1024 × 1024 og har nord øverst, uten speilvending
 - [ ] Veiene treffer midt på kanten og er like brede
 - [ ] Palisadene ender i hjørnene

@@ -65,6 +65,12 @@ body[data-modus='bord'] #brett { inset: 150px; }
 .panel .vikinger:has(.storviking) span:not(.storviking) { width: 22px; height: 22px; }
 .panel .vikinger svg { width: 100%; height: 100%; display: block; }
 
+/* Handel og håndverk: byggmester, høne og varene spilleren har samlet */
+.panel .lager { display: flex; align-items: center; gap: 8px; color: var(--dempet); font-weight: 700; }
+.panel .lager span { display: flex; align-items: center; gap: 2px; }
+.panel .lager svg { width: 22px; height: 22px; display: block; }
+.panel .lager .borte { opacity: 0.18; filter: grayscale(1); }
+
 .panel .tur-tekst { color: var(--farge); font-weight: 800; min-height: 1.3em; }
 
 .panel .neste {
@@ -112,6 +118,10 @@ body[data-modus='bord'] .panel {
 
 body[data-modus='bord'] .panel .navn { grid-area: navn; }
 body[data-modus='bord'] .panel .vikinger { grid-area: vikinger; }
+body[data-modus='bord'] .panel .lager { grid-area: lager; }
+body[data-modus='bord'] .panel:has(.lager:not([hidden])) {
+  grid-template-areas: 'navn poeng neste' 'vikinger poeng neste' 'lager poeng neste' 'tur tur neste';
+}
 body[data-modus='bord'] .panel .poeng { grid-area: poeng; }
 body[data-modus='bord'] .panel .tur-tekst { grid-area: tur; }
 body[data-modus='bord'] .panel .frakoblet { grid-area: tur; }
@@ -289,6 +299,7 @@ body[data-modus='bord'] #slutt { top: 50%; transform: translate(-50%, -50%); }
 .vei { background: #e3cc98; }
 .hov { background: #b98a6a; }
 .eng { background: #8fb866; }
+.varer { background: #9fbfd4; }
 #resultat .fordeling { font-size: 0.85rem; font-weight: 400; color: var(--dempet); text-align: left; }
 .forklaring { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
 .forklaring span { padding: 1px 10px; border-radius: 999px; }

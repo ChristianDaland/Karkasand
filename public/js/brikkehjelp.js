@@ -1,7 +1,7 @@
 // Tekstene om hver brikke: motivet, kantene og hva områdene gir av poeng.
 // Brukes av spillveiledningen og av hjelpevinduet på storskjermen.
 
-import { BRIKKE } from '/delt/brikker.js';
+import { BRIKKE, VARER } from '/delt/brikker.js';
 
 export const OM = {
   A: 'Et hov – gudehuset – med dragehoder på gavlene, en stor ask og et offeralter. Veien fra sør ender ved døra.',
@@ -55,6 +55,20 @@ export const OM = {
   G15: 'Et lite hov midt på brikken. Veiene fra vest og øst ender ved hovet.',
   G16: 'Et T-kryss med brønn, og et gjestgiveri ved veien mot øst.',
   G17: 'To veisvinger som ikke møtes: fra nord til vest og fra øst til sør.',
+  H1: 'En borgkappe i nord der tørrfisken henger til tørk. Resten av brikken er eng.',
+  H2: 'En borgkappe i nord med en smie og en stabel jernbarrer. Resten er eng.',
+  H3: 'En borgkappe i nord med et kornloft. Resten er eng.',
+  H4: 'En borgkappe i nord med tørrfisk, og en rett vei fra vest til øst under borgen.',
+  H5: 'En borgkappe i nord med en smie, og en rett vei fra vest til øst under borgen.',
+  H6: 'En borgkappe i nord med korn, og en vei som svinger fra øst til sør.',
+  H7: 'En borgkappe i nord med jern, og en vei som svinger fra øst til sør.',
+  H8: 'En borgkappe i nord med tørrfisk, og en vei som svinger fra vest til sør.',
+  H9: 'En borg som dekker den nordvestlige halvdelen, med en smie i hjørnet.',
+  H10: 'En borg i nordvest med korn, og en vei som svinger gjennom enga i sørøst.',
+  H11: 'En stor borg som dekker nord, øst og vest, med tørrfisk. Palisaden buer inn mot enga i sør.',
+  H12: 'En stor borg som dekker nord, øst og vest, med korn. Palisaden buer inn mot enga i sør.',
+  H13: 'En stor borg med en smie. Veien fra sør går gjennom en port i palisaden og ender inne i borgen.',
+  H14: 'To borgkapper som ikke henger sammen: tørrfisk i nord og korn i sør. Enga går tvers over midten.',
 };
 
 export const KANT = { borg: 'borg', vei: 'vei', eng: 'eng', elv: 'elv' };
@@ -70,6 +84,10 @@ export function egenskaper(b) {
     linjer.push(`<span class="type borg">Borg</span> ${borger.length > 1 ? `${antall} adskilte borger som hver er et eget område. ` : ''}Ferdig borg: 2 p per brikke. Uferdig ved slutten: 1 p per brikke.`);
     if (borger.some((d) => d.storhov)) linjer.push('<span class="type storhov">Storhov</span> Ferdig borg: 3 p per brikke og runestein. Uferdig ved slutten: 0 p.');
     if (rune) linjer.push('<span class="type rune">Runestein</span> Borgen gir 2 ekstra poeng når den er ferdig (1 hvis den er uferdig ved slutten).');
+    const varer = borger.filter((d) => d.vare).map((d) => VARER[d.vare]);
+    if (varer.length) {
+      linjer.push(`<span class="type vare">Vare</span> ${varer.join(' og ').replace(/^./, (c) => c.toUpperCase())}. Den som fullfører borgen, får varen, uansett hvem som har vikinger der. Flest av en vare gir 10 p på slutten.`);
+    }
   }
   if (veier.length) {
     // En veidel med bare én port går inn fra kanten og stopper på brikken

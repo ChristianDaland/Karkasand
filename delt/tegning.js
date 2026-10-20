@@ -3,6 +3,8 @@
 //   stil 'plassholder': enkel illustrert brikke som brukes til de malte bildene finnes
 // Modulen brukes både av Node (verktoy/lag-skisser.js) og i nettleseren.
 
+import { BRIKKE } from './brikker.js';
+
 export const S = 1024;
 const m = S / 2;
 export const VEIBREDDE = 110;
@@ -329,12 +331,68 @@ const PLASSHOLDER = {
   },
 };
 
+// ---------- Varene (Handel og håndverk) ----------
+
+// Symbolet for en vare, tegnet rundt (0, 0) innenfor ca. ±50. Brukes også i spillerpanelene.
+export function vareSymbol(vare) {
+  switch (vare) {
+    case 'fisk': {
+      // To tørrfisker som henger sammen i halen
+      const fisk = 'M0 -36C13 -26 15 8 6 26L13 42L0 36L-13 42L-6 26C-15 8 -13 -26 0 -36Z';
+      return (
+        `<path d="M-14 -44Q0 -54 14 -44" fill="none" stroke="#5a4630" stroke-width="5"/>` +
+        `<g transform="translate(-15 4) rotate(180)"><path d="${fisk}" fill="#d8c49a" stroke="#5a4630" stroke-width="5"/></g>` +
+        `<g transform="translate(15 4) rotate(180)"><path d="${fisk}" fill="#c9b07e" stroke="#5a4630" stroke-width="5"/></g>` +
+        `<circle cx="-15" cy="30" r="3.5" fill="#3a2c1c"/><circle cx="15" cy="30" r="3.5" fill="#3a2c1c"/>`
+      );
+    }
+    case 'jern':
+      // Tre jernbarrer i en stabel
+      return (
+        `<path d="M-44 40L-36 18H-4L4 40Z" fill="#5d6368" stroke="#24282b" stroke-width="5"/>` +
+        `<path d="M0 40L8 18H40L48 40Z" fill="#6d7378" stroke="#24282b" stroke-width="5"/>` +
+        `<path d="M-22 16L-14 -8H18L26 16Z" fill="#7d848a" stroke="#24282b" stroke-width="5"/>` +
+        `<path d="M-12 -2H12" stroke="#b9c0c6" stroke-width="5" stroke-linecap="round"/>` +
+        `<path d="M-6 -34l6 -10l6 10l-6 10z" fill="#e0763a" stroke="#7a3412" stroke-width="3"/>`
+      );
+    case 'korn': {
+      // Et kornband med aks på toppen
+      const strå = [-24, -12, 0, 12, 24].map((x) => `M${x * 0.5} 44L${x} -14`).join('');
+      const aks = [-24, -12, 0, 12, 24].map((x) => `<ellipse cx="${x}" cy="-26" rx="7" ry="16" transform="rotate(${x * 0.6} ${x} -26)" fill="#e2b84a" stroke="#7a5a1a" stroke-width="3.5"/>`).join('');
+      return (
+        `<path d="${strå}" stroke="#b8902e" stroke-width="7" stroke-linecap="round"/>` + aks +
+        `<rect x="-20" y="10" width="40" height="11" rx="4" fill="#8a5a2a" stroke="#4a2e12" stroke-width="3"/>`
+      );
+    }
+    default:
+      return '';
+  }
+}
+
+// Hvor varen står på de ulike formene (i kanonisk retning), én plass per borg
+const VAREPLASS = {
+  D: [[m, 252]], E: [[m, 252]], J: [[m, 252]], K: [[m, 252]],
+  N: [[200, 200]], P: [[200, 200]],
+  R: [[m, 232]], T: [[m, 200]],
+  H: [[m, 252], [m, 772]],
+};
+
+// Skissen viser bare formen, som grunnbrikken. Varen kommer med i prompten (en skive her
+// ble malt som et rundt hus tvers gjennom palisaden).
+SKISSE.vare = () => '';
+PLASSHOLDER.vare = (vare, x, y) =>
+  `<g transform="translate(${x} ${y})"><circle r="96" fill="#efe3c6" stroke="#6b4e30" stroke-width="8"/>` +
+  `<g transform="scale(1.45)">${vareSymbol(vare)}</g></g>`;
+
 const STILER = { skisse: SKISSE, plassholder: PLASSHOLDER };
 
 export function tegnBrikke(id, stil = 'plassholder') {
   const t = STILER[stil];
-  const o = OPPSETT[id];
+  // Brikkene i Handel og håndverk tegnes som formen de bygger på, med varene oppå
+  const form = BRIKKE[id]?.form;
+  const o = OPPSETT[form ?? id];
   if (!o) throw new Error(`Ukjent brikke: ${id}`);
+  const varer = form ? BRIKKE[id].deler.filter((d) => d.type === 'borg').map((d) => d.vare) : [];
   const lag = [t.defs(), t.grunn()];
 
   if (o.helBorg) lag.push(t.borg(HEL));
@@ -362,6 +420,7 @@ export function tegnBrikke(id, stil = 'plassholder') {
   if (o.storhov) lag.push(t.storhov(...o.storhov));
   for (const g of o.gjestgiveri ?? []) lag.push(t.gjestgiveri(...g));
   for (const p of o.pynt ?? []) lag.push(t.pynt(p));
+  varer.forEach((vare, i) => vare && lag.push(t.vare(vare, ...VAREPLASS[form][i])));
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">${lag.join('')}</svg>`;
 }

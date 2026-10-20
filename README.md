@@ -31,6 +31,7 @@ Den som har flest vikinger i et område får poengene. Står det likt, får alle
 |---|---|---|
 | Elva | +12 | Spillet starter ved kilden, og elva legges først til den renner ut i vatnet. |
 | Gjestgiveri og storhov | +18 | Gjestgiverier dobler ferdige veier og storhov gir 3 per brikke i ferdige borger, men begge gir 0 hvis de er uferdige. Storviking som teller som to. Plass til 6 spillere. |
+| Handel og håndverk | +15 | Borger med tørrfisk, jern og korn. Den som fullfører borgen, får varene, og flest av hver vare gir 10 poeng. Byggmester som gir ekstra tur, og en liten sort dvergkochin-høne som gir 4 i stedet for 3 per borg for enga. |
 
 Den fullstendige veiledningen, med alle brikkene, ligger på siden `/veiledning` i spillet.
 
@@ -52,7 +53,7 @@ Når du kjører lokalt, peker QR-koden til maskinens IP-adresse på nettverket. 
 | `delt/` | Brikkedata, spillmotor og brikketegning. Brukes av både serveren og nettleseren. |
 | `server/` | Express- og Socket.IO-server og spillrommene |
 | `public/` | Nettsidene: startside, storskjerm, mobilkontroll, spillveiledning og galleri |
-| `kunst/brikker/` | De malte brikkebildene (`A.jpg` til `X.jpg`, og `R1`–`R10`, `G1`–`G17` for utvidelsene) |
+| `kunst/brikker/` | De malte brikkebildene (`A.jpg` til `X.jpg`, og `R1`–`R10`, `G1`–`G17`, `H1`–`H14` for utvidelsene) |
 | `kunst/skisser/` | Skisser som brukes som maler for maleriene |
 | `docs/BRIKKER.md` | Beskrivelse av alle brikkene, med krav til bildene |
 | `test/` | Tester for spillmotoren |
