@@ -1,15 +1,19 @@
 // Spillrom: holder styr på spillerne i lobbyen, valgene deres og spillet som pågår.
+// Brukes av serveren, og av nettbrettet, der hele spillet kjører i nettleseren.
 
-import { randomUUID } from 'node:crypto';
-import { Spill } from '../delt/motor.js';
-import { UTVIDELSER, ANTALL } from '../delt/brikker.js';
+import { Spill } from './motor.js';
+import { UTVIDELSER, ANTALL } from './brikker.js';
+
+// crypto.randomUUID finnes bare på https og localhost i nettleseren
+const lagId = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
 export const MIN_SPILLERE = 2;
 export const MAKS_SPILLERE = 5; // 6 med Gjestgiveri og storhov
 export const FARGER = ['#e53935', '#1e88e5', '#fdd835', '#43a047', '#8e24aa', '#ec407a'];
 export const PLASSER = ['S', 'N', 'V', 'Ø']; // side av bordet spilleren sitter ved
-// 'tv': alle ser brettet samme vei. 'bord': prosjektor over et bord. 'pad': nettbrett som
-// ligger flatt på bordet. På bord og pad sitter spillerne rundt brettet, hver ved sin side.
+// 'tv': alle ser brettet samme vei. 'bord': prosjektor over et bord. 'pad': to spillere på
+// ett nettbrett uten mobiler (kjøres i nettleseren). På bord og pad sitter spillerne rundt
+// brettet, hver ved sin side.
 export const MODUSER = ['tv', 'bord', 'pad'];
 const PER_SIDE = 2; // med 5 spillere må to dele en side av bordet
 
@@ -56,7 +60,7 @@ export class Rom {
     }
     const farge = FARGER.find((f) => !this.spillere.some((s) => s.farge === f));
     const plass = this.rundtBrettet ? this.ledigsteSide() : 'S';
-    const spiller = { id: randomUUID(), navn: `Spiller ${this.spillere.length + 1}`, farge, plass, tilkoblet: true };
+    const spiller = { id: lagId(), navn: `Spiller ${this.spillere.length + 1}`, farge, plass, tilkoblet: true };
     this.spillere.push(spiller);
     return spiller;
   }
@@ -145,6 +149,23 @@ export class Rom {
     return spill.aktiv.brikke.id;
   }
 
+  // Sluttellingen vises område for område på skjermen. Mobilene venter med resultatet til den
+  // er ferdig. Er ingen skjerm koblet til, avsluttes den av seg selv etter en stund, og da
+  // kalles ferdig().
+  startOpptelling(ferdig) {
+    this.opptelling = 'pågår';
+    const sekunder = 10 + this.spill.sluttposter.length * 2;
+    this.opptellingTimer = setTimeout(() => this.ferdigOpptelling() && ferdig(), sekunder * 1000);
+  }
+
+  // Gir true hvis opptellingen pågikk og nå er avsluttet
+  ferdigOpptelling() {
+    if (this.opptelling !== 'pågår') return false;
+    this.opptelling = 'ferdig';
+    clearTimeout(this.opptellingTimer);
+    return true;
+  }
+
   nyttSpill() {
     this.spill = null;
     this.hjelp = null;
@@ -153,7 +174,7 @@ export class Rom {
   }
 
   // Handlinger fra mobilen. Bare spilleren som har tur kan gjøre noe.
-  handling(id, { type, retning, del, stor, figur }) {
+  handling(id, { type, retning, del, stor, figur, x, y }) {
     const spill = this.spill;
     if (!spill || spill.fase === 'slutt') return false;
     // Angre kan gjøres av den som la siste brikke, også etter at turen har gått videre
@@ -167,6 +188,8 @@ export class Rom {
         if (spill.fase === 'viking') return spill.blaDel(r === 1 || r === 2 ? 1 : -1);
         return spill.flytt(r);
       }
+      case 'flyttTil': // nettbrettet: spilleren trykker på en rute på brettet
+        return spill.flyttTil(Number(x), Number(y));
       case 'roter':
         return spill.roter();
       case 'neste':

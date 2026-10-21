@@ -1,6 +1,7 @@
 // Tegner spillbrettet: brikker, vikinger, markøren, hint og poeng-animasjoner.
 // Brukes av storskjermen og galleriet. Brettet tilpasses vinduet av seg selv, og
 // spillerne kan i tillegg zoome og flytte det (musehjul, dra, klyp, knapper, + − 0).
+// Et kort trykk som ikke flytter brettet, sendes til vedTrykk(x, y) i brikkekoordinater.
 
 import { BRIKKE } from '/delt/brikker.js';
 import { roterPunkt } from '/delt/motor.js';
@@ -30,6 +31,7 @@ export class BrettVisning {
     this.forrige = null;
     // Spillerens egen zoom oppå den tilpassede visningen: skjerm = forskyvning + zoom × tilpasset
     this.visning = { zoom: 1, x: 0, y: 0 };
+    this.vedTrykk = null;
     this.lagZoom();
     new ResizeObserver(() => this.tilpass()).observe(vindu);
   }
@@ -60,6 +62,7 @@ export class BrettVisning {
     // Dra med én peker, klyp med to
     const pekere = new Map();
     let start = null;
+    let trykk = null; // { id, x, y } så lenge én finger er nede uten å ha flyttet seg
     const tilstand = () => {
       const p = [...pekere.values()];
       const midt = { x: p.reduce((s, q) => s + q.x, 0) / p.length, y: p.reduce((s, q) => s + q.y, 0) / p.length };
@@ -69,6 +72,7 @@ export class BrettVisning {
     this.vindu.addEventListener('pointerdown', (e) => {
       const r = this.vindu.getBoundingClientRect();
       pekere.set(e.pointerId, { x: e.clientX - r.left, y: e.clientY - r.top });
+      trykk = pekere.size === 1 ? { id: e.pointerId, ...pekere.get(e.pointerId) } : null;
       this.vindu.setPointerCapture(e.pointerId);
       start = tilstand();
       this.vindu.classList.add('drar');
@@ -77,6 +81,7 @@ export class BrettVisning {
       if (!pekere.has(e.pointerId)) return;
       const r = this.vindu.getBoundingClientRect();
       pekere.set(e.pointerId, { x: e.clientX - r.left, y: e.clientY - r.top });
+      if (trykk && Math.hypot(e.clientX - r.left - trykk.x, e.clientY - r.top - trykk.y) > 10) trykk = null;
       const n = tilstand();
       const f = start.avstand && n.avstand ? n.avstand / start.avstand : 1;
       const zoom = Math.min(MAKS_ZOOM, Math.max(MIN_ZOOM, start.visning.zoom * f));
@@ -89,6 +94,16 @@ export class BrettVisning {
       this.tegnVisning(false);
     });
     const slipp = (e) => {
+      if (e.type === 'pointerup' && trykk?.id === e.pointerId && this.vedTrykk && this.tilpasset) {
+        const { dx, dy, skala } = this.tilpasset;
+        const { zoom, x, y } = this.visning;
+        const s = zoom * skala * T;
+        // Brettet har fulgt fingeren de få pikslene den rakk å flytte seg, så punktet under
+        // fingeren nå er det samme som der den trykket
+        const p = pekere.get(e.pointerId);
+        this.vedTrykk((p.x - x - zoom * dx) / s, (p.y - y - zoom * dy) / s);
+      }
+      trykk = null;
       pekere.delete(e.pointerId);
       start = pekere.size ? tilstand() : null;
       if (!pekere.size) this.vindu.classList.remove('drar');

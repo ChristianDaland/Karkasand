@@ -336,11 +336,34 @@ test('et helt parti med begge utvidelsene og seks spillere går opp', () => {
 });
 
 test('et nytt rom får alltid en gyldig modus', async () => {
-  const { Rom } = await import('../server/rom.js');
+  const { Rom } = await import('../delt/rom.js');
   assert.equal(new Rom('ABCD', null).modus, 'tv');
   assert.equal(new Rom('ABCD').modus, 'tv');
   assert.equal(new Rom('ABCD', 'bord').modus, 'bord');
   assert.equal(new Rom('ABCD', 'tull').modus, 'tv');
+});
+
+test('flytt brikken rett til en rute ved å trykke på brettet', () => {
+  const spill = nyttSpill();
+  assert.equal(spill.flyttTil(0, 0), false); // opptatt
+  assert.equal(spill.flyttTil(4, 4), false); // ikke inntil brettet
+  assert.equal(spill.flyttTil(0.5, 1), false);
+  assert.ok(spill.flyttTil(0, 1));
+  assert.deepEqual([spill.aktiv.x, spill.aktiv.y], [0, 1]);
+  assert.deepEqual(spill.markor, { x: 0, y: 1 });
+});
+
+test('nettbrettet: to spillere på hver sin side, og bare den som har tur kan flytte', async () => {
+  const { Rom } = await import('../delt/rom.js');
+  const rom = new Rom('NETTBRETT', 'pad');
+  const sor = rom.leggTilSpiller();
+  const nord = rom.leggTilSpiller();
+  assert.deepEqual([sor.plass, nord.plass], ['S', 'N']);
+  assert.ok(rom.start(sor.id));
+  assert.equal(rom.handling(nord.id, { type: 'flyttTil', x: 0, y: 1 }), false);
+  assert.ok(rom.handling(sor.id, { type: 'flyttTil', x: 0, y: 1 }));
+  assert.deepEqual([rom.spill.aktiv.x, rom.spill.aktiv.y], [0, 1]);
+  assert.equal(rom.ferdigOpptelling(), false); // ingen opptelling pågår
 });
 
 // ---------- Angre ----------

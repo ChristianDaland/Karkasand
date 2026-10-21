@@ -351,7 +351,7 @@ body:is([data-modus='bord'], [data-modus='pad']) #opptelling { top: 50%; }
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) rotate(var(--snu, 0deg));
   width: min(820px, calc(100% - 560px));
   min-width: 420px;
   max-height: calc(100% - 40px);
@@ -378,14 +378,21 @@ body:is([data-modus='bord'], [data-modus='pad']) #opptelling { top: 50%; }
 body:is([data-modus='bord'], [data-modus='pad']) .hjelp-vindu { width: min(760px, calc(100% - 340px)); }
 
 /* ---------- Nettbrett (pad) ----------
-   Som bordmodus, men skjermen er bare ca. 1024 × 768 og ligger flatt på bordet. Panelene
-   blir mindre, så to spillere får plass på samme kortside, og brettet får mer av skjermen. */
+   To spillere på ett nettbrett (ca. 1024 × 768) som ligger flatt på bordet, uten mobiler.
+   Den ene sitter i sør og den andre i nord. Langs kanten til hver spiller ligger panelet og
+   kontrollraden ved siden av hverandre, vendt mot spilleren. Brettet får resten av skjermen. */
 
-body[data-modus='pad'] #brett { inset: 92px; }
+body:not([data-modus='pad']) .bare-lokal,
+body[data-modus='pad'] .ikke-lokal { display: none; }
+
+/* Fingre på nettbrettet: ingen zoom av hele siden, markering av tekst eller bildemeny */
+body[data-modus='pad'] { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+body[data-modus='pad'] input { user-select: text; -webkit-user-select: text; }
+
+body[data-modus='pad'] #brett { inset: 112px 8px; }
 
 body[data-modus='pad'] .panel {
-  --panelsteg: 300px;
-  width: 290px;
+  width: 280px;
   column-gap: 10px;
   row-gap: 2px;
   padding: 6px 10px;
@@ -402,24 +409,75 @@ body[data-modus='pad'] .panel .vikinger .storviking { width: 18px; height: 18px;
 body[data-modus='pad'] .panel .lager { gap: 5px; font-size: 0.85rem; }
 body[data-modus='pad'] .panel .lager svg { width: 15px; height: 15px; }
 body[data-modus='pad'] .panel .tur-tekst { font-size: 0.85rem; min-height: 1.1em; }
-body[data-modus='pad'] .panel .frakoblet { font-size: 0.8rem; }
 body[data-modus='pad'] .panel .neste { width: 58px; height: 58px; }
 
-body[data-modus='pad'] .panel.plass-S { top: calc(100% - 46px); }
-body[data-modus='pad'] .panel.plass-N { top: 46px; }
-body[data-modus='pad'] .panel.plass-V { left: 46px; }
-body[data-modus='pad'] .panel.plass-Ø { left: calc(100% - 46px); }
+/* Panelet til venstre og kontrollene til høyre, sett fra spilleren */
+body[data-modus='pad'] .panel.plass-S { left: calc(50% - 220px); top: calc(100% - 56px); }
+body[data-modus='pad'] .panel.plass-N { left: calc(50% + 220px); top: 56px; }
 
-body[data-modus='pad'] .hjorneknapper { top: 8px; left: 8px; gap: 6px; }
+.styring {
+  --farge: #fff;
+  position: absolute;
+  width: 430px;
+  padding: 6px 10px 8px;
+  border-radius: 12px;
+  background: rgba(20, 15, 10, 0.95);
+  border: 2px solid color-mix(in srgb, var(--farge) 40%, transparent);
+  display: grid;
+  gap: 6px;
+  z-index: 15;
+}
+.styring.tur { border-color: var(--farge); box-shadow: 0 0 18px color-mix(in srgb, var(--farge) 50%, transparent); }
+/* Festet til kanten, så den vokser innover mot brettet når den trenger to rader knapper.
+   Nord er snudd rundt sin egen midte og ligger derfor på samme sted. */
+.styring.plass-S { bottom: 8px; left: calc(50% + 150px); transform: translateX(-50%); }
+.styring.plass-N { top: 8px; left: calc(50% - 150px); transform: translateX(-50%) rotate(180deg); }
+.styring-tekst { margin: 0; font-size: 0.95rem; color: var(--dempet); min-height: 1.2em; }
+.styring.tur .styring-tekst { color: var(--farge); font-weight: 800; }
+.styring-knapper { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.styring-knapper:empty { display: none; }
+.styring button { min-height: 48px; padding: 8px 14px; font-weight: 700; font-size: 1rem; }
+.styring button.primar { flex: 1; font-size: 1.1rem; }
+.styring button.rund { width: 48px; padding: 0; font-size: 1.4rem; }
+.styring button.valgt, .styring button.apen { background: var(--gull); color: #1b140d; }
+.styring button.figur svg { width: 32px; height: 32px; display: block; margin: auto; }
+
+/* Hjørneknappene står midt på venstre kant, der ingen av spillerne har kontroller */
+body[data-modus='pad'] .hjorneknapper { top: 50%; bottom: auto; left: 8px; transform: translateY(-50%); flex-direction: column; gap: 6px; }
 body[data-modus='pad'] .veiledning-knapp { padding: 4px 10px; font-size: 0.85rem; }
 body[data-modus='pad'] .zoom-knapper { transform: scale(0.8); transform-origin: bottom right; }
-body[data-modus='pad'] .hjelp-vindu { width: min(640px, calc(100% - 200px)); }
+body[data-modus='pad'] .hjelp-vindu { width: min(640px, calc(100% - 120px)); min-width: 0; grid-template-columns: 160px 1fr; }
 body[data-modus='pad'] .hjelp-vindu img { width: 160px; height: 160px; }
-body[data-modus='pad'] #slutt { max-width: calc(100% - 200px); max-height: calc(100% - 200px); overflow: auto; }
+body[data-modus='pad'] #slutt { max-width: calc(100% - 120px); max-height: calc(100% - 240px); overflow: auto; }
 
-/* Lobbyen på et liggende eller stående nettbrett */
-body[data-modus='pad'] .overlegg { gap: 12px; padding: 16px; }
-body[data-modus='pad'] .lobby-innhold { gap: 24px; }
-body[data-modus='pad'] .qr-boks img { width: min(260px, 34vh, 60vw); }
-body[data-modus='pad'] .lobby-spillere { min-width: 260px; }
-body[data-modus='pad'] #lobby-liste li { font-size: 1.1rem; padding: 8px 12px; }
+/* Lobbyen: hver spiller skriver navnet og velger farge på sin side */
+body:has(.nettbrett-lobby:not([hidden])) .hjorneknapper { display: none; }
+.nettbrett-lobby { grid-template-rows: 1fr auto 1fr; place-content: stretch; align-items: center; gap: 12px; }
+.nettbrett-lobby .tittel { font-size: clamp(2.2rem, 6vw, 3.6rem); }
+.lobby-midt { display: grid; gap: 10px; justify-items: center; }
+.lobby-midt p { margin: 0; }
+.lobby-midt a { color: var(--gull); }
+.lobby-midt .start { padding: 14px 40px; font-size: 1.3rem; font-weight: 800; }
+.nettbrett-lobby .utvidelser { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.nettbrett-lobby .utvidelser button { padding: 8px 14px; font-size: 1rem; }
+.nettbrett-lobby .utvidelser button[aria-pressed='true'] { background: var(--gull); color: #1b140d; }
+.sete { --farge: #fff; display: grid; gap: 12px; justify-items: center; }
+.sete.plass-N { transform: rotate(180deg); }
+.sete label { display: grid; gap: 6px; color: var(--dempet); font-weight: 700; }
+.sete input {
+  width: min(320px, 80vw);
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 3px solid var(--farge);
+  background: var(--kort);
+  color: var(--tekst);
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+}
+.sete input:focus { outline: none; box-shadow: 0 0 0 3px var(--gull); }
+.sete .farger { display: flex; gap: 10px; }
+.sete .farger button { width: 44px; height: 44px; border-radius: 50%; border: 3px solid transparent; }
+.sete .farger button.valgt { border-color: #fff; box-shadow: 0 0 0 3px var(--gull); }
+.sete .farger button:disabled { opacity: 0.2; }

@@ -4,13 +4,17 @@ Et flisleggingsspill i nettleseren, inspirert av Carcassonne og satt i vikingtid
 
 ## Slik spiller du
 
-1. Åpne spillet på storskjermen og velg **Spill på skjerm** (TV/PC), **Spill på bordet** (prosjektor som lyser ned på et bord) eller **Spill på nettbrett** (en iPad eller et annet nettbrett som ligger flatt midt på bordet). Modusen kan også byttes i lobbyen.
-2. Alle spillerne skanner QR-koden med mobilen, skriver navnet sitt og velger farge. En farge kan bare velges av én spiller. På bord og nettbrett velger de også hvilken side av bordet de sitter ved, høyst to per side.
+1. Åpne spillet på storskjermen og velg **Spill på skjerm** (TV/PC) eller **Spill på bordet** (prosjektor som lyser ned på et bord). Modusen kan også byttes i lobbyen. (**Spill på nettbrett** er for to spillere uten mobiler, se under.)
+2. Alle spillerne skanner QR-koden med mobilen, skriver navnet sitt og velger farge. En farge kan bare velges av én spiller. På bordet velger de også hvilken side av bordet de sitter ved, høyst to per side.
 3. Den som skannet først, er vert. Verten velger utvidelser og ser hvor mange brikker det blir, trykker **Start spillet** og bekrefter at alle er klare.
 4. Når det er din tur, trykker du **Trekk brikke**. Så flytter du brikken med pilene og roterer den med ⟳. «Neste plass» hopper til neste rute der brikken passer. Trykk **Legg brikken**.
 5. Velg om du vil sette ut en viking på brikken du nettopp la. Har du trykket feil, kan du angre brikken eller hele trekket fra mobilen helt til neste spiller har trykket **Trekk brikke**.
 
-På bord og nettbrett følger pilene siden du sitter ved. «Opp» betyr alltid bort fra deg.
+På bordet følger pilene siden du sitter ved. «Opp» betyr alltid bort fra deg.
+
+### To på nettbrett
+
+**Spill på nettbrett** (`/nettbrett`) er for to spillere på én iPad eller et annet nettbrett som ligger flatt mellom dem, uten mobiler. Den ene sitter i sør og den andre i nord, og hver har kontrollene langs sin kant. Du trykker på brettet der brikken skal ligge, på brikken for å snu den og på punktet der vikingen skal stå. Hele spillet kjører i nettleseren på nettbrettet. Serveren sender bare nettsiden og brikkebildene.
 
 På storskjermen kan du zoome med musehjulet, knappene + / − / ⤢ eller tastene + − 0, og dra for å flytte brettet. Når spillet er slutt, telles poengene opp på skjermen område for område, og verten kan hoppe over opptellingen fra mobilen. Resultatet vises i et kort over brettet, med poengene fordelt på borg, vei, hov og eng, så du fortsatt kan se på byggverket.
 
@@ -50,9 +54,9 @@ Når du kjører lokalt, peker QR-koden til maskinens IP-adresse på nettverket. 
 
 | Mappe | Innhold |
 |---|---|
-| `delt/` | Brikkedata, spillmotor og brikketegning. Brukes av både serveren og nettleseren. |
-| `server/` | Express- og Socket.IO-server og spillrommene |
-| `public/` | Nettsidene: startside, storskjerm, mobilkontroll, spillveiledning og galleri |
+| `delt/` | Brikkedata, spillmotor, spillrommet og brikketegning. Brukes av både serveren og nettleseren. |
+| `server/` | Express- og Socket.IO-server |
+| `public/` | Nettsidene: startside, storskjerm, nettbrett, mobilkontroll, spillveiledning og galleri |
 | `kunst/brikker/` | De malte brikkebildene (`A.jpg` til `X.jpg`, og `R1`–`R10`, `G1`–`G17`, `H1`–`H14` for utvidelsene) |
 | `kunst/skisser/` | Skisser som brukes som maler for maleriene |
 | `docs/BRIKKER.md` | Beskrivelse av alle brikkene, med krav til bildene |

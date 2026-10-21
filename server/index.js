@@ -8,7 +8,7 @@ import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 import QRCode from 'qrcode';
-import { Rom } from './rom.js';
+import { Rom } from '../delt/rom.js';
 
 const rot = (sti) => fileURLToPath(new URL(`../${sti}`, import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -28,6 +28,7 @@ app.use('/kunst', express.static(rot('kunst'), { maxAge: '1h' }));
 app.get('/skjerm/:kode', (req, res) => res.sendFile(rot('public/skjerm.html')));
 app.get('/m/:kode', (req, res) => res.sendFile(rot('public/mobil.html')));
 app.get('/galleri', (req, res) => res.sendFile(rot('public/galleri.html')));
+app.get('/nettbrett', (req, res) => res.sendFile(rot('public/skjerm.html')));
 app.get('/veiledning', (req, res) => res.sendFile(rot('public/veiledning.html')));
 
 // Hvilke malte brikkebilder som finnes: { A: ['A.jpg', 'A_2.jpg'], ... }
@@ -79,21 +80,6 @@ function nyttRom(modus) {
   const rom = new Rom(Rom.lagKode(rommene), modus);
   rommene.set(rom.kode, rom);
   return rom;
-}
-
-// Sluttellingen vises område for område på skjermen. Mobilene venter med resultatet til den
-// er ferdig. Er ingen skjerm koblet til, avsluttes den av seg selv etter en stund.
-function startOpptelling(rom) {
-  rom.opptelling = 'pågår';
-  const sekunder = 10 + rom.spill.sluttposter.length * 2;
-  rom.opptellingTimer = setTimeout(() => ferdigOpptelling(rom), sekunder * 1000);
-}
-
-function ferdigOpptelling(rom) {
-  if (rom.opptelling !== 'pågår') return;
-  rom.opptelling = 'ferdig';
-  clearTimeout(rom.opptellingTimer);
-  sendTilstand(rom);
 }
 
 io.on('connection', (socket) => {
@@ -154,18 +140,18 @@ io.on('connection', (socket) => {
   socket.on('mobil:handling', (handling = {}) => {
     const rom = hentRom();
     if (!rom?.handling(socket.data.spillerId, handling)) return;
-    if (rom.spill.fase === 'slutt' && !rom.opptelling) startOpptelling(rom);
+    if (rom.spill.fase === 'slutt' && !rom.opptelling) rom.startOpptelling(() => sendTilstand(rom));
     sendTilstand(rom);
   });
 
   // Skjermen er ferdig med å vise sluttellingen, eller verten vil hoppe over den
   socket.on('skjerm:opptelling-ferdig', () => {
     const rom = hentRom();
-    if (rom && socket.data.rolle === 'skjerm') ferdigOpptelling(rom);
+    if (rom && socket.data.rolle === 'skjerm' && rom.ferdigOpptelling()) sendTilstand(rom);
   });
   socket.on('mobil:hopp-over', () => {
     const rom = hentRom();
-    if (rom && rom.vert?.id === socket.data.spillerId) ferdigOpptelling(rom);
+    if (rom && rom.vert?.id === socket.data.spillerId && rom.ferdigOpptelling()) sendTilstand(rom);
   });
 
   // Avslutt spillet som pågår og gå tilbake til lobbyen. Spillerne, fargene og plassene

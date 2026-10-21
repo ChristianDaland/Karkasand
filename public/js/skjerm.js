@@ -1,16 +1,23 @@
 // Storskjermen: viser lobbyen med QR-kode, brettet, spillerpanelene og resultatet.
+// På /nettbrett kjører spillet lokalt i nettleseren (lokal.js), og nettbrett.js lager
+// lobbyen og kontrollene i stedet for mobilene.
 
 import { BrettVisning } from './brett.js';
 import { lastBilder, brikkeUrl, vikingSvg, figurSvg, vareSvg, elementFra, PLASS_GRADER, PLASS_NAVN, GRUNN } from './felles.js';
 import { VARER } from '/delt/brikker.js';
 import { VIKINGER_PER_SPILLER } from '/delt/motor.js';
 import { brikkeTekst } from './brikkehjelp.js';
+import { LokalKanal } from './lokal.js';
+import { start as startNettbrett } from './nettbrett.js';
 
 const $ = (id) => document.getElementById(id);
+const lokal = location.pathname === '/nettbrett';
+// Nettbrettmodusen med mobiler finnes ikke lenger; gamle lenker går til nettbrettspillet
+if (new URLSearchParams(location.search).get('modus') === 'pad') location.replace('/nettbrett');
 // Bildelisten hentes før socketen lages. Ellers kan «connect» komme mens vi venter,
 // før lytterne er satt opp, og siden blir stående uten å koble til.
 await lastBilder();
-const socket = io();
+const socket = lokal ? new LokalKanal() : io();
 const params = new URLSearchParams(location.search);
 let kode = location.pathname.split('/')[2];
 let modus = params.get('modus');
@@ -18,6 +25,7 @@ let sisteMelding = 0;
 let meldingTimer;
 
 const brett = new BrettVisning($('brett'));
+if (lokal) startNettbrett(socket, brett);
 const panelene = []; // spillerpanelene, i samme rekkefølge som spillerne
 let sisteRom = null;
 let opptelling = null; // { avbrutt } mens sluttellingen spilles av
@@ -25,6 +33,7 @@ let opptellingVist = false; // sluttellingen for dette spillet er spilt av
 
 socket.on('connect', () => {
   socket.emit('skjerm:koble', { kode, modus }, (svar) => {
+    if (lokal) return;
     if (kode !== svar.kode) {
       kode = svar.kode;
       history.replaceState(null, '', `/skjerm/${kode}`);
@@ -66,7 +75,7 @@ document.addEventListener('visibilitychange', () => document.visibilityState ===
 function vis(rom) {
   document.body.dataset.modus = rom.modus;
   const spill = rom.spill;
-  $('lobby').hidden = Boolean(spill);
+  $('lobby').hidden = Boolean(spill) || lokal;
   $('info').hidden = !spill;
   $('avslutt').hidden = !spill;
   if (!spill && $('bekreft-avslutt').open) $('bekreft-avslutt').close();
@@ -83,7 +92,7 @@ function vis(rom) {
 
   if (!spill) {
     $('hjelp').hidden = true;
-    visLobby(rom);
+    if (!lokal) visLobby(rom);
     for (const panel of panelene.splice(0)) panel.remove();
     $('slutt').hidden = true;
     $('liten-qr').hidden = true;
@@ -95,7 +104,7 @@ function vis(rom) {
   visPaneler(rom);
   if (spill.fase !== 'slutt') visMelding(spill);
   $('igjen').textContent = `${spill.igjen} ${spill.igjen === 1 ? 'brikke' : 'brikker'} igjen`;
-  $('liten-qr').hidden = rom.spillere.every((s) => s.tilkoblet) || spill.fase === 'slutt';
+  $('liten-qr').hidden = lokal || rom.spillere.every((s) => s.tilkoblet) || spill.fase === 'slutt';
   visSlutt(spill);
 }
 
@@ -107,6 +116,9 @@ function visHjelp(rom) {
   const spiller = rom.spill.spillere.find((s) => s.id === hjelp.spillerId);
   $('hjelp').style.setProperty('--farge', spiller?.farge ?? 'var(--gull)');
   $('hjelp-hvem').textContent = `${spiller?.navn ?? ''} spør: hva er denne brikken?`;
+  // På nettbrettet vender vinduet mot den som spurte
+  const plass = rom.spillere.find((s) => s.id === hjelp.spillerId)?.plass;
+  $('hjelp').style.setProperty('--snu', rom.modus === 'pad' && plass === 'N' ? '180deg' : '0deg');
   if ($('hjelp').dataset.brikke !== hjelp.brikke) {
     $('hjelp').dataset.brikke = hjelp.brikke;
     $('hjelp-bilde').src = brikkeUrl(hjelp.brikke);

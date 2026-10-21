@@ -301,6 +301,18 @@ export class Spill {
     return true;
   }
 
+  // Flytt brikken rett til en tom rute inntil brettet (nettbrettet: trykk på ruta)
+  flyttTil(x, y) {
+    if (this.fase !== 'legg' || !Number.isInteger(x) || !Number.isInteger(y) || this.brikke(x, y)) return false;
+    if (![0, 1, 2, 3].some((s) => this.brikke(x + DX[s], y + DY[s]))) return false;
+    this.aktiv.x = x;
+    this.aktiv.y = y;
+    this.markor = { x, y };
+    const rot = this.gyldigeRotasjoner(this.aktiv.brikke.id, x, y);
+    if (rot.length && !rot.includes(this.aktiv.rot)) this.aktiv.rot = rot[0];
+    return true;
+  }
+
   roter() {
     if (this.fase !== 'legg') return false;
     const a = this.aktiv;
