@@ -25,7 +25,7 @@ Spillet har **72 brikker** fordelt på **24 brikketyper** (A–X). Du lager **et
 ### Perspektiv og lys
 - **Rett ovenfra** (ortografisk fugleperspektiv), som et kart. Ingen horisont, ingen himmel og ikke skrått eller isometrisk.
 - **Mykt og diffust lys**, som en overskyet nordisk dag. **Ingen tydelige slagskygger i én retning.** Brikkene roteres i spillet, og skygger som peker i ulike retninger ville avsløre det. Bruk heller korte, myke skygger rett under ting (ambient occlusion).
-- Hus, trær og folk sees ovenfra: vi ser torvtak, trekroner og hoder.
+- Hus, trær og folk sees ovenfra: vi ser hustak, trekroner og hoder.
 
 ---
 
@@ -40,6 +40,7 @@ Når to brikker ligger inntil hverandre, må det ene bildet fortsette sømløst 
 | **Borgkappe** | Når borgen bare dekker én kant, buer palisaden inn til **300 px** fra kanten på midten og ender i de to hjørnene. |
 | **Palisade** | Ender alltid **i et hjørne** av brikken, aldri midt på en kant. Den er ca. 36–40 px tykk og står på borgsiden av grensen. |
 | **Eng mot kant** | Bare gress. Samme grønnfarge og tetthet langs alle kanter. |
+| **Borgfarger** | Bare gråtoner, brunt, hvitt og svart. Ikke noe grønt. |
 | **Kantsonen** | Hold de **ytterste 48 px** langs hver kant fri for gjenstander, og vis bare underlaget (gress, vei eller borggrunn). Hus, trær, steiner, folk og dyr skal ikke kuttes av kanten. |
 
 **Underlaget langs kantene må være likt på alle brikkene.** Gresset skal ha samme farge og struktur, veien samme jordfarge med steinheller, og borggrunnen samme trampede jord og plankeganger. Det er dette som får brettet til å se ut som ett sammenhengende landskap.
@@ -55,7 +56,9 @@ Saftig, litt vill nordisk beitemark: mosegrønt gress med innslag av lyng, blåk
 En opptråkket jordvei i lys brun-oker med hjulspor, små steinheller og gress som vokser inn i kantene. Veien skal ikke ha kantstein eller murer.
 
 ### Borg (borggrunn)
-Inne i borgen er bakken trampet jord, med plankeganger mellom husene. Der står **langhus med torvtak** (grønne tak sett ovenfra, med røykhull), stabbur, smie, tønner, ved og fiskehjeller. Gjerne røyk fra et par røykhull. **Bygninger holdes 48 px unna kantene** som berører andre brikker.
+Inne i borgen er bakken trampet jord, med plankeganger mellom husene. Der står **langhus med grå spontak** (sett ovenfra, med røykhull), stabbur, smie, tønner, ved og fiskehjeller. Gjerne røyk fra et par røykhull. **Bygninger holdes 48 px unna kantene** som berører andre brikker.
+
+**Ingen grønnfarge i borgen.** Alt innenfor palisaden har bare gråtoner, brunt, hvitt og svart: ingen torvtak, gress, busker eller trær. På en TV-skjerm blir brikkene små, og da er fargen det som skiller borg fra eng. Grønt hører til enga.
 
 ### Palisade
 En **trepalisade** av tette, tilspissede tømmerstokker i mørk, værbitt brun. Sett ovenfra ser den ut som en tykk rad med stokketopper. Det skal ikke være noen steinmur, for dette er ikke en middelalderborg. Gjerne med små vaktplattformer innimellom.
@@ -76,7 +79,7 @@ Der veier møtes, står et lite **tun** med en **brønn** midt i krysset (et run
 | Vei | lys oker `#c9a877` |
 | Borggrunn | jordbrun `#9c7a55` |
 | Palisade | mørk tømmerbrun `#4a3523` |
-| Torvtak | grønt og gyllent gress på brun torv |
+| Tak i borgen | grå spon og mørkt, værbitt treverk, aldri grønt |
 | Runestein | skifergrå `#8a8f94` med rødt `#b3322b` |
 
 Fargene er bare veiledende. Det viktigste er at de er **like på alle brikkene**.
@@ -94,7 +97,7 @@ top-down orthographic bird's-eye view, square board game tile, hand-painted goua
 
 **Borgprompt (felles):** brukes når borggrunnen males på nytt for seg (se arbeidsflyten under).
 ```
-inside a Norse settlement seen from directly above: bare trampled brown earth ground with no grass, crowded turf-roofed longhouses with smoke holes, wooden plank walkways between the houses, a storehouse on posts, barrels, stacked firewood and fish drying racks
+inside a Norse settlement seen from directly above: bare trampled brown earth ground with no grass and no plants, crowded longhouses with grey wooden shingle roofs and smoke holes, dark weathered timber walls, wooden plank walkways between the houses, a storehouse on posts, barrels, stacked firewood and fish drying racks, only grey, brown, black and white colours, nothing green
 ```
 
 **Kantkilder (felles):** tre bilder som bare har underlaget. Kantstripen på alle brikkene hentes fra dem. For eng og borg brukes bare midten av bildet, speilet til en sømløs flate.
@@ -113,7 +116,7 @@ perspective, isometric, horizon, sky, clouds, text, letters, watermark, signatur
 ### Anbefalt arbeidsflyt på AI-riggen
 `npm run brikker` gjør alt dette automatisk med Z-Image Turbo i ComfyUI på AI-serveren (se `verktoy/lag-brikker.js`):
 - **Runde 1:** Hele brikken males med brikkens prompt. Et kantkart av skissen styrer ControlNet.
-- **Runde 2:** Borggrunnen, med runesteinen, klippes ut, skaleres opp og males på nytt med borgprompten. Modellen ser bare strekene i kantkartet og vet ellers ikke hvilken side av palisaden som er borg.
+- **Runde 2:** Borggrunnen, med runesteinen, klippes ut, skaleres opp og males på nytt med borgprompten. Modellen ser bare strekene i kantkartet og vet ellers ikke hvilken side av palisaden som er borg. Grønt som likevel havner inne i borgen (torvtak, busker), gjøres grått etterpå.
 - **Runde 3:** Båndet langs kantene byttes ut med det samme båndet fra tre kildebilder som er malt med kantkilde-promptene: bare eng, bare borggrunn og en rett vei (dreid for øst–vest). Da møtes alle brikkene likt. Kildene ligger i `kunst/teksturer/`. Er du ikke fornøyd med kantene, slett filene der og kjør på nytt med en annen `--seed`.
 
 Slik gjør du det for hånd:
@@ -161,13 +164,13 @@ a wooden Norse pagan temple (hov) with dragon-head gables seen from directly abo
 ### C – Storborgen · 1 stk
 **Kanter:** borg / borg / borg / borg · **Runestein** · **Skisse:** [C.png](../kunst/skisser/C.png)
 
-**Motiv:** Hele brikken er inne i en stor borg. Langhus med torvtak ligger tett, med plankeganger mellom. Midt på står en stor runestein på en liten steinlagt plass. Det er ingen palisade, fordi borgen fortsetter på alle kanter.
+**Motiv:** Hele brikken er inne i en stor borg. Langhus med grå spontak ligger tett, med plankeganger mellom. Midt på står en stor runestein på en liten steinlagt plass. Det er ingen palisade, fordi borgen fortsetter på alle kanter.
 
 **Detaljer:** røyk fra røykhull, et smiebål, tønner og fiskehjeller. Ingen hus i kantsonen.
 
 **Prompt:**
 ```
-the inside of a large Viking settlement filling the entire tile, turf-roofed longhouses seen from above, wooden plank walkways, packed earth ground reaching all four edges, a prominent grey runestone with a bright red painted serpent knotwork in the exact center on a small stone-paved square, no palisade
+the inside of a large Viking settlement filling the entire tile, longhouses with grey wooden shingle roofs seen from above, wooden plank walkways, packed earth ground reaching all four edges, a prominent grey runestone with a bright red painted serpent knotwork in the exact center on a small stone-paved square, no palisade
 ```
 
 ---
@@ -181,7 +184,7 @@ the inside of a large Viking settlement filling the entire tile, turf-roofed lon
 
 **Prompt:**
 ```
-top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with a turf-roofed longhouse, the palisade arcs from the top-left corner to the top-right corner reaching 30% down at its middle; a straight dirt road crosses the tile horizontally from the middle of the left edge to the middle of the right edge; meadow elsewhere
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with a longhouse with a grey wooden shingle roof, the palisade arcs from the top-left corner to the top-right corner reaching 30% down at its middle; a straight dirt road crosses the tile horizontally from the middle of the left edge to the middle of the right edge; meadow elsewhere
 ```
 
 ---
@@ -195,7 +198,7 @@ top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking 
 
 **Prompt:**
 ```
-top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with turf roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with grey shingle roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall
 ```
 
 ---
@@ -209,7 +212,7 @@ top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking 
 
 **Prompt:**
 ```
-a Viking settlement band running from the left edge to the right edge, narrowing in the middle, two curved wooden palisades: one arcing between the top corners, one arcing between the bottom corners, meadow outside both palisades at top and bottom, turf-roofed longhouses and a plank street inside, a prominent grey runestone with bright red serpent knotwork in the center
+a Viking settlement band running from the left edge to the right edge, narrowing in the middle, two curved wooden palisades: one arcing between the top corners, one arcing between the bottom corners, meadow outside both palisades at top and bottom, longhouses with grey wooden shingle roofs and a plank street inside, a prominent grey runestone with bright red serpent knotwork in the center
 ```
 
 ---
@@ -221,7 +224,7 @@ a Viking settlement band running from the left edge to the right edge, narrowing
 
 **Prompt:**
 ```
-a Viking settlement band running from the top edge to the bottom edge, narrowing in the middle, two curved wooden palisades: one arcing between the two left corners, one between the two right corners, meadow outside both palisades at left and right, turf-roofed longhouses and a plank street inside, no runestone
+a Viking settlement band running from the top edge to the bottom edge, narrowing in the middle, two curved wooden palisades: one arcing between the two left corners, one between the two right corners, meadow outside both palisades at left and right, longhouses with grey wooden shingle roofs and a plank street inside, no runestone
 ```
 
 ---
@@ -301,7 +304,7 @@ top edge: curved wooden palisade of a Viking settlement arcing between the top c
 
 **Prompt:**
 ```
-a Viking settlement fills the upper-left half of the tile, bounded by a curved wooden palisade running from the top-right corner to the bottom-left corner bulging slightly toward the lower right; turf-roofed longhouses inside; a prominent grey runestone with bright red serpent knotwork in the upper-left area; open meadow in the lower-right half
+a Viking settlement fills the upper-left half of the tile, bounded by a curved wooden palisade running from the top-right corner to the bottom-left corner bulging slightly toward the lower right; longhouses with grey wooden shingle roofs inside; a prominent grey runestone with bright red serpent knotwork in the upper-left area; open meadow in the lower-right half
 ```
 
 ---
@@ -313,7 +316,7 @@ a Viking settlement fills the upper-left half of the tile, bounded by a curved w
 
 **Prompt:**
 ```
-a Viking settlement fills the upper-left half of the tile, bounded by a curved wooden palisade running from the top-right corner to the bottom-left corner bulging slightly toward the lower right; turf-roofed longhouses inside; open meadow in the lower-right half, no runestone
+a Viking settlement fills the upper-left half of the tile, bounded by a curved wooden palisade running from the top-right corner to the bottom-left corner bulging slightly toward the lower right; longhouses with grey wooden shingle roofs inside; open meadow in the lower-right half, no runestone
 ```
 
 ---
@@ -349,7 +352,7 @@ a Viking settlement fills the upper-left half, bounded by a curved wooden palisa
 
 **Prompt:**
 ```
-a Viking settlement covers the tile and reaches the top, left and right edges; along the bottom a curved wooden palisade arcs between the two bottom corners reaching 30% up at its middle, with meadow outside it; turf-roofed longhouses; a prominent grey runestone with bright red serpent knotwork near the center
+a Viking settlement covers the tile and reaches the top, left and right edges; along the bottom a curved wooden palisade arcs between the two bottom corners reaching 30% up at its middle, with meadow outside it; longhouses with grey wooden shingle roofs; a prominent grey runestone with bright red serpent knotwork near the center
 ```
 
 ---
@@ -559,7 +562,7 @@ a river flows straight across the middle from the left edge to the right edge; a
 
 **Prompt:**
 ```
-the inside of a large Viking settlement filling the entire tile, a great stave-church-like temple hall with tiered shingled roofs and carved dragon heads stands in the center, turf-roofed longhouses around it, packed earth ground reaching all four edges, no palisade
+the inside of a large Viking settlement filling the entire tile, a great stave-church-like temple hall with tiered shingled roofs and carved dragon heads stands in the center, longhouses with grey wooden shingle roofs around it, packed earth ground reaching all four edges, no palisade
 ```
 
 ### G2 – Firborgen · 1 stk
@@ -739,7 +742,7 @@ Ikke ha med høna eller byggmesteren på brikkene. De er figurer som spillerne s
 
 **Prompt:**
 ```
-top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with turf roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with grey shingle roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard
 ```
 
 ### H2 – Smia · 1 stk
@@ -749,7 +752,7 @@ top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking 
 
 **Prompt:**
 ```
-top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with turf roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with grey shingle roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
 ```
 
 ### H3 – Kornloftet · 1 stk
@@ -759,7 +762,7 @@ top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking 
 
 **Prompt:**
 ```
-top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with turf roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: a wooden grain store (stabbur) on stone posts with many golden sheaves of grain stacked in front of it, clearly visible in the open yard
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with grey shingle roofs, arcing from the top-left corner to the top-right corner and reaching 30% down at its middle; the rest of the tile is open meadow with heather, a few sheep and a low stone wall; inside the walled settlement: a wooden grain store (stabbur) on stone posts with many golden sheaves of grain stacked in front of it, clearly visible in the open yard
 ```
 
 ### H4 – Fiskeveien · 1 stk
@@ -769,7 +772,7 @@ top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking 
 
 **Prompt:**
 ```
-top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with a turf-roofed longhouse, the palisade arcs from the top-left corner to the top-right corner reaching 30% down at its middle; a straight dirt road crosses the tile horizontally from the middle of the left edge to the middle of the right edge; meadow elsewhere; inside the walled settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with a longhouse with a grey wooden shingle roof, the palisade arcs from the top-left corner to the top-right corner reaching 30% down at its middle; a straight dirt road crosses the tile horizontally from the middle of the left edge to the middle of the right edge; meadow elsewhere; inside the walled settlement: a large wooden drying rack (hjell) full of pale dried stockfish hanging in rows, clearly visible in the open yard
 ```
 
 ### H5 – Smia ved veien · 1 stk
@@ -779,7 +782,7 @@ top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking 
 
 **Prompt:**
 ```
-top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with a turf-roofed longhouse, the palisade arcs from the top-left corner to the top-right corner reaching 30% down at its middle; a straight dirt road crosses the tile horizontally from the middle of the left edge to the middle of the right edge; meadow elsewhere; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
+top edge: a curved wooden palisade of sharpened logs enclosing part of a Viking settlement with a longhouse with a grey wooden shingle roof, the palisade arcs from the top-left corner to the top-right corner reaching 30% down at its middle; a straight dirt road crosses the tile horizontally from the middle of the left edge to the middle of the right edge; meadow elsewhere; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
 ```
 
 ### H6 – Kornloftet ved svingen · 1 stk
@@ -819,7 +822,7 @@ top edge: curved wooden palisade of a Viking settlement arcing between the top c
 
 **Prompt:**
 ```
-a Viking settlement fills the upper-left half of the tile, bounded by a curved wooden palisade running from the top-right corner to the bottom-left corner bulging slightly toward the lower right; turf-roofed longhouses inside; open meadow in the lower-right half, no runestone; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
+a Viking settlement fills the upper-left half of the tile, bounded by a curved wooden palisade running from the top-right corner to the bottom-left corner bulging slightly toward the lower right; longhouses with grey wooden shingle roofs inside; open meadow in the lower-right half, no runestone; inside the walled settlement: an open blacksmith forge with a glowing fire, an anvil and a big stack of dark iron bars, clearly visible in the open yard
 ```
 
 ### H10 – Kornhjørnet · 1 stk

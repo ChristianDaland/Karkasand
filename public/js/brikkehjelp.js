@@ -6,7 +6,7 @@ import { BRIKKE, VARER } from '/delt/brikker.js';
 export const OM = {
   A: 'Et hov – gudehuset – med dragehoder på gavlene, en stor ask og et offeralter. Veien fra sør ender ved døra.',
   B: 'Et hov i en lund av bjørk og ask, omgitt av en steinsetting. Ingen vei, bare eng rundt.',
-  C: 'Brikken ligger midt inne i en stor borg. Langhus med torvtak står tett rundt en runestein. Borgen fortsetter på alle fire kanter.',
+  C: 'Brikken ligger midt inne i en stor borg. Langhus med grå spontak står tett rundt en runestein. Borgen fortsetter på alle fire kanter.',
   D: 'En borgkappe med palisade i nord og en rett vei tvers over brikken. Spillet starter med denne brikken når Elva ikke er med.',
   E: 'En borgkappe med palisade i nord. Resten er eng, gjerne med sauer og en steingard.',
   F: 'En borg som går tvers over brikken fra vest til øst, med en runestein i midten. Palisadene buer inn mot nord og sør.',

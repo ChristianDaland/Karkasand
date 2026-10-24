@@ -4,6 +4,7 @@
 //      startbilde med denoise under 1 gir flate felt eller rutemønstre, så det er av.)
 //   2. Borggrunnen (med runesteinen) males på nytt med borgprompten. ControlNet ser
 //      bare strekene og vet ellers ikke hvilken side av palisaden som er borg.
+//      Grønt som likevel havner inne i borgen, gjøres grått etterpå.
 //   3. Båndet langs kantene byttes ut med det samme båndet fra tre kildebilder som er
 //      malt på samme måte: bare eng, bare borggrunn og en rett vei (dreid 90° for
 //      øst–vest). Da møtes alle brikkene likt. Kildene lagres i kunst/teksturer/ og
@@ -37,9 +38,9 @@ const SEED = { B: 7, X: 99, H: 42, I: 42, M: 99, O: 99, R5: 42, R1: 123 };
 // vei mot nord, fordi kantkartet er tomt der og modellen ser brønn i krysset som firveiskryss.
 // «omrade» er rektanglene (x0,y0 x1,y1) som males på nytt; bare enga innenfor tas med.
 // R1 (kilden) får elv i alle fire retninger, men elva skal bare renne mot vest.
-// Seed for borgrunden (runde 2), der standard-seed ga feil vare eller en vare som knapt synes.
+// Seed for borgrunden (runde 2), der standard-seed ga feil vare, en vare som knapt synes, eller to runesteiner.
 // Kan prøves med --borgseed=<tall>. En liste gir én seed per borg (for brikker med flere borger).
-const BORGSEED = { H2: 42, H5: 42, H7: 42, H13: 42, H14: [42, 99] };
+const BORGSEED = { M: 123, O: 123, H1: 123, H2: 42, H3: 123, H5: 42, H7: 42, H12: 7, H13: 42, H14: 7 };
 const RENSK_ENG = {
   W: { omrade: ['420,0 604,430'] },
   G16: { omrade: ['420,0 604,430'] },
@@ -67,6 +68,8 @@ const prompter = Object.fromEntries(doc.split(/\n### /).slice(1)
   .map((del) => [del.split(' ')[0], kodeEtter(del, '**Prompt:**')]));
 // Stilen for kantkildene: uten leddene som får modellen til å fylle en ensfarget flate med mønstre
 const kildestil = stil.split(', ').filter((ledd) => !/board game|richly detailed|edge to edge|along all edges/.test(ledd)).join(', ');
+// Stilen for borgrunden: uten mosegrønt, lyng og gress, ellers får husene grønne tak
+const borgstil = stil.split(', ').filter((ledd) => !/moss green|heather|grass/.test(ledd)).join(', ');
 const STORHOV = 'a great stave-church-like temple hall with tiered shingled roofs and carved dragon heads in the middle of the settlement';
 const RUNESTEIN = 'a large prominent grey runestone with bright red serpent knotwork standing in the middle of a round stone-paved square';
 // Varene i Handel og håndverk (samme beskrivelse som i docs/BRIKKER.md)
@@ -179,6 +182,17 @@ async function malPaaNytt(b, navn, prompt, d, { kontroll = true, borgseed = BORG
   magick(fil('malt'), fil(`${navn}_innsatt`), fil(`${navn}myk`), '-composite', fil('malt'));
 }
 
+// Borgen skal bare ha gråtoner, brunt, hvitt og svart, slik at den skiller seg fra enga
+// på en TV-skjerm. Det grønne modellen likevel maler inne i borgen (torvtak, busker,
+// gress), gjøres grått. Fargetonen fra ca. 50° (gulgrønn torv) til 170° regnes som grønn,
+// så gylne kornband og glo fra smia får stå.
+function fjernGront(b) {
+  const fil = filAv(b.id);
+  magick(fil('malt'), '-colorspace', 'HSL', '-fx', 'u.r>0.14 && u.r<0.47 ? min(1, max(0, (u.g-0.08)*6)) : 0',
+    '-channel', 'R', '-separate', '+channel', fil('borgmyk'), '-compose', 'multiply', '-composite', '-blur', '0x1', fil('gront'));
+  magick(fil('malt'), '(', '+clone', '-modulate', '100,12', ')', fil('gront'), '-composite', fil('malt'));
+}
+
 // Runde 1 og 2. Gir stien til det malte bildet, før kantstripen.
 // Brikkene i Handel og håndverk har formen til en grunnbrikke (b.form). Runde 1 bruker
 // prompten og seeden til den, ellers maler modellen en ekstra innhegning med varen ute
@@ -224,7 +238,7 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.fo
     const medVare = b.deler.filter((d) => d.vare);
     if (medVare.length < 2) {
       const vare = medVare.length ? `, ${VARE[medVare[0].vare]}` : '';
-      await malPaaNytt(b, 'borg', `${borgprompt}${runestein}${storhov}${vare}, ${stil}`, borgdenoise);
+      await malPaaNytt(b, 'borg', `${borgprompt}${runestein}${storhov}${vare}, ${borgstil}`, borgdenoise);
     } else {
       // Flere borger med hver sin vare: hver borg males for seg, ellers får bare én av dem varen.
       // Borgen er den delen av borgmasken som ligger nærmest vikingpunktet til delen.
@@ -235,10 +249,11 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.fo
           .map(([px, py]) => `hypot(i-${x},j-${y})<hypot(i-${px},j-${py})`).join('&&');
         magick(fil('borg'), '(', '+clone', '-fx', `${naermest}?1:0`, ')', '-compose', 'multiply', '-composite', fil(`borg${i}`));
         magick(fil(`borg${i}`), '-blur', '0x4', fil(`borg${i}myk`));
-        await malPaaNytt(b, `borg${i}`, `${borgprompt}${runestein}${storhov}, ${VARE[d.vare]}, ${stil}`, borgdenoise,
+        await malPaaNytt(b, `borg${i}`, `${borgprompt}${runestein}${storhov}, ${VARE[d.vare]}, ${borgstil}`, borgdenoise,
           { borgseed: [BORGSEED[b.id]].flat()[i] });
       }
     }
+    fjernGront(b);
   }
   // Rydd enga der modellen legger til noe som ikke skal være der (se RENSK_ENG)
   if (RENSK_ENG[b.id]) {
