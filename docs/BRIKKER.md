@@ -102,8 +102,8 @@ inside a Norse settlement seen from directly above: bare trampled brown earth gr
 
 **Kantkilder (felles):** tre bilder som bare har underlaget. Kantstripen på alle brikkene hentes fra dem. For eng og borg brukes bare midten av bildet, speilet til en sømløs flate.
 ```
-eng: an open Nordic meadow seen from directly above, only grass with a little heather, no trees, no stones, nothing else
-borg: bare trampled brown earth ground seen from directly above, a few pebbles and wisps of straw, nothing else
+eng: an even Nordic meadow seen from directly above, only short uniform grass of one even green, no flowers, no heather, no clumps, no trees, no stones, nothing else
+borg: smooth bare packed brown earth ground seen from directly above, even and uniform, no straw, no sticks, no pebbles, no plants, nothing else
 vei: a straight dirt road runs vertically from the exact middle of the top edge to the exact middle of the bottom edge through open meadow, no trees, no stones, nothing else
 elv: a river flows straight across the tile from the exact middle of the left edge to the exact middle of the right edge through open meadow, clear blue-grey water, no trees, no stones, nothing else
 ```
@@ -117,7 +117,7 @@ perspective, isometric, horizon, sky, clouds, text, letters, watermark, signatur
 `npm run brikker` gjør alt dette automatisk med Z-Image Turbo i ComfyUI på AI-serveren (se `verktoy/lag-brikker.js`):
 - **Runde 1:** Hele brikken males med brikkens prompt. Et kantkart av skissen styrer ControlNet.
 - **Runde 2:** Borggrunnen, med runesteinen, klippes ut, skaleres opp og males på nytt med borgprompten. Modellen ser bare strekene i kantkartet og vet ellers ikke hvilken side av palisaden som er borg. Grønt som likevel havner inne i borgen (torvtak, busker), gjøres grått etterpå.
-- **Runde 3:** Båndet langs kantene byttes ut med det samme båndet fra tre kildebilder som er malt med kantkilde-promptene: bare eng, bare borggrunn og en rett vei (dreid for øst–vest). Da møtes alle brikkene likt. Kildene ligger i `kunst/teksturer/`. Er du ikke fornøyd med kantene, slett filene der og kjør på nytt med en annen `--seed`.
+- **Runde 3:** Båndet langs kantene byttes ut med det samme båndet fra tre kildebilder som er malt med kantkilde-promptene: bare eng, bare borggrunn og en rett vei (dreid for øst–vest). Da møtes alle brikkene likt. Kildene ligger i `kunst/teksturer/`. Kildene speiles, og brikkene dreies, så det som ligger langs én kant, ligger speilvendt på naboen. Derfor dempes eng og borggrunn før de brukes: strå, kvister, lyng og gressklumper fjernes, så det ikke blir symmetriske figurer langs skjøtene. Borgen har et smalere bånd enn enga, slik at husene på to borgbrikker kommer nær hverandre og ser ut som én borg. Er du ikke fornøyd med kantene, slett filene der og kjør på nytt med en annen `--seed`.
 
 Slik gjør du det for hånd:
 1. Bruk skissen `kunst/skisser/<ID>.png` som **styringsbilde**. Det kan være ControlNet med segmentering, canny eller scribble, eller img2img med denoise på omtrent 0,55–0,75. Skissene er flate og fargekodet: grønn er eng, lys brun er vei, mellombrun er borggrunn, mørk brun stripe er palisade, mørkebrunt rektangel er hov, grå stein med rødt er runestein, og den lille firkanten i en lys sirkel er tun med brønn.

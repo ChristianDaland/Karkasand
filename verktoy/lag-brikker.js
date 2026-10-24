@@ -16,6 +16,8 @@
 //
 // Valg: --ut=<mappe>  --seed=<tall>  --denoise=<0–1>  --styrke=<ControlNet, 0–1>
 //       --stoy=<fargestøy i startbildet>  --borgdenoise=<0–1>  --borgseed=<seed for borgrunden>
+//       --borgband=<bredden på borgens kantbånd, px>  --engdetalj, --borgdetalj=<penselstrøk som beholdes
+//       i kantteksturene, px>  --engmedian=<px>  --behold (ikke slett mellomfilene i <ut>/.arbeid)
 // Serveren settes med COMFY_URL (standard http://10.0.0.76:8188). Krever ImageMagick.
 
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
@@ -267,16 +269,25 @@ async function malRunder(b, { skisse = skisseAv(b.id), prompt = `${prompter[b.fo
   return fil('malt');
 }
 
+// Bredden på kantbåndet: [innrykk, uskarphet] i px. Borgen har et smalere bånd, så husene
+// på to borgbrikker kommer nær hverandre og ser ut som én borg, ikke to med en tom stripe imellom.
+const BAND = { standard: [56, 14], borg: [Number(valg.borgband ?? 28), 8] };
+
 // Runde 3: felles kantstripe. Hver kilde legges der skissen har den typen underlag,
 // men bare i båndet langs kantene (nesten helt dekkende ut til ca. 30 px, så tones den
-// ut mot ca. 90 px). Palisaden og alt annet som ikke er gress, vei eller borggrunn får stå.
+// ut mot ca. 90 px; for borg ca. halvparten). Palisaden og alt annet som ikke er gress,
+// vei eller borggrunn får stå.
 function kantstripe(b, malt, kilder) {
   const skisse = skisseAv(b.id);
   const fil = filAv(b.id);
-  const band = `${ARBEID}band.png`;
-  if (!existsSync(band)) magick('-size', '1024x1024', 'xc:white', '-fill', 'black', '-draw', 'rectangle 56,56 967,967', '-blur', '0x14', band);
   let bilde = malt;
   for (const [type, kilde] of Object.entries(kilder)) {
+    const [inn, uskarp] = BAND[type] ?? BAND.standard;
+    const band = `${ARBEID}band_${inn}.png`;
+    if (!existsSync(band)) {
+      magick('-size', '1024x1024', 'xc:white', '-fill', 'black', '-draw', `rectangle ${inn},${inn} ${1023 - inn},${1023 - inn}`,
+        '-blur', `0x${uskarp}`, band);
+    }
     fargemaske(skisse, [SKISSEFARGE[type]], fil(`klasse_${type}`), '-blur', '0x2');
     magick(fil(`klasse_${type}`), band, '-compose', 'multiply', '-composite', fil(`maske_${type}`));
     if (snitt(fil(`maske_${type}`)) < 0.0005) continue;
@@ -288,7 +299,7 @@ function kantstripe(b, malt, kilder) {
 
 // Snittfargen gress, vei og borggrunn har inne på de malte brikkene. Kantkildene flyttes
 // hit, ellers blir kantbåndet brunere eller mørkere og rutenettet synes på brettet.
-const MALFARGE = { eng: [112, 120, 51], vei: [171, 155, 116], borg: [110, 100, 66] }; // elva brukes som den er
+const MALFARGE = { eng: [112, 120, 51], vei: [171, 155, 116], borg: [112, 97, 74] }; // elva brukes som den er
 
 // Flytter snittfargen i bildet (eller i utsnittet) til målfargen, kanal for kanal
 function fargejuster(inn, ut, maal, utsnitt) {
@@ -310,6 +321,24 @@ function diagonalMaske() {
       '-draw', 'polygon 0,1024 1024,1024 512,512', fil);
   }
   return fil;
+}
+
+// Eng og borggrunn er speilet, og brikkene dreies, så det som ligger langs én kant, ligger
+// speilvendt langs kanten på naboen. Tydelige ting i underlaget (strå, gressklumper, lyng)
+// blir da til symmetriske figurer på tvers av skjøten. Her beholdes bare de store fargeflatene
+// og penselstrøkene som er mindre enn «detalj» px. Medianfilteret tar tynne strå og kvister.
+const DEMP = {
+  eng: { median: Number(valg.engmedian ?? 3), detalj: Number(valg.engdetalj ?? 8) },
+  borg: { median: 5, detalj: Number(valg.borgdetalj ?? 10) },
+};
+function demp(type, inn) {
+  const { median, detalj } = DEMP[type];
+  const ut = `${ARBEID}kilde_${type}_dempet.png`;
+  // Lyng og blomster (mer blått enn grønt) fylles først med snittfargen i bildet
+  magick(inn, '(', '+clone', '-fx', 'mean', ')', '(', '-clone', '0', '-fx', 'u.b > u.g*0.92', '-morphology', 'Dilate', 'Disk:8', '-blur', '0x4', ')',
+    '-composite', '-statistic', 'Median', `${median}x${median}`, '(', '+clone', '-blur', '0x40', ')',
+    '(', '-clone', '0', '-blur', `0x${detalj}`, ')', '-fx', 'u[1] + 1.3*(u[0]-u[2])', ut);
+  return ut;
 }
 
 async function lagKantkilder() {
@@ -340,8 +369,9 @@ async function lagKantkilder() {
   }
   // Veien ligger i en stripe midt på (457–567 px), så fargen måles bare der
   const justert = {};
-  for (const [type, fil] of Object.entries(kilder)) {
+  for (let [type, fil] of Object.entries(kilder)) {
     justert[type] = `${ARBEID}kilde_${type}_justert.png`;
+    if (DEMP[type]) fil = demp(type, fil);
     if (MALFARGE[type]) fargejuster(fil, justert[type], MALFARGE[type], type === 'vei' ? '110x1024+457+0' : null);
     else magick(fil, justert[type]);
   }
@@ -356,5 +386,5 @@ for (const b of valgte) {
   kantstripe(b, await malRunder(b), kilder);
   console.log(`${b.id}  ${b.navn}  (${((Date.now() - start) / 1000).toFixed(0)} s)`);
 }
-if (!valg.behold) rmSync(ARBEID, { recursive: true });
+if (!('behold' in valg)) rmSync(ARBEID, { recursive: true });
 console.log(`Ferdig: ${valgte.length} brikker i ${UT}`);
