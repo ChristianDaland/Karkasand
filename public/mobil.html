@@ -78,6 +78,16 @@
     </div>
   </dialog>
 
+  <!-- Hjelp om brikken spilleren har trukket. Stående: bildet øverst og teksten under. Liggende: side om side. -->
+  <dialog id="brikkehjelp" class="brikkehjelp">
+    <img id="brikkehjelp-bilde" alt="">
+    <div class="brikkehjelp-tekst">
+      <div id="brikkehjelp-innhold"></div>
+      <p class="merk">Vist med nord øverst.</p>
+    </div>
+    <button id="brikkehjelp-lukk" class="stor primar">Lukk</button>
+  </dialog>
+
   <section id="spill" class="side" hidden>
     <header class="topp">
       <span class="prikk" id="min-farge"></span>
@@ -88,7 +98,7 @@
       <button id="avslutt" class="avslutt-knapp" hidden aria-label="Avslutt spillet" title="Avslutt spillet">✕</button>
     </header>
     <p id="status" class="status"></p>
-    <button id="hjelp" class="hjelp-knapp" hidden aria-label="Vis hjelp om brikken på skjermen">?</button>
+    <button id="hjelp" class="hjelp-knapp" hidden>? Hva er denne brikken?</button>
     <button id="angre-trekk" class="middels angre" hidden>↶ Angre trekket</button>
     <div class="forhand-ramme">
       <div id="forhand" class="forhand">

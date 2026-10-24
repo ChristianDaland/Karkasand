@@ -375,7 +375,6 @@ body:is([data-modus='bord'], [data-modus='pad']) #opptelling { top: 50%; }
 .hjelp-vindu ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .hjelp-hvem { color: var(--farge); font-weight: 800; }
 .hjelp-merk { font-size: 0.9rem; margin-top: 12px !important; }
-body:is([data-modus='bord'], [data-modus='pad']) .hjelp-vindu { width: min(760px, calc(100% - 340px)); }
 
 /* ---------- Nettbrett (pad) ----------
    To spillere på ett nettbrett (ca. 1024 × 768) som ligger flatt på bordet, uten mobiler.

@@ -108,7 +108,8 @@ function vis(rom) {
   visSlutt(spill);
 }
 
-// Hjelpevinduet: hva brikken spilleren har trukket, er og gir av poeng
+// Hjelpevinduet på nettbrettet: hva brikken spilleren har trukket, er og gir av poeng.
+// Med mobiler vises hjelpen på mobilen, og rom.hjelp er alltid tom.
 function visHjelp(rom) {
   const hjelp = rom.hjelp;
   $('hjelp').hidden = !hjelp;

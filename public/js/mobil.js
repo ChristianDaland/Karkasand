@@ -4,6 +4,7 @@ import { BRIKKE } from '/delt/brikker.js';
 import { roterPunkt } from '/delt/motor.js';
 import { lastBilder, brikkeUrl, vikingSvg, figurSvg, vareSvg, elementFra, PLASS_GRADER, FIGURNAVN } from './felles.js';
 import { VARER } from '/delt/brikker.js';
+import { brikkeTekst } from './brikkehjelp.js';
 
 const $ = (id) => document.getElementById(id);
 const kode = location.pathname.split('/')[2]?.toUpperCase();
@@ -223,8 +224,16 @@ $('sett-viking').addEventListener('click', () => {
 $('nytt-spill').addEventListener('click', () => socket.emit('mobil:nytt-spill'));
 $('angre-brikke').addEventListener('click', () => handling({ type: 'angre' }));
 $('trekk').addEventListener('click', () => handling({ type: 'trekk' }));
-// Hjelp om brikken: vises på storskjermen, og lukkes med samme knapp
-$('hjelp').addEventListener('click', () => socket.emit('mobil:hjelp', rom.hjelp?.spillerId !== spillerId));
+// Hjelp om brikken: vises bare på mobilen. Brikken vises med nord øverst, så kantene
+// i teksten stemmer med bildet.
+$('hjelp').addEventListener('click', () => {
+  const { id, nr } = rom.spill.aktiv.brikke;
+  $('brikkehjelp-bilde').src = brikkeUrl(id, nr);
+  $('brikkehjelp-innhold').innerHTML = brikkeTekst(id);
+  $('brikkehjelp').dataset.brikke = id;
+  $('brikkehjelp').showModal();
+});
+$('brikkehjelp-lukk').addEventListener('click', () => $('brikkehjelp').close());
 $('angre-trekk').addEventListener('click', () => handling({ type: 'angre' }));
 $('hopp-over').addEventListener('click', () => socket.emit('mobil:hopp-over'));
 $('avslutt').addEventListener('click', () => $('bekreft-avslutt').showModal());
@@ -319,10 +328,9 @@ function visSpill(meg) {
 
   // Den som la siste brikke, kan angre trekket til neste spiller har trukket sin
   $('trekk-kontroll').hidden = !(harTur && spill.fase === 'trekk');
-  const hjelpApen = rom.hjelp?.spillerId === spillerId;
   $('hjelp').hidden = !(harTur && aktiv);
-  $('hjelp').classList.toggle('apen', hjelpApen);
-  $('hjelp').textContent = hjelpApen ? '✕ Lukk hjelp' : '? Hva er denne brikken?';
+  // Hjelpen lukkes av seg selv når turen går videre
+  if ($('brikkehjelp').open && (!harTur || aktiv?.brikke.id !== $('brikkehjelp').dataset.brikke)) $('brikkehjelp').close();
   // På den ekstra turen fra byggmesteren kan spilleren også angre forrige brikke
   $('angre-trekk').hidden = !(spill.kanAngre === i && (!harTur || spill.fase === 'trekk'));
   $('legg-kontroll').hidden = !(harTur && spill.fase === 'legg');

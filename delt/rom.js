@@ -33,7 +33,7 @@ export class Rom {
     this.spillere = []; // { id, navn, farge, plass, tilkoblet }
     this.spill = null;
     this.utvidelser = []; // id-ene til utvidelsene verten har valgt
-    this.hjelp = null; // id-en til spilleren som har bedt om hjelp for brikken sin
+    this.hjelp = null; // id-en til spilleren som har bedt om hjelp for brikken sin (bare på nettbrettet)
     this.opptelling = null; // null, 'pågår' eller 'ferdig': sluttellingen som vises på skjermen
     this.sistAktiv = Date.now();
   }
@@ -126,7 +126,8 @@ export class Rom {
     return true;
   }
 
-  // Hjelpevinduet på skjermen: bare spilleren som har tur og har trukket brikke, kan åpne det
+  // Hjelpevinduet på skjermen, bare på nettbrettet (med mobiler vises hjelpen på mobilen).
+  // Bare spilleren som har tur og har trukket brikke, kan åpne det.
   settHjelp(id, vis) {
     const spill = this.spill;
     if (!vis) {

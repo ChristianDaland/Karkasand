@@ -1,5 +1,5 @@
 // Tekstene om hver brikke: motivet, kantene og hva områdene gir av poeng.
-// Brukes av spillveiledningen og av hjelpevinduet på storskjermen.
+// Brukes av spillveiledningen, av hjelpevinduet på mobilen og av hjelpevinduet på nettbrettet.
 
 import { BRIKKE, VARER } from '/delt/brikker.js';
 
